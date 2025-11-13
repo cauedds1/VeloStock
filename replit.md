@@ -41,6 +41,8 @@ Multer configured for in-memory storage (10MB limit), images stored in the datab
 - **Status Enum Cleanup**: Reduced vehicle status values from 9 to 8.
 - **Checklist Observations System** (November 2025): Checklist structure migrated from arrays of strings to arrays of ChecklistItem objects {item: string, observation?: string} to support item-specific notes. Backward compatibility maintained via automatic normalization of legacy data. Visual indicators implemented: green (completed), yellow (completed with attention/observation), red (pending).
 - **Observações Gerais Purpose**: Section reformulated from generic notes to specific tracking of store inventory (e.g., cleaning supplies, tire shine) and property maintenance reminders (e.g., heavy gate, broken lock).
+- **Vehicle Image Placeholder** (November 2025): Elegant dark car silhouette placeholder image (/client/public/car-placeholder.png) automatically displayed for vehicles without photos, matching the system's design aesthetic.
+- **React Query Cache Invalidation** (November 2025): SalePriceEditor now invalidates both vehicle-specific (`/api/vehicles/${id}`) and collection (`/api/vehicles`) query keys when updating sale price, ensuring DashboardAlerts and FinancialSummary reflect changes immediately.
 
 ## External Dependencies
 
