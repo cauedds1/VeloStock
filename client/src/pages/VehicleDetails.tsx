@@ -609,11 +609,10 @@ export default function VehicleDetails() {
                 Observações Gerais
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Registre lembretes sobre a loja (estoque de materiais: papel higiênico, pretinho, detergente, esponja, etc.) 
-                e manutenção da propriedade (ex: "portão pesado precisa reparo")
+                Registre observações e anotações específicas deste veículo (defeitos, pendências, características especiais, negociações, etc.)
               </p>
               <Textarea
-                placeholder="Ex: Comprar pretinho e papel higiênico. Portão pesado, precisa lubrificar dobradiças..."
+                placeholder="Ex: Cliente interessado, aguardando contato. Arranhão no para-choque traseiro precisa polimento. Documentação original em mãos..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="min-h-[200px] mb-4"
