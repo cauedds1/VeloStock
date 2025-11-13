@@ -74,15 +74,6 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   });
 
   const onSubmit = async (data: VehicleFormData) => {
-    if (images.length === 0) {
-      toast({
-        title: "Adicione pelo menos uma foto",
-        description: "É necessário adicionar ao menos uma foto do veículo.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const formData = new FormData();
       formData.append("brand", data.brand);
