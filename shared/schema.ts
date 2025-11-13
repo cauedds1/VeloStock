@@ -25,9 +25,7 @@ export const userRoleEnum = pgEnum("user_role", ["DONO", "EQUIPE"]);
 export const vehicleStatusEnum = pgEnum("vehicle_status", [
   "Entrada",
   "Em Reparos",
-  "Aguardando Peças",
   "Em Higienização",
-  "Em Documentação",
   "Pronto para Venda",
   "Vendido",
   "Arquivado"

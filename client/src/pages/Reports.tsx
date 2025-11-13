@@ -352,15 +352,14 @@ export default function Reports() {
               </h3>
               <div className="space-y-4">
                 {(() => {
-                  const totalExpectedItems = Object.values(checklistItems).reduce((sum, items) => sum + items.length, 0);
                   let totalItemsAcrossVehicles = 0;
                   let completedItemsAcrossVehicles = 0;
                   
                   filteredVehicles.forEach((v) => {
                     const normalized = normalizeChecklistData(v.checklist || {});
-                    const stats = getChecklistStats(normalized);
+                    const stats = getChecklistStats(normalized, v.checklist);
                     
-                    totalItemsAcrossVehicles += totalExpectedItems;
+                    totalItemsAcrossVehicles += stats.totalItems;
                     completedItemsAcrossVehicles += stats.checkedItems;
                   });
 

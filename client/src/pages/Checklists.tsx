@@ -38,7 +38,7 @@ export default function Checklists() {
 
   const getVehicleChecklistStats = (vehicle: any) => {
     const normalizedChecklist = normalizeChecklistData(vehicle.checklist);
-    return getChecklistStats(normalizedChecklist);
+    return getChecklistStats(normalizedChecklist, vehicle.checklist);
   };
 
   const getCategoryStatus = (vehicle: any, category: keyof typeof checklistItems) => {

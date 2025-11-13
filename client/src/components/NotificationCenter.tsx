@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { checklistItems, getChecklistStats, normalizeChecklistData } from "@shared/checklistUtils";
+import { checklistItems, getChecklistStats, normalizeChecklistData, hasChecklistStarted } from "@shared/checklistUtils";
 
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
@@ -23,23 +23,22 @@ export function NotificationCenter() {
     queryKey: ["/api/store-observations"],
   });
 
-  const totalExpectedItems = Object.values(checklistItems).reduce((sum, items) => sum + items.length, 0);
   let checklistPending = 0;
   let vehiclesWithPendingChecklist: Array<{ name: string; pending: number }> = [];
   let vehiclesWithoutChecklist: Array<{ name: string; plate: string }> = [];
 
   vehicles.forEach((vehicle: any) => {
-    // Verificar se o veículo não tem checklist
-    if (!vehicle.checklist || Object.keys(vehicle.checklist).length === 0) {
+    // Verificar se o veículo tem checklist iniciado usando a nova lógica de presence
+    if (!hasChecklistStarted(vehicle.checklist)) {
       vehiclesWithoutChecklist.push({
         name: `${vehicle.brand} ${vehicle.model}`,
         plate: vehicle.plate,
       });
     } else {
-      // Se tem checklist, verificar itens pendentes
+      // Se tem checklist iniciado, verificar itens pendentes
       const normalized = normalizeChecklistData(vehicle.checklist);
-      const stats = getChecklistStats(normalized);
-      const pending = totalExpectedItems - stats.checkedItems;
+      const stats = getChecklistStats(normalized, vehicle.checklist);
+      const pending = stats.totalItems - stats.checkedItems;
 
       if (pending > 0) {
         checklistPending += pending;
@@ -52,10 +51,12 @@ export function NotificationCenter() {
   });
 
   const pendingObservations = observations.filter((obs: any) => obs.status === "Pendente");
-  const totalNotifications = 
-    (checklistPending > 0 ? 1 : 0) + 
-    (vehiclesWithoutChecklist.length > 0 ? 1 : 0) + 
-    (pendingObservations.length > 0 ? 1 : 0);
+  
+  // Contar total de veículos com problemas de checklist
+  const totalVehiclesWithChecklistIssues = vehiclesWithoutChecklist.length + vehiclesWithPendingChecklist.length;
+  
+  // Badge mostra número total de alertas (veículos + observações)
+  const totalNotifications = totalVehiclesWithChecklistIssues + pendingObservations.length;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
