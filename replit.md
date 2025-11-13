@@ -43,6 +43,7 @@ Multer configured for in-memory storage (10MB limit), images stored in the datab
 - **Observações Gerais Purpose**: Section reformulated from generic notes to specific tracking of store inventory (e.g., cleaning supplies, tire shine) and property maintenance reminders (e.g., heavy gate, broken lock).
 - **Vehicle Image Placeholder** (November 2025): Elegant dark car silhouette placeholder image (/client/public/car-placeholder.png) automatically displayed for vehicles without photos, matching the system's design aesthetic.
 - **React Query Cache Invalidation** (November 2025): SalePriceEditor now invalidates both vehicle-specific (`/api/vehicles/${id}`) and collection (`/api/vehicles`) query keys when updating sale price, ensuring DashboardAlerts and FinancialSummary reflect changes immediately.
+- **Vehicle Type System** (November 2025): Comprehensive differentiation between cars (Carro) and motorcycles (Moto) with type-specific checklists. Database schema includes vehicleTypeEnum ("Carro"|"Moto") with "Carro" as default. Motorcycle checklists exclude irrelevant items (electric windows, A/C, electric locks) and include motorcycle-specific categories (fairings/finishings, simplified electrical system). All checklist helpers (normalizeChecklistData, getCategoryPresence, getChecklistStats, hasChecklistStarted) dynamically adapt to vehicle type. UI includes type selector (🚗/🏍️) in add/edit dialogs with backward compatibility for existing records.
 
 ## External Dependencies
 
