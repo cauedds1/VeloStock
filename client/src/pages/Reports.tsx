@@ -361,7 +361,7 @@ export default function Reports() {
                     const stats = getChecklistStats(normalized);
                     
                     totalItemsAcrossVehicles += totalExpectedItems;
-                    completedItemsAcrossVehicles += stats.completed;
+                    completedItemsAcrossVehicles += stats.checkedItems;
                   });
 
                   const completionRate = totalItemsAcrossVehicles > 0 
