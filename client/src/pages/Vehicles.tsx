@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, ArrowUpDown } from "lucide-react";
 import { AddVehicleDialog } from "@/components/AddVehicleDialog";
 import { Link } from "wouter";
 import {
@@ -23,34 +23,68 @@ const STATUS_OPTIONS = [
   { value: "Arquivado", label: "Arquivado" },
 ];
 
+const STATUS_ORDER = {
+  "Pronto para Venda": 1,
+  "Em Higienização": 2,
+  "Em Documentação": 3,
+  "Aguardando Peças": 4,
+  "Em Reparos": 5,
+  "Entrada": 6,
+  "Vendido": 7,
+  "Arquivado": 8,
+};
+
+const SORT_OPTIONS = [
+  { value: "status", label: "Ordenar por Status" },
+  { value: "brand", label: "Ordenar por Marca" },
+  { value: "year", label: "Ordenar por Ano (Mais Novo)" },
+  { value: "year-old", label: "Ordenar por Ano (Mais Antigo)" },
+];
+
 export default function Vehicles() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("status");
 
   const { data: vehicles = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
   });
 
-  const filteredVehicles = vehicles.filter((vehicle: any) => {
-    const matchesSearch = `${vehicle.brand} ${vehicle.model} ${vehicle.plate}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    
-    // Oculta veículos arquivados por padrão, a menos que o filtro seja especificamente "Arquivado"
-    const isArchived = vehicle.status === "Arquivado";
-    if (statusFilter !== "Arquivado" && isArchived && statusFilter !== "all") {
-      return false;
-    }
-    
-    // Se o filtro for "all", exclui arquivados
-    if (statusFilter === "all" && isArchived) {
-      return false;
-    }
-    
-    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredVehicles = vehicles
+    .filter((vehicle: any) => {
+      const matchesSearch = `${vehicle.brand} ${vehicle.model} ${vehicle.plate}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      
+      // Oculta veículos arquivados por padrão, a menos que o filtro seja especificamente "Arquivado"
+      const isArchived = vehicle.status === "Arquivado";
+      if (statusFilter !== "Arquivado" && isArchived && statusFilter !== "all") {
+        return false;
+      }
+      
+      // Se o filtro for "all", exclui arquivados
+      if (statusFilter === "all" && isArchived) {
+        return false;
+      }
+      
+      const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a: any, b: any) => {
+      if (sortBy === "status") {
+        const orderA = STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] || 999;
+        const orderB = STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] || 999;
+        return orderA - orderB;
+      } else if (sortBy === "brand") {
+        return `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`);
+      } else if (sortBy === "year") {
+        return (b.year || 0) - (a.year || 0);
+      } else if (sortBy === "year-old") {
+        return (a.year || 0) - (b.year || 0);
+      }
+      return 0;
+    });
 
   return (
     <div className="flex h-full flex-col p-8">
@@ -80,6 +114,19 @@ export default function Vehicles() {
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-[240px]">
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Ordenar" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

@@ -132,7 +132,16 @@ export default function VehicleDetails() {
     }
 
     const newChecklist = { ...checklist, [category]: newCategoryItems };
+    
+    // Atualizar estado local e ref imediatamente
     setChecklist(newChecklist);
+    lastServerChecklistRef.current = JSON.stringify(newChecklist);
+    
+    // Atualização otimista do cache
+    queryClient.setQueryData([`/api/vehicles/${vehicleId}`], (old: any) => {
+      if (!old) return old;
+      return { ...old, checklist: newChecklist };
+    });
 
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
@@ -143,10 +152,16 @@ export default function VehicleDetails() {
 
       if (!response.ok) throw new Error("Erro ao salvar checklist");
 
-      await queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
+      // Invalidar apenas a lista (não o detalhe)
       await queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
     } catch (error) {
+      // Reverter em caso de erro
       setChecklist(previousChecklist);
+      lastServerChecklistRef.current = JSON.stringify(previousChecklist);
+      queryClient.setQueryData([`/api/vehicles/${vehicleId}`], (old: any) => {
+        if (!old) return old;
+        return { ...old, checklist: previousChecklist };
+      });
       toast({
         title: "Erro ao atualizar checklist",
         description: "Ocorreu um erro. Tente novamente.",
@@ -160,18 +175,42 @@ export default function VehicleDetails() {
     const vehicleType = (vehicle?.vehicleType || "Carro") as VehicleType;
     const items = getChecklistItems(vehicleType);
     const categoryItemNames = items[category] || [];
+    const currentCategoryItems = checklist[category] || [];
     
-    // Marcar todos os itens da categoria (sem observações)
+    // Verificar se todos já estão marcados
+    const allMarked = categoryItemNames.every(itemName => 
+      currentCategoryItems.some(ci => ci.item === itemName)
+    );
+    
+    // Se todos já estão marcados, não fazer nada
+    if (allMarked) {
+      toast({
+        title: "Categoria completa",
+        description: "Todos os itens já estão marcados!",
+      });
+      return;
+    }
+    
+    // Marcar apenas os itens que faltam, preservando os já marcados
     const newCategoryItems: ChecklistItem[] = categoryItemNames.map(itemName => {
-      const existingItem = (checklist[category] || []).find(ci => ci.item === itemName);
-      // Manter observação existente se houver
-      return existingItem?.observation 
-        ? { item: itemName, observation: existingItem.observation }
-        : { item: itemName };
+      const existingItem = currentCategoryItems.find(ci => ci.item === itemName);
+      if (existingItem) {
+        return existingItem; // Manter item existente com observação
+      }
+      return { item: itemName }; // Adicionar novo item
     });
 
     const newChecklist = { ...checklist, [category]: newCategoryItems };
+    
+    // Atualizar estado local e ref imediatamente
     setChecklist(newChecklist);
+    lastServerChecklistRef.current = JSON.stringify(newChecklist);
+    
+    // Atualização otimista do cache
+    queryClient.setQueryData([`/api/vehicles/${vehicleId}`], (old: any) => {
+      if (!old) return old;
+      return { ...old, checklist: newChecklist };
+    });
 
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
@@ -187,10 +226,16 @@ export default function VehicleDetails() {
         description: "Todos os itens foram marcados com sucesso.",
       });
 
-      await queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
+      // Invalidar apenas a lista
       await queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
     } catch (error) {
+      // Reverter em caso de erro
       setChecklist(previousChecklist);
+      lastServerChecklistRef.current = JSON.stringify(previousChecklist);
+      queryClient.setQueryData([`/api/vehicles/${vehicleId}`], (old: any) => {
+        if (!old) return old;
+        return { ...old, checklist: previousChecklist };
+      });
       toast({
         title: "Erro ao marcar itens",
         description: "Ocorreu um erro. Tente novamente.",
