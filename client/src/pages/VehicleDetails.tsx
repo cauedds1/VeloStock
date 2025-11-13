@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Trash2, FileText, CheckSquare, MessageSquare } from "lucide-react";
+import { Save, Upload, Trash2, FileText, CheckSquare, MessageSquare, CheckCheck } from "lucide-react";
 import { type ChecklistData, type ChecklistItem, getChecklistItemStatus, getChecklistCategories, getChecklistItems, type VehicleType } from "@shared/checklistUtils";
 
 export default function VehicleDetails() {
@@ -52,6 +52,9 @@ export default function VehicleDetails() {
   });
   const { toast} = useToast();
   const queryClient = useQueryClient();
+  
+  // Ref para rastrear o último checklist do servidor e evitar sobrescrever mudanças otimistas
+  const lastServerChecklistRef = useRef<string | null>(null);
 
   const { data: vehicle, isLoading } = useQuery<any>({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -73,7 +76,13 @@ export default function VehicleDetails() {
       setNotes(vehicle.notes || "");
     }
     if (vehicle?.checklist) {
-      setChecklist(vehicle.checklist);
+      // Só atualizar o estado local se o checklist do servidor mudou desde a última vez
+      // Isso preserva atualizações otimistas e evita sobrescrever com dados desatualizados
+      const currentServerChecklist = JSON.stringify(vehicle.checklist);
+      if (lastServerChecklistRef.current !== currentServerChecklist) {
+        lastServerChecklistRef.current = currentServerChecklist;
+        setChecklist(vehicle.checklist);
+      }
     }
   }, [vehicle?.notes, vehicle?.checklist]);
 
@@ -140,6 +149,50 @@ export default function VehicleDetails() {
       setChecklist(previousChecklist);
       toast({
         title: "Erro ao atualizar checklist",
+        description: "Ocorreu um erro. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const markAllInCategory = async (category: keyof ChecklistData) => {
+    const previousChecklist = { ...checklist };
+    const vehicleType = (vehicle?.vehicleType || "Carro") as VehicleType;
+    const items = getChecklistItems(vehicleType);
+    const categoryItemNames = items[category] || [];
+    
+    // Marcar todos os itens da categoria (sem observações)
+    const newCategoryItems: ChecklistItem[] = categoryItemNames.map(itemName => {
+      const existingItem = (checklist[category] || []).find(ci => ci.item === itemName);
+      // Manter observação existente se houver
+      return existingItem?.observation 
+        ? { item: itemName, observation: existingItem.observation }
+        : { item: itemName };
+    });
+
+    const newChecklist = { ...checklist, [category]: newCategoryItems };
+    setChecklist(newChecklist);
+
+    try {
+      const response = await fetch(`/api/vehicles/${vehicleId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checklist: newChecklist }),
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar checklist");
+
+      toast({
+        title: "Categoria marcada!",
+        description: "Todos os itens foram marcados com sucesso.",
+      });
+
+      await queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+    } catch (error) {
+      setChecklist(previousChecklist);
+      toast({
+        title: "Erro ao marcar itens",
         description: "Ocorreu um erro. Tente novamente.",
         variant: "destructive",
       });
@@ -678,11 +731,22 @@ export default function VehicleDetails() {
                 
                 return (Object.keys(categories) as Array<keyof typeof categories>).map((category) => (
                   <Card key={category} className="p-6">
-                    <div className="flex items-center mb-4">
-                      <CheckSquare className="h-5 w-5 text-primary mr-2" />
-                      <h3 className="text-lg font-semibold text-card-foreground">
-                        {categories[category]}
-                      </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <CheckSquare className="h-5 w-5 text-primary mr-2" />
+                        <h3 className="text-lg font-semibold text-card-foreground">
+                          {categories[category]}
+                        </h3>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => markAllInCategory(category)}
+                        className="h-8 text-xs"
+                      >
+                        <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+                        Marcar Todas
+                      </Button>
                     </div>
                     <div className="space-y-2">
                       {items[category].map((itemName) => {
