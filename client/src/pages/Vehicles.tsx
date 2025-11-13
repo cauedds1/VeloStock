@@ -99,17 +99,11 @@ export default function Vehicles() {
               <Card className="cursor-pointer transition-shadow hover:shadow-lg">
                 <CardHeader className="p-0">
                   <div className="aspect-video relative overflow-hidden rounded-t-lg bg-muted">
-                    {vehicle.image ? (
-                      <img
-                        src={vehicle.image}
-                        alt={`${vehicle.brand} ${vehicle.model}`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground">
-                        Sem imagem
-                      </div>
-                    )}
+                    <img
+                      src={vehicle.image || "/car-placeholder.png"}
+                      alt={`${vehicle.brand} ${vehicle.model}`}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4">
