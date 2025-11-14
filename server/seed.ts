@@ -86,8 +86,10 @@ async function seed() {
 
     await db.insert(vehicleHistory).values({
       vehicleId: vehicle.id,
-      fromLocation: null,
-      toLocation: vehicle.location,
+      fromStatus: null,
+      toStatus: vehicle.location as any,
+      fromPhysicalLocation: null,
+      toPhysicalLocation: null,
       userId: systemUser.id,
       notes: "Veículo cadastrado no sistema",
     });
