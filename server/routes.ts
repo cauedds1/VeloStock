@@ -182,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toPhysicalLocation: newPhysicalLocation,
           fromPhysicalLocationDetail: existingVehicle.physicalLocationDetail || null,
           toPhysicalLocationDetail: newPhysicalLocationDetail,
-          userId: req.body.userId || "system",
+          userId: req.body.userId || null,
           notes: req.body.moveNotes || req.body.historyNotes || null,
           movedAt: req.body.moveDate ? new Date(req.body.moveDate) : undefined,
         });

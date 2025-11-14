@@ -138,7 +138,6 @@ export const vehicleHistory = pgTable("vehicle_history", {
   fromPhysicalLocationDetail: text("from_physical_location_detail"),
   toPhysicalLocationDetail: text("to_physical_location_detail"),
   userId: varchar("user_id")
-    .notNull()
     .references(() => users.id),
   notes: text("notes"),
   movedAt: timestamp("moved_at", { withTimezone: true }).defaultNow().notNull(),
@@ -178,7 +177,7 @@ export type VehicleCost = typeof vehicleCosts.$inferSelect;
 export const storeObservations = pgTable("store_observations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   description: text("description").notNull(),
-  category: storeObservationCategoryEnum("category"),
+  category: text("category"),
   status: storeObservationStatusEnum("status").notNull().default("Pendente"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),

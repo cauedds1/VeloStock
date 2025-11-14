@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export function StoreObservationDialog({
 }: StoreObservationDialogProps) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<string | undefined>(undefined);
+  const [customCategory, setCustomCategory] = useState("");
   const [status, setStatus] = useState<"Pendente" | "Resolvido">("Pendente");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,11 +44,22 @@ export function StoreObservationDialog({
   useEffect(() => {
     if (observation) {
       setDescription(observation.description);
-      setCategory(observation.category || undefined);
+      const isStandardCategory = ["Estoque", "Manutenção"].includes(observation.category || "");
+      if (isStandardCategory) {
+        setCategory(observation.category || undefined);
+        setCustomCategory("");
+      } else if (observation.category) {
+        setCategory("Outro");
+        setCustomCategory(observation.category);
+      } else {
+        setCategory(undefined);
+        setCustomCategory("");
+      }
       setStatus(observation.status);
     } else {
       setDescription("");
       setCategory(undefined);
+      setCustomCategory("");
       setStatus("Pendente");
     }
   }, [observation, open]);
@@ -115,9 +128,20 @@ export function StoreObservationDialog({
       return;
     }
 
+    if (category === "Outro" && !customCategory.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Por favor, especifique a categoria.",
+      });
+      return;
+    }
+
+    const finalCategory = category === "Outro" ? customCategory.trim() : category;
+
     const data = {
       description: description.trim(),
-      category: category || null,
+      category: finalCategory || null,
       status,
     };
 
@@ -154,7 +178,12 @@ export function StoreObservationDialog({
 
           <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={category} onValueChange={(value) => {
+              setCategory(value);
+              if (value !== "Outro") {
+                setCustomCategory("");
+              }
+            }}>
               <SelectTrigger id="category">
                 <SelectValue placeholder="Selecione uma categoria (opcional)" />
               </SelectTrigger>
@@ -165,6 +194,18 @@ export function StoreObservationDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {category === "Outro" && (
+            <div className="space-y-2">
+              <Label htmlFor="customCategory">Especifique a Categoria *</Label>
+              <Input
+                id="customCategory"
+                placeholder="Ex: Limpeza, Segurança, Administrativo..."
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+              />
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">

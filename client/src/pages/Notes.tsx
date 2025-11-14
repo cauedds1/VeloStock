@@ -72,6 +72,11 @@ export default function Notes() {
   const pendingCount = observations.filter(o => o.status === "Pendente").length;
   const resolvedCount = observations.filter(o => o.status === "Resolvido").length;
 
+  // Derivar categorias únicas dos dados
+  const uniqueCategories = Array.from(
+    new Set(observations.map(o => o.category).filter(Boolean))
+  ).sort();
+
   return (
     <div className="flex h-full flex-col p-8">
       <div className="mb-8 flex items-start justify-between">
@@ -107,9 +112,11 @@ export default function Notes() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as Categorias</SelectItem>
-            <SelectItem value="Estoque">Estoque</SelectItem>
-            <SelectItem value="Manutenção">Manutenção</SelectItem>
-            <SelectItem value="Outro">Outro</SelectItem>
+            {uniqueCategories.map((cat) => (
+              <SelectItem key={cat} value={cat!}>
+                {cat}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -155,7 +162,7 @@ export default function Notes() {
                         <CheckCircle2 className="h-5 w-5 text-green-500" />
                       )}
                       <CardTitle className="text-lg">
-                        {obs.category || "Sem categoria"}
+                        {obs.category ? obs.category : "Sem categoria"}
                       </CardTitle>
                       <Badge 
                         variant={obs.status === "Pendente" ? "default" : "outline"}
