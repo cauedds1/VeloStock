@@ -24,6 +24,11 @@ export function PendingTasksNotification() {
     let taskMessages: string[] = [];
 
     vehicles.forEach((vehicle: any) => {
+      // Só notificar checklist para veículos "Pronto para Venda"
+      if (vehicle.status !== "Pronto para Venda") {
+        return;
+      }
+
       if (vehicle.checklist) {
         const checklist = vehicle.checklist;
         const allItems = [
@@ -65,6 +70,11 @@ export function PendingTasksNotification() {
   let checklistPending = 0;
   
   vehicles.forEach((vehicle: any) => {
+    // Só notificar checklist para veículos "Pronto para Venda"
+    if (vehicle.status !== "Pronto para Venda") {
+      return;
+    }
+
     if (vehicle.checklist) {
       const checklist = vehicle.checklist;
       const allItems = [

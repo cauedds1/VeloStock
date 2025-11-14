@@ -28,6 +28,11 @@ export function NotificationCenter() {
   let vehiclesWithoutChecklist: Array<{ name: string; plate: string }> = [];
 
   vehicles.forEach((vehicle: any) => {
+    // Só notificar checklist para veículos "Pronto para Venda"
+    if (vehicle.status !== "Pronto para Venda") {
+      return;
+    }
+
     // Verificar se o veículo tem checklist iniciado usando a nova lógica de presence
     if (!hasChecklistStarted(vehicle.checklist, vehicle.vehicleType || "Carro")) {
       vehiclesWithoutChecklist.push({
