@@ -141,6 +141,7 @@ export const vehicleHistory = pgTable("vehicle_history", {
     .notNull()
     .references(() => users.id),
   notes: text("notes"),
+  movedAt: timestamp("moved_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

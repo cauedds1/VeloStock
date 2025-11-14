@@ -151,9 +151,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
       
       // Detectar mudanças significativas em status ou localização física base
-      const statusChanged = updates.status && updates.status !== existingVehicle.status;
-      const physicalLocationChanged = 
-        updates.physicalLocation !== undefined && updates.physicalLocation !== existingVehicle.physicalLocation;
+      const statusChanged = Object.prototype.hasOwnProperty.call(updates, "status") && 
+        updates.status !== existingVehicle.status;
+      const physicalLocationChanged = Object.prototype.hasOwnProperty.call(updates, "physicalLocation") && 
+        updates.physicalLocation !== existingVehicle.physicalLocation;
 
       // Atualizar locationChangedAt apenas quando status muda
       if (statusChanged) {
@@ -183,6 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toPhysicalLocationDetail: newPhysicalLocationDetail,
           userId: req.body.userId || "system",
           notes: req.body.moveNotes || req.body.historyNotes || null,
+          movedAt: req.body.moveDate ? new Date(req.body.moveDate) : undefined,
         });
       }
 

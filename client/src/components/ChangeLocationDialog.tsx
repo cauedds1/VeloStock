@@ -19,8 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin } from "lucide-react";
+import { MapPin, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface ChangeLocationDialogProps {
   vehicleId: string;
@@ -53,6 +62,7 @@ export function ChangeLocationDialog({
     physicalLocation: currentPhysicalLocation || "__none__",
     physicalLocationDetail: currentPhysicalLocationDetail || "",
     notes: "",
+    date: new Date(),
   });
 
   useEffect(() => {
@@ -62,6 +72,7 @@ export function ChangeLocationDialog({
         physicalLocation: currentPhysicalLocation || "__none__",
         physicalLocationDetail: currentPhysicalLocationDetail || "",
         notes: "",
+        date: new Date(),
       });
     }
   }, [open, currentStatus, currentPhysicalLocation, currentPhysicalLocationDetail]);
@@ -92,6 +103,7 @@ export function ChangeLocationDialog({
       const payload: any = {
         status: formData.status,
         moveNotes: formData.notes || null,
+        moveDate: formData.date.toISOString(),
       };
 
       // Convert __none__ to null, otherwise use the value
@@ -224,6 +236,32 @@ export function ChangeLocationDialog({
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Data da Movimentação</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.date ? format(formData.date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={formData.date}
+                  onSelect={(date) => date && setFormData({ ...formData, date })}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Observações (opcional)</Label>
