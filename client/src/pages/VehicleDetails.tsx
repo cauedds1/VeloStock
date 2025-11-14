@@ -314,7 +314,7 @@ export default function VehicleDetails() {
   return (
     <div className="flex h-full flex-col">
       <VehicleDetailsHeader
-        image={vehicle.images?.[0]?.imageUrl || "/api/placeholder/400/300"}
+        image={vehicle.images?.[0]?.imageUrl || "/car-placeholder.png"}
         brand={vehicle.brand}
         model={vehicle.model}
         year={vehicle.year}

@@ -174,6 +174,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? updates.physicalLocationDetail
           : existingVehicle.physicalLocationDetail;
         
+        const movedAtDate = req.body.moveDate ? new Date(req.body.moveDate) : new Date();
+        console.log("[DEBUG] moveDate recebido:", req.body.moveDate);
+        console.log("[DEBUG] movedAt criado:", movedAtDate);
+        
         await storage.addVehicleHistory({
           vehicleId: req.params.id,
           fromStatus: existingVehicle.status || null,
@@ -184,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toPhysicalLocationDetail: newPhysicalLocationDetail,
           userId: req.body.userId || null,
           notes: req.body.moveNotes || req.body.historyNotes || null,
-          movedAt: req.body.moveDate ? new Date(req.body.moveDate) : undefined,
+          movedAt: movedAtDate,
         });
       }
 
