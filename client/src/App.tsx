@@ -37,11 +37,15 @@ export default function App() {
   const { settings } = useSettings();
   
   useEffect(() => {
+    console.log('Dark Mode Setting:', settings.darkMode);
     if (settings.darkMode) {
+      console.log('Aplicando modo escuro...');
       document.documentElement.classList.add('dark');
     } else {
+      console.log('Aplicando modo claro...');
       document.documentElement.classList.remove('dark');
     }
+    console.log('Classes do HTML:', document.documentElement.className);
   }, [settings.darkMode]);
 
   const style = {
