@@ -50,17 +50,18 @@ export function EditHistoryDialog({
     toPhysicalLocation: historyEntry.toPhysicalLocation || "__none__",
     toPhysicalLocationDetail: historyEntry.toPhysicalLocationDetail || "",
     notes: historyEntry.notes || "",
-    movedAt: historyEntry.movedAt.split("T")[0],
+    movedAt: historyEntry.movedAt ? historyEntry.movedAt.split("T")[0] : new Date().toISOString().split("T")[0],
   });
 
   useEffect(() => {
     if (open) {
+      const movedAtDate = historyEntry.movedAt ? historyEntry.movedAt.split("T")[0] : new Date().toISOString().split("T")[0];
       setFormData({
         toStatus: historyEntry.toStatus,
         toPhysicalLocation: historyEntry.toPhysicalLocation || "__none__",
         toPhysicalLocationDetail: historyEntry.toPhysicalLocationDetail || "",
         notes: historyEntry.notes || "",
-        movedAt: historyEntry.movedAt.split("T")[0],
+        movedAt: movedAtDate,
       });
     }
   }, [open, historyEntry]);
@@ -104,15 +105,24 @@ export function EditHistoryDialog({
         payload.toPhysicalLocationDetail = null;
       }
 
+      console.log('Enviando atualização de histórico:', payload);
+
       const response = await fetch(`/api/vehicles/${vehicleId}/history/${historyEntry.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      console.log('Resposta recebida:', response.status);
+
       if (!response.ok) {
-        throw new Error("Erro ao atualizar histórico");
+        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('Erro na resposta:', errorData);
+        throw new Error(errorData.error || "Erro ao atualizar histórico");
       }
+
+      const result = await response.json();
+      console.log('Histórico atualizado com sucesso:', result);
 
       toast({
         title: "Histórico atualizado!",
@@ -120,13 +130,14 @@ export function EditHistoryDialog({
       });
 
       queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/history`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
 
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar histórico:", error);
       toast({
         title: "Erro ao atualizar histórico",
-        description: "Ocorreu um erro. Tente novamente.",
+        description: error.message || "Ocorreu um erro. Tente novamente.",
         variant: "destructive",
       });
     } finally {

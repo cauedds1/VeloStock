@@ -267,7 +267,9 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">Exportar</Button>
+              <Button variant="outline" size="sm" disabled>
+                Em breve
+              </Button>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -280,7 +282,9 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">Gerar PDF</Button>
+              <Button variant="outline" size="sm" disabled>
+                Em breve
+              </Button>
             </div>
           </CardContent>
         </Card>
