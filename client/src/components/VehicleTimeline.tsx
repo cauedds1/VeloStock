@@ -11,6 +11,7 @@ interface TimelineEvent {
   toStatus?: string;
   toPhysicalLocation?: string | null;
   toPhysicalLocationDetail?: string | null;
+  movedAt?: string;
 }
 
 interface VehicleTimelineProps {
@@ -46,7 +47,7 @@ export function VehicleTimeline({ events, vehicleId }: VehicleTimelineProps) {
                     <p className="mt-2 text-sm text-card-foreground">{event.notes}</p>
                   )}
                 </div>
-                {vehicleId && event.toStatus && (
+                {vehicleId && event.toStatus && event.movedAt && (
                   <EditHistoryDialog
                     vehicleId={vehicleId}
                     historyEntry={{
@@ -55,6 +56,7 @@ export function VehicleTimeline({ events, vehicleId }: VehicleTimelineProps) {
                       toPhysicalLocation: event.toPhysicalLocation,
                       toPhysicalLocationDetail: event.toPhysicalLocationDetail,
                       notes: event.notes,
+                      movedAt: event.movedAt,
                     }}
                   />
                 )}

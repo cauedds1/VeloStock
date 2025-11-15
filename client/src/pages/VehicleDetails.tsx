@@ -573,7 +573,8 @@ export default function VehicleDetails() {
                   notes: h.notes,
                   toStatus: h.toStatus,
                   toPhysicalLocation: h.toPhysicalLocation,
-                  toPhysicalLocationDetail: h.toPhysicalLocationDetail
+                  toPhysicalLocationDetail: h.toPhysicalLocationDetail,
+                  movedAt: h.movedAt
                 };
               })} 
             />
