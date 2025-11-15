@@ -8,7 +8,7 @@ import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSch
 import OpenAI from "openai";
 import path from "path";
 import fs from "fs/promises";
-import { existsSync } from "fs";
+import { existsSync, createReadStream } from "fs";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -794,14 +794,26 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         return res.status(404).json({ error: "Documento não encontrado" });
       }
 
-      if (!existsSync(document.storagePath)) {
-        return res.status(404).json({ error: "Arquivo não encontrado no servidor" });
-      }
-
       res.setHeader("Content-Type", document.mimeType);
       res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(document.originalFileName)}"`);
       
-      const fileStream = require("fs").createReadStream(document.storagePath);
+      const fileStream = createReadStream(document.storagePath);
+      
+      fileStream.on('error', (err: any) => {
+        console.error("Erro ao ler arquivo:", err);
+        
+        if (res.headersSent) {
+          res.destroy();
+          return;
+        }
+        
+        if (err.code === 'ENOENT') {
+          res.status(404).json({ error: "Arquivo não encontrado no servidor" });
+        } else {
+          res.status(500).json({ error: "Erro ao ler arquivo" });
+        }
+      });
+      
       fileStream.pipe(res);
     } catch (error) {
       console.error("Erro ao fazer download de documento:", error);
@@ -820,8 +832,12 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
 
       await storage.deleteVehicleDocument(req.params.docId);
       
-      if (existsSync(document.storagePath)) {
+      try {
         await fs.unlink(document.storagePath);
+      } catch (unlinkError: any) {
+        if (unlinkError.code !== 'ENOENT') {
+          console.error("Erro ao deletar arquivo físico:", unlinkError);
+        }
       }
 
       io.emit("vehicleDocumentDeleted", req.params.docId);
