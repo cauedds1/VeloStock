@@ -50,15 +50,28 @@ const LOCATION_PRIORITY = {
 
 const SORT_OPTIONS = [
   { value: "location", label: "Ordenar por Localização" },
+  { value: "status", label: "Ordenar por Status" },
   { value: "brand", label: "Ordenar por Marca" },
   { value: "year", label: "Ordenar por Ano (Mais Novo)" },
   { value: "year-old", label: "Ordenar por Ano (Mais Antigo)" },
+];
+
+const PRIORITY_STATUS_OPTIONS = [
+  { value: "Pronto para Venda", label: "Pronto para Venda" },
+  { value: "Em Higienização", label: "Em Higienização" },
+  { value: "Em Documentação", label: "Em Documentação" },
+  { value: "Aguardando Peças", label: "Aguardando Peças" },
+  { value: "Em Reparos", label: "Em Reparos" },
+  { value: "Entrada", label: "Entrada" },
+  { value: "Vendido", label: "Vendido" },
+  { value: "Arquivado", label: "Arquivado" },
 ];
 
 export default function Vehicles() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("location");
+  const [priorityStatus, setPriorityStatus] = useState("Pronto para Venda");
 
   const { data: vehicles = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
@@ -100,6 +113,18 @@ export default function Vehicles() {
         const statusOrderA = STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] || 999;
         const statusOrderB = STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] || 999;
         return statusOrderA - statusOrderB;
+      } else if (sortBy === "status") {
+        // Se é o status prioritário, vai primeiro
+        const aIsPriority = a.status === priorityStatus;
+        const bIsPriority = b.status === priorityStatus;
+        
+        if (aIsPriority && !bIsPriority) return -1;
+        if (!aIsPriority && bIsPriority) return 1;
+        
+        // Se ambos são ou não são o status prioritário, usa ordem padrão
+        const statusOrderA = STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] || 999;
+        const statusOrderB = STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] || 999;
+        return statusOrderA - statusOrderB;
       } else if (sortBy === "brand") {
         return `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`);
       } else if (sortBy === "year") {
@@ -122,7 +147,7 @@ export default function Vehicles() {
         <AddVehicleDialog />
       </div>
 
-      <div className="mb-6 flex gap-4">
+      <div className="mb-6 flex gap-4 flex-wrap">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -157,6 +182,20 @@ export default function Vehicles() {
             ))}
           </SelectContent>
         </Select>
+        {sortBy === "status" && (
+          <Select value={priorityStatus} onValueChange={setPriorityStatus}>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue placeholder="Status prioritário" />
+            </SelectTrigger>
+            <SelectContent>
+              {PRIORITY_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
