@@ -69,7 +69,7 @@ export function EditCostDialog({
         category: isPredefinedCategory ? cost.category : "Outra",
         customCategory: isPredefinedCategory ? "" : cost.category,
         description: cost.description,
-        value: cost.value.toFixed(2),
+        value: (cost.value / 100).toFixed(2),
         date: cost.date,
         paymentMethod: cost.paymentMethod || "Cartão Loja",
         paidBy: cost.paidBy || "",
