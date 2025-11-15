@@ -57,6 +57,9 @@ export default function VehicleDetails() {
   
   // Ref para rastrear o último checklist do servidor e evitar sobrescrever mudanças otimistas
   const lastServerChecklistRef = useRef<string | null>(null);
+  
+  // Ref para scroll automático das tabs no mobile
+  const tabsListRef = useRef<HTMLDivElement>(null);
 
   const { data: vehicle, isLoading } = useQuery<any>({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -87,6 +90,26 @@ export default function VehicleDetails() {
       }
     }
   }, [vehicle?.notes, vehicle?.checklist]);
+
+  // Scroll automático para tab ativa no mobile
+  useEffect(() => {
+    if (!tabsListRef.current) return;
+    
+    // Verificar se é mobile (< 768px)
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile) return;
+
+    // Encontrar a tab ativa
+    const activeTabElement = tabsListRef.current.querySelector('[data-state="active"]');
+    if (!activeTabElement) return;
+
+    // Rolar para centralizar a tab ativa
+    activeTabElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    });
+  }, [activeTab]);
 
   const saveNotes = async () => {
     setIsSavingNotes(true);
@@ -355,7 +378,7 @@ export default function VehicleDetails() {
 
       <div className="flex-1 overflow-y-auto p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6" data-testid="tabs-vehicle-details">
+          <TabsList ref={tabsListRef} className="mb-6" data-testid="tabs-vehicle-details">
             <TabsTrigger value="visao-geral" data-testid="tab-visao-geral">
               Visão Geral
             </TabsTrigger>

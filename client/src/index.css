@@ -485,4 +485,63 @@
     width: 44px !important;
     height: 44px !important;
   }
+
+  /* ===== VEHICLE DETAILS TABS MOBILE ===== */
+  
+  /* Tabs container - sticky and scrollable */
+  [role="tablist"][data-orientation="horizontal"] {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    background: hsl(var(--background)) !important;
+    padding: 0.75rem 0.5rem !important;
+    margin: 0 -1rem !important;
+    width: calc(100% + 2rem) !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+    border-bottom: 1px solid hsl(var(--border)) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  }
+
+  /* Hide scrollbar */
+  [role="tablist"][data-orientation="horizontal"]::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Individual tabs */
+  [role="tablist"][data-orientation="horizontal"] [role="tab"] {
+    flex: 0 0 auto !important;
+    min-width: 120px !important;
+    padding: 12px 20px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  /* Active tab - strong visual indicator */
+  [role="tablist"][data-orientation="horizontal"] [role="tab"][data-state="active"] {
+    background: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px hsla(var(--primary), 0.3) !important;
+    transform: scale(1.05) !important;
+  }
+
+  /* Inactive tab */
+  [role="tablist"][data-orientation="horizontal"] [role="tab"][data-state="inactive"] {
+    background: hsl(var(--muted)) !important;
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /* Tab content with better spacing */
+  [role="tabpanel"] {
+    padding-top: 1rem !important;
+  }
 }
