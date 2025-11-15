@@ -16,6 +16,7 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState<string>("last-3-months");
   const [checklistDialogOpen, setChecklistDialogOpen] = useState(false);
   const [checklistDialogType, setChecklistDialogType] = useState<"completed" | "missing">("missing");
+  const [observationsTab, setObservationsTab] = useState<"pending" | "resolved">("pending");
 
   const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
@@ -101,9 +102,7 @@ export default function Reports() {
 
     filteredVehicles.forEach((v) => {
       const status = v.status || v.location || "Entrada";
-      const locationChangedAt = new Date(v.locationChangedAt);
-      const now = new Date();
-      const daysInStatus = Math.floor((now.getTime() - locationChangedAt.getTime()) / (1000 * 60 * 60 * 24));
+      const daysInStatus = v.daysInStatus || 0; // Usar valor calculado corretamente pela API
 
       const current = stageTime.get(status) || { total: 0, count: 0 };
       stageTime.set(status, {
@@ -126,9 +125,7 @@ export default function Reports() {
   const getVehiclesWithLongestTime = () => {
     return filteredVehicles
       .map((v) => {
-        const locationChangedAt = new Date(v.locationChangedAt);
-        const now = new Date();
-        const daysInStatus = Math.floor((now.getTime() - locationChangedAt.getTime()) / (1000 * 60 * 60 * 24));
+        const daysInStatus = v.daysInStatus || 0; // Usar valor calculado corretamente pela API
         
         return {
           id: v.id,
@@ -515,33 +512,100 @@ export default function Reports() {
                 ) : (
                   <>
                     {(() => {
-                      const pendingObs = observations.filter((o: any) => o.status === "Pendente").length;
-                      const resolvedObs = observations.filter((o: any) => o.status === "Resolvido").length;
+                      const pendingObs = observations.filter((o: any) => o.status === "Pendente");
+                      const resolvedObs = observations.filter((o: any) => o.status === "Resolvido");
                       const totalObs = observations.length;
 
                       return (
                         <>
                           <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center p-4 bg-yellow-500/10 rounded-lg">
-                              <p className="text-2xl font-bold text-yellow-600">{pendingObs}</p>
+                            <button
+                              onClick={() => setObservationsTab("pending")}
+                              className={`text-center p-4 rounded-lg transition-all ${
+                                observationsTab === "pending"
+                                  ? "bg-yellow-500/20 ring-2 ring-yellow-500"
+                                  : "bg-yellow-500/10 hover:bg-yellow-500/15"
+                              }`}
+                            >
+                              <p className="text-2xl font-bold text-yellow-600">{pendingObs.length}</p>
                               <p className="text-xs text-muted-foreground mt-1">Pendentes</p>
-                            </div>
-                            <div className="text-center p-4 bg-green-500/10 rounded-lg">
-                              <p className="text-2xl font-bold text-green-600">{resolvedObs}</p>
+                            </button>
+                            <button
+                              onClick={() => setObservationsTab("resolved")}
+                              className={`text-center p-4 rounded-lg transition-all ${
+                                observationsTab === "resolved"
+                                  ? "bg-green-500/20 ring-2 ring-green-500"
+                                  : "bg-green-500/10 hover:bg-green-500/15"
+                              }`}
+                            >
+                              <p className="text-2xl font-bold text-green-600">{resolvedObs.length}</p>
                               <p className="text-xs text-muted-foreground mt-1">Resolvidas</p>
-                            </div>
+                            </button>
                           </div>
                           <div className="pt-4">
                             <p className="text-sm text-muted-foreground">Total de Observações</p>
                             <p className="text-3xl font-bold">{totalObs}</p>
                           </div>
-                          {pendingObs > 0 && (
-                            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                              <p className="text-sm font-medium text-yellow-700">
-                                ⚠️ Há {pendingObs} {pendingObs === 1 ? 'observação pendente' : 'observações pendentes'} que {pendingObs === 1 ? 'precisa' : 'precisam'} de atenção
-                              </p>
-                            </div>
-                          )}
+                          
+                          <div className="mt-6 space-y-3">
+                            {observationsTab === "pending" ? (
+                              pendingObs.length > 0 ? (
+                                pendingObs.map((obs: any) => (
+                                  <div key={obs.id} className="p-4 border border-yellow-500/20 rounded-lg bg-yellow-500/5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <p className="font-medium text-card-foreground">{obs.title}</p>
+                                        {obs.description && (
+                                          <p className="text-sm text-muted-foreground mt-1">{obs.description}</p>
+                                        )}
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-700">
+                                            {obs.category || "Sem categoria"}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {new Date(obs.createdAt).toLocaleDateString('pt-BR')}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-center text-sm text-muted-foreground py-8">
+                                  Nenhuma observação pendente
+                                </p>
+                              )
+                            ) : (
+                              resolvedObs.length > 0 ? (
+                                resolvedObs.map((obs: any) => (
+                                  <div key={obs.id} className="p-4 border border-green-500/20 rounded-lg bg-green-500/5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <p className="font-medium text-card-foreground">{obs.title}</p>
+                                        {obs.description && (
+                                          <p className="text-sm text-muted-foreground mt-1">{obs.description}</p>
+                                        )}
+                                        <div className="flex items-center gap-2 mt-2">
+                                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-700">
+                                            {obs.category || "Sem categoria"}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {new Date(obs.createdAt).toLocaleDateString('pt-BR')}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-center text-sm text-muted-foreground py-8">
+                                  Nenhuma observação resolvida
+                                </p>
+                              )
+                            )}
+                          </div>
                         </>
                       );
                     })()}

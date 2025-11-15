@@ -122,6 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             readyForSaleAt: readyForSaleAt, // Nova propriedade
             image: images[0]?.imageUrl || null,
             timeInStatus: days === 0 ? "Hoje" : `${days} ${days === 1 ? "dia" : "dias"}`,
+            daysInStatus: days, // Campo numérico para cálculos
             hasNotes: !!vehicle.notes,
           };
         })
