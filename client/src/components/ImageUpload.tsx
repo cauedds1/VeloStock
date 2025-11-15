@@ -75,27 +75,26 @@ export function ImageUpload({ onImagesChange, maxImages = 5 }: ImageUploadProps)
       )}
 
       {files.length < maxImages && (
-        <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/20 p-6 md:p-8 transition-colors hover-elevate active:scale-[0.98]">
+        <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/20 p-8 md:p-8 transition-colors hover-elevate active:scale-[0.98] min-h-[120px] md:min-h-[140px]">
           <input
             type="file"
             multiple
             accept="image/*"
-            capture="environment"
             onChange={handleFileChange}
             className="hidden"
             data-testid="input-upload-images"
           />
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Upload className="h-6 w-6 text-primary" />
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="flex h-14 w-14 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary/10">
+              <Upload className="h-7 w-7 md:h-6 md:w-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-card-foreground">
+              <p className="text-base md:text-sm font-medium text-card-foreground">
                 <span className="hidden sm:inline">Clique para adicionar fotos</span>
-                <span className="sm:hidden">Tocar para tirar foto ou escolher da galeria</span>
+                <span className="sm:hidden">Toque para adicionar fotos</span>
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                PNG, JPG até 10MB cada
+                Câmera ou galeria • PNG/JPG até 10MB
               </p>
             </div>
           </div>

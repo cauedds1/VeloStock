@@ -333,4 +333,156 @@
     width: 85vw !important;
     max-width: 320px !important;
   }
+
+  /* ===== MODAL/DIALOG OPTIMIZATIONS ===== */
+  
+  /* Make modals full screen on mobile */
+  [role="dialog"] {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Dialog content scrollable */
+  [role="dialog"] > div {
+    max-height: calc(100vh - 80px) !important;
+    overflow-y: auto !important;
+  }
+
+  /* Larger form inputs on mobile */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  textarea,
+  select {
+    min-height: 48px !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 12px 16px !important;
+  }
+
+  /* Better spacing for form fields */
+  form > div, 
+  form > fieldset {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Larger checkboxes and radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+  }
+
+  /* Better label spacing */
+  label {
+    margin-bottom: 0.5rem !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Tabs should stack on mobile */
+  [role="tablist"] {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  [role="tab"] {
+    flex: 1 1 auto !important;
+    min-width: 100px !important;
+    padding: 12px 16px !important;
+  }
+
+  /* Select dropdowns */
+  [role="combobox"] {
+    min-height: 48px !important;
+    font-size: 16px !important;
+  }
+
+  /* Dialog buttons */
+  [role="dialog"] button {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    padding: 12px 24px !important;
+  }
+
+  /* Card improvements */
+  [role="article"],
+  .card {
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Table improvements */
+  table {
+    display: block !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* Image preview grid */
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ===== KANBAN BOARD MOBILE ===== */
+  
+  /* Kanban columns mobile-optimized */
+  .flex.h-full.gap-4.pb-4 > div {
+    min-width: 280px !important;
+    max-width: 280px !important;
+  }
+
+  /* Kanban scroll hint */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x proximity !important;
+  }
+
+  .overflow-x-auto > .flex {
+    scroll-snap-type: x proximity !important;
+  }
+
+  .overflow-x-auto > .flex > div {
+    scroll-snap-align: start !important;
+  }
+
+  /* ===== DASHBOARD METRICS MOBILE ===== */
+  
+  /* Stack metric cards vertically on mobile */
+  .grid.gap-4.sm\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ===== REPORTS/CHARTS MOBILE ===== */
+  
+  /* Charts should scroll horizontally if needed */
+  .recharts-wrapper {
+    overflow-x: auto !important;
+  }
+
+  /* ===== CHECKLIST MOBILE ===== */
+  
+  /* Checklist items with larger touch targets */
+  .space-y-3 > div {
+    padding: 12px !important;
+  }
+
+  /* ===== VEHICLE DETAILS MOBILE ===== */
+  
+  /* Image gallery on mobile */
+  .aspect-video {
+    aspect-ratio: 16 / 9 !important;
+  }
+
+  /* Navigation buttons on image gallery */
+  button[aria-label*="Anterior"],
+  button[aria-label*="Próxima"] {
+    width: 44px !important;
+    height: 44px !important;
+  }
 }
