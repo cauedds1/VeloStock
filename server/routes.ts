@@ -85,9 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const currentStatusEntry = history.find(h => h.toStatus === vehicle.status);
           
           // Se encontrou no histórico, usa essa data. Senão, usa locationChangedAt como fallback
+          // Se tudo falhar, usa createdAt (garantia de que sempre terá uma data válida)
           const statusChangedAt = currentStatusEntry 
             ? (currentStatusEntry.movedAt || currentStatusEntry.createdAt)
-            : vehicle.locationChangedAt;
+            : (vehicle.locationChangedAt || vehicle.createdAt);
           
           const timeDiff = now.getTime() - statusChangedAt.getTime();
           const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));

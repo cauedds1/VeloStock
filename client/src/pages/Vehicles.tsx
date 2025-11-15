@@ -80,16 +80,12 @@ export default function Vehicles() {
   const { data: vehicles = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
     queryFn: async () => {
-      const response = await fetch("/api/vehicles", {
-        headers: { "Cache-Control": "no-cache" }
-      });
+      const response = await fetch("/api/vehicles");
       if (!response.ok) {
         throw new Error("Erro ao carregar veículos");
       }
       return response.json();
     },
-    staleTime: 0,
-    gcTime: 0,
   });
 
   // Salvar preferências de ordenação no localStorage
