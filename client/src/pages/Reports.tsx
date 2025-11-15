@@ -510,10 +510,28 @@ export default function Reports() {
                   const pendingObs = observations.filter((o: any) => o.status === "Pendente");
                   const resolvedObs = observations.filter((o: any) => o.status === "Resolvido");
                   const totalObs = observations.length;
+                  
+                  const resolutionRate = totalObs > 0 
+                    ? Math.round((resolvedObs.length / totalObs) * 100) 
+                    : 0;
 
                   return (
                     <>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Taxa de Resolução</span>
+                        <span className="text-2xl font-bold text-primary">{resolutionRate}%</span>
+                      </div>
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all duration-500" 
+                          style={{ width: `${resolutionRate}%` }}
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 pt-4">
+                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                          <p className="text-xs text-muted-foreground mb-1">Total de Observações</p>
+                          <p className="text-2xl font-bold">{totalObs}</p>
+                        </div>
                         <Button
                           variant="outline"
                           className="h-auto p-3 flex flex-col items-center gap-1 bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-600/20"
@@ -536,10 +554,6 @@ export default function Reports() {
                           <p className="text-xs text-muted-foreground">Resolvidas</p>
                           <p className="text-2xl font-bold text-green-600">{resolvedObs.length}</p>
                         </Button>
-                      </div>
-                      <div className="pt-2">
-                        <p className="text-sm text-muted-foreground">Total de Observações</p>
-                        <p className="text-3xl font-bold">{totalObs}</p>
                       </div>
 
                       {/* Dialog para mostrar lista de observações */}
