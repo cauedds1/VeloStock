@@ -117,6 +117,12 @@ export function NotificationCenter() {
   
   const totalNotifications = totalVehiclesWithChecklistIssues + displayedObservations;
 
+  // Contar tarefas urgentes (>7 dias)
+  const urgentCount = 
+    vehiclesWithoutChecklist.filter(v => v.isUrgent).length +
+    vehiclesWithPendingChecklist.filter(v => v.isUrgent).length +
+    pendingObservations.filter(obs => obs.isUrgent).length;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -125,11 +131,11 @@ export function NotificationCenter() {
           size="icon" 
           className="relative h-9 w-9 hover:bg-transparent"
         >
-          <Bell className="h-5 w-5 text-white" />
+          <Bell className={`h-5 w-5 text-white ${urgentCount > 0 ? 'animate-pulse-urgent' : ''}`} />
           {totalNotifications > 0 && (
             <Badge 
               variant="destructive" 
-              className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[10px] font-bold"
+              className={`absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-bold ${urgentCount > 0 ? 'animate-pulse-urgent' : ''}`}
             >
               {totalNotifications}
             </Badge>
@@ -174,16 +180,17 @@ export function NotificationCenter() {
                     {vehiclesWithoutChecklist.slice(0, 5).map((v, idx) => (
                       <Link 
                         key={idx} 
-                        href={`/veiculos/${v.id}?tab=checklist`}
+                        href={`/veiculo/${v.id}?tab=checklist`}
                         onClick={() => setOpen(false)}
-                        className="flex items-center justify-between gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors p-1.5 -ml-1.5 rounded hover:bg-accent group"
+                        className={`flex items-center justify-between gap-2 text-xs hover:text-foreground transition-colors p-2 -ml-1.5 rounded hover:bg-accent group ${v.isUrgent ? 'bg-pulse-urgent border-l-2 border-red-600 text-red-700 font-medium' : 'text-muted-foreground'}`}
                       >
                         <span className="flex items-center gap-2">
+                          {v.isUrgent && <AlertCircle className="h-3.5 w-3.5 text-red-600 animate-pulse-urgent flex-shrink-0" />}
                           <span>•</span>
                           <span>{v.name} ({v.plate})</span>
                         </span>
                         {v.isUrgent && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
                             <Clock className="h-2.5 w-2.5 mr-1" />
                             {v.daysSince}d
                           </Badge>
@@ -228,18 +235,19 @@ export function NotificationCenter() {
                     {vehiclesWithPendingChecklist.slice(0, 5).map((v, idx) => (
                       <Link 
                         key={idx}
-                        href={`/veiculos/${v.id}?tab=checklist`}
+                        href={`/veiculo/${v.id}?tab=checklist`}
                         onClick={() => setOpen(false)}
-                        className="flex justify-between items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors p-1.5 -ml-1.5 rounded hover:bg-accent group"
+                        className={`flex justify-between items-center gap-2 text-xs hover:text-foreground transition-colors p-2 -ml-1.5 rounded hover:bg-accent group ${v.isUrgent ? 'bg-pulse-urgent border-l-2 border-red-600 text-red-700 font-medium' : 'text-muted-foreground'}`}
                       >
                         <span className="flex items-center gap-2">
+                          {v.isUrgent && <AlertCircle className="h-3.5 w-3.5 text-red-600 animate-pulse-urgent flex-shrink-0" />}
                           <span>•</span>
                           <span>{v.name}</span>
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{v.pending} pendentes</span>
                           {v.isUrgent && (
-                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
                               <Clock className="h-2.5 w-2.5 mr-1" />
                               {v.daysPending}d
                             </Badge>
@@ -303,14 +311,15 @@ export function NotificationCenter() {
                       key={obs.id}
                       href="/anotacoes"
                       onClick={() => setOpen(false)}
-                      className="flex items-center justify-between gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors p-1.5 -ml-1.5 rounded hover:bg-accent group"
+                      className={`flex items-center justify-between gap-2 text-xs hover:text-foreground transition-colors p-2 -ml-1.5 rounded hover:bg-accent group ${obs.isUrgent ? 'bg-pulse-urgent border-l-2 border-red-600 text-red-700 font-medium' : 'text-muted-foreground'}`}
                     >
                       <span className="flex items-center gap-2 flex-1 min-w-0">
+                        {obs.isUrgent && <AlertCircle className="h-3.5 w-3.5 text-red-600 animate-pulse-urgent flex-shrink-0" />}
                         <span>•</span>
                         <span className="line-clamp-2 flex-1">{obs.title}</span>
                       </span>
                       {obs.isUrgent && (
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 flex-shrink-0 animate-pulse-urgent">
                           <Clock className="h-2.5 w-2.5 mr-1" />
                           {obs.daysPending}d
                         </Badge>

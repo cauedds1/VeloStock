@@ -545,3 +545,35 @@
     padding-top: 1rem !important;
   }
 }
+
+
+/* Animação pulsante para alertas urgentes */
+@keyframes pulse-urgent {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-urgent {
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+
+/* Background pulsante vermelho para notificações urgentes */
+@keyframes bg-pulse-urgent {
+  0%, 100% {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.2);
+  }
+}
+
+.bg-pulse-urgent {
+  animation: bg-pulse-urgent 2s ease-in-out infinite;
+}
+
