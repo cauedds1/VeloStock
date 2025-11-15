@@ -70,6 +70,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const timeDiff = now.getTime() - vehicle.locationChangedAt.getTime();
           const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
           
+          // Para veículos "Pronto para Venda", buscar a data do histórico quando ficou nesse status
+          let readyForSaleAt: Date | null = null;
+          if (vehicle.status === "Pronto para Venda") {
+            const history = await storage.getVehicleHistory(vehicle.id);
+            // Encontrar a última entrada onde toStatus é "Pronto para Venda"
+            const readyEntry = history.find(h => h.toStatus === "Pronto para Venda");
+            if (readyEntry) {
+              readyForSaleAt = readyEntry.movedAt || readyEntry.createdAt;
+            }
+          }
+          
           return {
             id: vehicle.id,
             brand: vehicle.brand,
@@ -87,6 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             checklist: vehicle.checklist || {},
             createdAt: vehicle.createdAt,
             locationChangedAt: vehicle.locationChangedAt,
+            readyForSaleAt: readyForSaleAt, // Nova propriedade
             image: images[0]?.imageUrl || null,
             timeInStatus: days === 0 ? "Hoje" : `${days} ${days === 1 ? "dia" : "dias"}`,
             hasNotes: !!vehicle.notes,

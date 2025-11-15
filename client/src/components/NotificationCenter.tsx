@@ -58,8 +58,8 @@ export function NotificationCenter() {
       return;
     }
 
-    // Calcular dias desde que ficou "Pronto para Venda"
-    const daysSince = vehicle.updatedAt ? getDaysSince(vehicle.updatedAt) : 0;
+    // Calcular dias desde que ficou "Pronto para Venda" usando a data do histórico
+    const daysSince = vehicle.readyForSaleAt ? getDaysSince(vehicle.readyForSaleAt) : 0;
 
     // Verificar se o veículo tem checklist iniciado usando a nova lógica de presence
     if (!hasChecklistStarted(vehicle.checklist, vehicle.vehicleType || "Carro")) {
