@@ -286,3 +286,51 @@
     inset: -1px;
   }
 }
+
+/* Mobile-specific improvements - Only affects screens < 768px */
+@media (max-width: 767px) {
+  /* Reduce padding on mobile */
+  .flex.h-full.flex-col.p-8 {
+    padding: 1rem !important;
+  }
+
+  /* Make buttons touch-friendly (min 44px) */
+  button, .button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Make selects full-width on mobile */
+  .mb-6.flex.gap-4.flex-wrap > div:not(.relative) {
+    width: 100% !important;
+  }
+
+  /* Stack filters vertically on mobile */
+  .mb-6.flex.gap-4.flex-wrap {
+    gap: 0.5rem !important;
+  }
+
+  /* Improve card grid on mobile - single column */
+  .grid.gap-4.md\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Better mobile header spacing */
+  .mb-8.flex.items-start.justify-between {
+    margin-bottom: 1.5rem !important;
+    gap: 0.5rem;
+  }
+
+  /* Adjust headings on mobile */
+  .text-3xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  /* Smaller sidebar on mobile when open */
+  [data-sidebar] {
+    width: 85vw !important;
+    max-width: 320px !important;
+  }
+}

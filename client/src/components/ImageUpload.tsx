@@ -75,11 +75,12 @@ export function ImageUpload({ onImagesChange, maxImages = 5 }: ImageUploadProps)
       )}
 
       {files.length < maxImages && (
-        <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/20 p-8 transition-colors hover-elevate">
+        <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/20 p-6 md:p-8 transition-colors hover-elevate active:scale-[0.98]">
           <input
             type="file"
             multiple
             accept="image/*"
+            capture="environment"
             onChange={handleFileChange}
             className="hidden"
             data-testid="input-upload-images"
@@ -90,7 +91,8 @@ export function ImageUpload({ onImagesChange, maxImages = 5 }: ImageUploadProps)
             </div>
             <div>
               <p className="text-sm font-medium text-card-foreground">
-                Clique para adicionar fotos
+                <span className="hidden sm:inline">Clique para adicionar fotos</span>
+                <span className="sm:hidden">Tocar para tirar foto ou escolher da galeria</span>
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 PNG, JPG até 10MB cada
