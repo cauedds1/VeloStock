@@ -11,7 +11,7 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   deleteConfirmation: true,
-  darkMode: false,
+  darkMode: true,
   autoUpdate: true,
   taskAlerts: true,
   stuckVehicleAlerts: true,
