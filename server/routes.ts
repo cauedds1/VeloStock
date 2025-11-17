@@ -354,6 +354,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/vehicles/:id/costs - Adicionar custo
   app.post("/api/vehicles/:id/costs", async (req, res) => {
     try {
+      console.log("🔍 RECEBIDO DO FRONTEND:", req.body.value, typeof req.body.value);
+      
       const costData = insertVehicleCostSchema.parse({
         vehicleId: req.params.id,
         category: req.body.category,
@@ -364,7 +366,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paidBy: req.body.paidBy || null,
       });
 
+      console.log("✅ APÓS ZOD PARSE:", costData.value, typeof costData.value);
+
       const cost = await storage.addVehicleCost(costData);
+      
+      console.log("💾 SALVO NO BANCO:", cost.value, typeof cost.value);
 
       io.emit("cost:added", cost);
 
@@ -381,12 +387,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PATCH /api/vehicles/:id/costs/:costId - Atualizar custo
   app.patch("/api/vehicles/:id/costs/:costId", async (req, res) => {
     try {
+      console.log("🔍 PATCH RECEBIDO:", req.body.value, typeof req.body.value);
+      
       const updates: Partial<any> = {};
       
       if (req.body.category !== undefined) updates.category = req.body.category;
       if (req.body.description !== undefined) updates.description = req.body.description;
       if (req.body.value !== undefined) {
         updates.value = typeof req.body.value === 'string' ? req.body.value : req.body.value.toString();
+        console.log("✅ VALOR CONVERTIDO:", updates.value, typeof updates.value);
       }
       if (req.body.date !== undefined) updates.date = new Date(req.body.date);
       if (req.body.paymentMethod !== undefined) updates.paymentMethod = req.body.paymentMethod;

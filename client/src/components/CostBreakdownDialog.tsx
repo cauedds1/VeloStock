@@ -136,7 +136,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
             <div>
               <p className="text-sm text-muted-foreground">Total de Custos</p>
               <p className="text-3xl font-bold text-primary">
-                R$ {(totalCosts / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                R$ {Number(totalCosts).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
             <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -202,7 +202,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
                           {item.brand} {item.model}
                         </span>
                         <span className="text-sm font-bold text-primary">
-                          R$ {(item.total / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {Number(item.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                     ))
@@ -229,7 +229,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
                             </p>
                           </div>
                           <span className="text-sm font-bold text-destructive">
-                            R$ {(expense.value / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {Number(expense.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       </div>

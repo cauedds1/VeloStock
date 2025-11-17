@@ -623,7 +623,7 @@ export default function VehicleDetails() {
                 id: c.id,
                 category: c.category,
                 description: c.description,
-                value: c.value / 100,
+                value: Number(c.value),
                 date: new Date(c.date).toLocaleDateString('pt-BR'),
                 paymentMethod: c.paymentMethod,
                 paidBy: c.paidBy
@@ -636,7 +636,7 @@ export default function VehicleDetails() {
                     id: rawCost.id,
                     category: rawCost.category,
                     description: rawCost.description,
-                    value: rawCost.value / 100,
+                    value: Number(rawCost.value),
                     date: new Date(rawCost.date).toISOString().split('T')[0],
                     paymentMethod: rawCost.paymentMethod,
                     paidBy: rawCost.paidBy

@@ -93,7 +93,7 @@ export default function Reports() {
     });
 
     return Array.from(categoryMap.entries())
-      .map(([name, value]) => ({ name, value: value / 100 }))
+      .map(([name, value]) => ({ name, value: Number(value) }))
       .sort((a, b) => b.value - a.value);
   };
 
@@ -145,7 +145,7 @@ export default function Reports() {
   const costsByCategory = getCostsByCategoryData();
   const avgTimePerStage = getAvgTimePerStageData();
   const vehiclesWithLongestTime = getVehiclesWithLongestTime();
-  const totalCosts = filteredCosts.reduce((sum, c) => sum + c.value, 0) / 100;
+  const totalCosts = filteredCosts.reduce((sum, c) => sum + Number(c.value), 0);
 
   const isLoading = isLoadingVehicles || isLoadingCosts;
 
