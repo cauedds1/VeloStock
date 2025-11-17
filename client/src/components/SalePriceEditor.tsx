@@ -19,7 +19,7 @@ export function SalePriceEditor({ vehicleId, currentPrice }: SalePriceEditorProp
 
   useEffect(() => {
     if (currentPrice !== null && currentPrice !== undefined) {
-      setPrice((currentPrice / 100).toFixed(2));
+      setPrice(Number(currentPrice).toFixed(2));
     } else {
       setPrice("");
     }
@@ -37,12 +37,12 @@ export function SalePriceEditor({ vehicleId, currentPrice }: SalePriceEditorProp
 
     setIsSaving(true);
     try {
-      const priceInCents = Math.round(parseFloat(price) * 100);
+      const priceValue = parseFloat(price).toFixed(2);
       
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ salePrice: priceInCents }),
+        body: JSON.stringify({ salePrice: priceValue }),
       });
 
       if (!response.ok) throw new Error("Erro ao salvar preço");
@@ -69,7 +69,7 @@ export function SalePriceEditor({ vehicleId, currentPrice }: SalePriceEditorProp
 
   const handleCancel = () => {
     if (currentPrice !== null && currentPrice !== undefined) {
-      setPrice((currentPrice / 100).toFixed(2));
+      setPrice(Number(currentPrice).toFixed(2));
     } else {
       setPrice("");
     }
@@ -89,7 +89,7 @@ export function SalePriceEditor({ vehicleId, currentPrice }: SalePriceEditorProp
           <span className="text-sm font-medium text-muted-foreground">Preço Definido</span>
           {currentPrice !== null && currentPrice !== undefined && currentPrice > 0 ? (
             <span className="text-2xl font-bold text-primary">
-              {formatCurrency(currentPrice / 100)}
+              {formatCurrency(Number(currentPrice))}
             </span>
           ) : (
             <span className="text-sm text-muted-foreground italic">Não definido</span>
