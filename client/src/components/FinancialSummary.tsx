@@ -11,7 +11,7 @@ export function FinancialSummary() {
 
   // Calcular valor total do estoque (apenas veículos com preço definido e prontos para venda)
   const inventoryValue = readyForSale.reduce((sum, v) => {
-    return sum + (v.salePrice || 0);
+    return sum + Number(v.salePrice || 0);
   }, 0);
 
   const formatCurrency = (value: number) => {
