@@ -67,7 +67,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
     const categoryMap = new Map<string, number>();
     filteredCosts.forEach((cost) => {
       const current = categoryMap.get(cost.category) || 0;
-      categoryMap.set(cost.category, current + cost.value);
+      categoryMap.set(cost.category, current + Number(cost.value));
     });
     return Array.from(categoryMap.entries())
       .map(([category, total]) => ({ category, total }))
@@ -83,12 +83,12 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
         const key = cost.vehicleId;
         const current = vehicleMap.get(key);
         if (current) {
-          vehicleMap.set(key, { ...current, total: current.total + cost.value });
+          vehicleMap.set(key, { ...current, total: current.total + Number(cost.value) });
         } else {
           vehicleMap.set(key, {
             brand: vehicle.brand,
             model: vehicle.model,
-            total: cost.value,
+            total: Number(cost.value),
           });
         }
       }
@@ -100,7 +100,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
   const getTopExpenses = () => {
     return filteredCosts
       .slice()
-      .sort((a, b) => b.value - a.value)
+      .sort((a, b) => Number(b.value) - Number(a.value))
       .slice(0, 10)
       .map((cost) => {
         const vehicle = allVehicles.find((v) => v.id === cost.vehicleId);
@@ -111,7 +111,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
       });
   };
 
-  const totalCosts = filteredCosts.reduce((sum, cost) => sum + cost.value, 0);
+  const totalCosts = filteredCosts.reduce((sum, cost) => sum + Number(cost.value), 0);
   const costsByCategory = getCostsByCategory();
   const costsByVehicle = getCostsByVehicle();
   const topExpenses = getTopExpenses();
