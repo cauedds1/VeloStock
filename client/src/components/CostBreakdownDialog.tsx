@@ -174,7 +174,7 @@ export function CostBreakdownDialog({ open, onOpenChange }: CostBreakdownDialogP
                           <div className="flex justify-between mb-1">
                             <span className="text-sm font-medium">{category}</span>
                             <span className="text-sm font-bold">
-                              R$ {(total / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-2">
