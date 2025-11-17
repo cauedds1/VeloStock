@@ -111,6 +111,10 @@ export function EditCostDialog({
       const valueInCents = Math.round(parseFloat(formData.value) * 100);
       const dateObj = new Date(formData.date + 'T12:00:00');
 
+      console.log('[EditCost] Valor original:', cost.value, 'centavos');
+      console.log('[EditCost] Campo mostra:', formData.value);
+      console.log('[EditCost] Enviando:', valueInCents, 'centavos');
+
       const response = await fetch(`/api/vehicles/${vehicleId}/costs/${cost.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

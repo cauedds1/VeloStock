@@ -381,6 +381,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PATCH /api/vehicles/:id/costs/:costId - Atualizar custo
   app.patch("/api/vehicles/:id/costs/:costId", async (req, res) => {
     try {
+      console.log('[PATCH Cost] Recebido:', req.body.value, 'centavos');
+      
       const updates: Partial<any> = {};
       
       if (req.body.category !== undefined) updates.category = req.body.category;
