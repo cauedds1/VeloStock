@@ -33,7 +33,7 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost }: VehicleCosts
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value / 100);
+    }).format(value);
 
   const categoryColors: Record<string, string> = {
     "Mecânica": "text-amber-500",

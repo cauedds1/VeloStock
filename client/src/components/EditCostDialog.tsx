@@ -69,7 +69,7 @@ export function EditCostDialog({
         category: isPredefinedCategory ? cost.category : "Outra",
         customCategory: isPredefinedCategory ? "" : cost.category,
         description: cost.description,
-        value: (cost.value / 100).toFixed(2),
+        value: cost.value.toString(),
         date: cost.date,
         paymentMethod: cost.paymentMethod || "Cartão Loja",
         paidBy: cost.paidBy || "",
@@ -108,12 +108,8 @@ export function EditCostDialog({
         return;
       }
 
-      const valueInCents = Math.round(parseFloat(formData.value) * 100);
+      const valueInReais = parseFloat(formData.value);
       const dateObj = new Date(formData.date + 'T12:00:00');
-
-      console.log('[EditCost] Valor original:', cost.value, 'centavos');
-      console.log('[EditCost] Campo mostra:', formData.value);
-      console.log('[EditCost] Enviando:', valueInCents, 'centavos');
 
       const response = await fetch(`/api/vehicles/${vehicleId}/costs/${cost.id}`, {
         method: "PATCH",
@@ -121,7 +117,7 @@ export function EditCostDialog({
         body: JSON.stringify({
           category: finalCategory,
           description: formData.description,
-          value: valueInCents,
+          value: valueInReais,
           date: dateObj.toISOString(),
           paymentMethod: formData.paymentMethod,
           paidBy: formData.paymentMethod === "Outra Pessoa" ? formData.paidBy : null,

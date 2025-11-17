@@ -358,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vehicleId: req.params.id,
         category: req.body.category,
         description: req.body.description,
-        value: Math.round(req.body.value * 100),
+        value: req.body.value,
         date: new Date(req.body.date),
         paymentMethod: req.body.paymentMethod || "Cartão Loja",
         paidBy: req.body.paidBy || null,
@@ -381,13 +381,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PATCH /api/vehicles/:id/costs/:costId - Atualizar custo
   app.patch("/api/vehicles/:id/costs/:costId", async (req, res) => {
     try {
-      console.log('[PATCH Cost] Recebido:', req.body.value, 'centavos');
-      
       const updates: Partial<any> = {};
       
       if (req.body.category !== undefined) updates.category = req.body.category;
       if (req.body.description !== undefined) updates.description = req.body.description;
-      if (req.body.value !== undefined) updates.value = req.body.value;
+      if (req.body.value !== undefined) {
+        updates.value = typeof req.body.value === 'string' ? req.body.value : req.body.value.toString();
+      }
       if (req.body.date !== undefined) updates.date = new Date(req.body.date);
       if (req.body.paymentMethod !== undefined) updates.paymentMethod = req.body.paymentMethod;
       if (req.body.paidBy !== undefined) updates.paidBy = req.body.paidBy;
@@ -514,7 +514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const costDate = new Date(cost.date);
           return costDate >= startOfCurrentMonth;
         });
-        const totalCost = monthCosts.reduce((sum, cost) => sum + cost.value, 0) / 100;
+        const totalCost = monthCosts.reduce((sum, cost) => sum + Number(cost.value), 0);
         return { vehicleId, totalCost };
       }).filter(v => v.totalCost > 0); // Apenas veículos com custos
       
@@ -571,7 +571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Pegar custos do veículo para contextualizar o valor
       const costs = await storage.getVehicleCosts(vehicle.id);
-      const totalCosts = costs.reduce((sum, cost) => sum + cost.value, 0);
+      const totalCosts = costs.reduce((sum, cost) => sum + Number(cost.value), 0);
       const hasPriceSet = vehicle.salePrice && vehicle.salePrice > 0;
 
       const prompt = `Você é um redator de publicidade EXPERT em vendas de carros para a "Capoeiras Automóveis", uma concessionária confiável e estabelecida. 

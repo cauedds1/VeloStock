@@ -431,7 +431,7 @@ export default function VehicleDetails() {
                     <div className="flex justify-between">
                       <span className="text-sm font-medium text-muted-foreground">Total Investido</span>
                       <span className="text-lg font-bold text-card-foreground">
-                        R$ {(costs.reduce((sum: number, c: any) => sum + c.value, 0) / 100).toFixed(2)}
+                        R$ {costs.reduce((sum: number, c: any) => sum + Number(c.value), 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="border-t pt-2">
@@ -439,7 +439,7 @@ export default function VehicleDetails() {
                         <div key={cost.id} className="flex justify-between py-1">
                           <span className="text-sm text-muted-foreground">{cost.description}</span>
                           <span className="text-sm font-medium text-card-foreground">
-                            R$ {(cost.value / 100).toFixed(2)}
+                            R$ {Number(cost.value).toFixed(2)}
                           </span>
                         </div>
                       ))}
@@ -530,7 +530,7 @@ export default function VehicleDetails() {
                       description: `💰 Custo adicionado: ${new Intl.NumberFormat('pt-BR', { 
                         style: 'currency', 
                         currency: 'BRL' 
-                      }).format(c.value / 100)} - ${c.category}`
+                      }).format(Number(c.value))} - ${c.category}`
                     }))
                   ]
                     .sort((a, b) => b.date.getTime() - a.date.getTime())

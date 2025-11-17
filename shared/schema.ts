@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, pgEnum, json } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, pgEnum, json, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -160,14 +160,16 @@ export const vehicleCosts = pgTable("vehicle_costs", {
     .references(() => vehicles.id, { onDelete: "cascade" }),
   category: text("category").notNull(),
   description: text("description").notNull(),
-  value: integer("value").notNull(), // stored in cents
+  value: numeric("value", { precision: 10, scale: 2 }).notNull(),
   date: timestamp("date").notNull(),
   paymentMethod: text("payment_method").notNull().default("Cartão Loja"),
   paidBy: text("paid_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertVehicleCostSchema = createInsertSchema(vehicleCosts).omit({
+export const insertVehicleCostSchema = createInsertSchema(vehicleCosts, {
+  value: z.union([z.number(), z.string()]).transform(val => typeof val === 'string' ? val : val.toString()),
+}).omit({
   id: true,
   createdAt: true,
 });

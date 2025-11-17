@@ -48,7 +48,7 @@ export function AddCostDialog({ vehicleId, trigger }: AddCostDialogProps) {
     setIsSubmitting(true);
 
     try {
-      const valueInCents = Math.round(parseFloat(formData.value) * 100);
+      const valueInReais = parseFloat(formData.value);
       const dateObj = new Date(formData.date + 'T12:00:00');
       
       const finalCategory = formData.category === "Outra" 
@@ -81,7 +81,7 @@ export function AddCostDialog({ vehicleId, trigger }: AddCostDialogProps) {
         body: JSON.stringify({
           category: finalCategory,
           description: formData.description,
-          value: valueInCents,
+          value: valueInReais,
           date: dateObj.toISOString(),
           paymentMethod: formData.paymentMethod,
           paidBy: formData.paymentMethod === "Outra Pessoa" ? formData.paidBy : null,
