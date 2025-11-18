@@ -43,6 +43,12 @@ const documentUpload = multer({
   }
 });
 
+// Helper para obter empresa padrão (primeira empresa do sistema)
+async function getDefaultCompanyId(): Promise<string | null> {
+  const companies = await storage.getAllCompanies();
+  return companies.length > 0 ? companies[0].id : null;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const io = new SocketIOServer(httpServer, {
@@ -59,10 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // GET /api/vehicles - Listar todos os veículos
+  // GET /api/vehicles - Listar todos os veículos (FILTRADO POR EMPRESA)
   app.get("/api/vehicles", async (req, res) => {
     try {
-      const vehicles = await storage.getAllVehicles();
+      const empresaId = await getDefaultCompanyId();
+      const vehicles = await storage.getAllVehicles(empresaId || undefined);
       
       // Otimização: buscar TODO o histórico de uma vez ao invés de N queries
       const allHistory = await storage.getAllVehicleHistory();
@@ -136,12 +143,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET /api/vehicles/:id - Buscar veículo por ID
+  // GET /api/vehicles/:id - Buscar veículo por ID (COM VALIDAÇÃO DE EMPRESA)
   app.get("/api/vehicles/:id", async (req, res) => {
     try {
-      const vehicle = await storage.getVehicle(req.params.id);
+      const empresaId = await getDefaultCompanyId();
+      if (!empresaId) {
+        return res.status(403).json({ error: "Empresa não configurada" });
+      }
+
+      const vehicle = await storage.getVehicle(req.params.id, empresaId);
       if (!vehicle) {
-        return res.status(404).json({ error: "Veículo não encontrado" });
+        return res.status(404).json({ error: "Veículo não encontrado ou não pertence a esta empresa" });
       }
       
       const images = await storage.getVehicleImages(vehicle.id);
@@ -205,12 +217,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PATCH /api/vehicles/:id - Atualizar veículo
+  // PATCH /api/vehicles/:id - Atualizar veículo (COM VALIDAÇÃO DE EMPRESA)
   app.patch("/api/vehicles/:id", async (req, res) => {
     try {
-      const existingVehicle = await storage.getVehicle(req.params.id);
+      const empresaId = await getDefaultCompanyId();
+      if (!empresaId) {
+        return res.status(403).json({ error: "Empresa não configurada" });
+      }
+
+      const existingVehicle = await storage.getVehicle(req.params.id, empresaId);
       if (!existingVehicle) {
-        return res.status(404).json({ error: "Veículo não encontrado" });
+        return res.status(404).json({ error: "Veículo não encontrado ou não pertence a esta empresa" });
       }
 
       const updates = req.body;
@@ -266,12 +283,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DELETE /api/vehicles/:id - Deletar veículo
+  // DELETE /api/vehicles/:id - Deletar veículo (COM VALIDAÇÃO DE EMPRESA)
   app.delete("/api/vehicles/:id", async (req, res) => {
     try {
+      const empresaId = await getDefaultCompanyId();
+      if (!empresaId) {
+        return res.status(403).json({ error: "Empresa não configurada" });
+      }
+
+      // Validar que o veículo pertence à empresa antes de deletar
+      const vehicle = await storage.getVehicle(req.params.id, empresaId);
+      if (!vehicle) {
+        return res.status(404).json({ error: "Veículo não encontrado ou não pertence a esta empresa" });
+      }
+
       const success = await storage.deleteVehicle(req.params.id);
       if (!success) {
-        return res.status(404).json({ error: "Veículo não encontrado" });
+        return res.status(404).json({ error: "Erro ao deletar veículo" });
       }
 
       io.emit("vehicle:deleted", req.params.id);
@@ -508,10 +536,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET /api/metrics - Métricas do dashboard
+  // GET /api/metrics - Métricas do dashboard (FILTRADO POR EMPRESA)
   app.get("/api/metrics", async (req, res) => {
     try {
-      const vehicles = await storage.getAllVehicles();
+      const empresaId = await getDefaultCompanyId();
+      const vehicles = await storage.getAllVehicles(empresaId || undefined);
       
       const totalVehicles = vehicles.length;
       const readyForSale = vehicles.filter(v => v.status === "Pronto para Venda").length;
@@ -660,10 +689,11 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
 
   // Store Observations endpoints
 
-  // GET /api/store-observations - Listar todas as observações da loja
+  // GET /api/store-observations - Listar todas as observações da loja (FILTRADO POR EMPRESA)
   app.get("/api/store-observations", async (req, res) => {
     try {
-      const observations = await storage.getAllStoreObservations();
+      const empresaId = await getDefaultCompanyId();
+      const observations = await storage.getAllStoreObservations(empresaId || undefined);
       
       // Calcular dias pendentes para cada observação
       const observationsWithDays = observations.map((obs: any) => {
@@ -1182,8 +1212,9 @@ Retorne APENAS um JSON válido no formato:
 
       const company = companies[0];
       const alertDays = company.alertaDiasParado || 7;
+      const empresaId = company.id;
 
-      const vehicles = await storage.getAllVehicles();
+      const vehicles = await storage.getAllVehicles(empresaId);
       const alerts: any[] = [];
       const now = new Date();
 

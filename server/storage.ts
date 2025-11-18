@@ -41,8 +41,8 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getAllVehicles(): Promise<Vehicle[]>;
-  getVehicle(id: string): Promise<Vehicle | undefined>;
+  getAllVehicles(empresaId?: string): Promise<Vehicle[]>;
+  getVehicle(id: string, empresaId?: string): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   updateVehicle(id: string, vehicle: Partial<InsertVehicle>): Promise<Vehicle | undefined>;
   deleteVehicle(id: string): Promise<boolean>;
@@ -62,7 +62,7 @@ export interface IStorage {
   updateVehicleCost(id: string, updates: Partial<InsertVehicleCost>): Promise<VehicleCost | undefined>;
   deleteCost(id: string): Promise<boolean>;
   
-  getAllStoreObservations(): Promise<StoreObservation[]>;
+  getAllStoreObservations(empresaId?: string): Promise<StoreObservation[]>;
   getStoreObservation(id: string): Promise<StoreObservation | undefined>;
   createStoreObservation(observation: InsertStoreObservation): Promise<StoreObservation>;
   updateStoreObservation(id: string, updates: Partial<InsertStoreObservation>): Promise<StoreObservation | undefined>;
@@ -116,16 +116,24 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getAllVehicles(): Promise<Vehicle[]> {
-    const vehiclesList = await db.select().from(vehicles).orderBy(desc(vehicles.createdAt));
+  async getAllVehicles(empresaId?: string): Promise<Vehicle[]> {
+    let query = db.select().from(vehicles);
+    if (empresaId) {
+      query = query.where(eq(vehicles.empresaId, empresaId)) as any;
+    }
+    const vehiclesList = await query.orderBy(desc(vehicles.createdAt));
     return vehiclesList.map(v => ({
       ...v,
       checklist: normalizeChecklistData(v.checklist)
     }));
   }
 
-  async getVehicle(id: string): Promise<Vehicle | undefined> {
-    const result = await db.select().from(vehicles).where(eq(vehicles.id, id));
+  async getVehicle(id: string, empresaId?: string): Promise<Vehicle | undefined> {
+    let whereCondition = eq(vehicles.id, id);
+    if (empresaId) {
+      whereCondition = and(eq(vehicles.id, id), eq(vehicles.empresaId, empresaId)) as any;
+    }
+    const result = await db.select().from(vehicles).where(whereCondition);
     if (!result[0]) return undefined;
     return {
       ...result[0],
@@ -252,9 +260,12 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getAllStoreObservations(): Promise<StoreObservation[]> {
-    return await db.select().from(storeObservations)
-      .orderBy(desc(storeObservations.createdAt));
+  async getAllStoreObservations(empresaId?: string): Promise<StoreObservation[]> {
+    let query = db.select().from(storeObservations);
+    if (empresaId) {
+      query = query.where(eq(storeObservations.empresaId, empresaId)) as any;
+    }
+    return await query.orderBy(desc(storeObservations.createdAt));
   }
 
   async getStoreObservation(id: string): Promise<StoreObservation | undefined> {
