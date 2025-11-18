@@ -4,10 +4,22 @@
 VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealership and store management. Originally designed for "Capoeiras Automóveis," it has evolved into a white-label solution for any automotive business. The system manages vehicles through their preparation pipeline from intake to sale, featuring Kanban-style workflow, detailed tracking, cost management, AI-powered features (price suggestions and ad generation), intelligent alerts, and complete store operations (including inventory/supplies management). The application is localized in Brazilian Portuguese (pt-BR) with a modern, professional design system.
 
 ## Recent Major Changes (November 2024)
+- **ROLE-BASED ACCESS CONTROL (RBAC)**: Complete permission system with 4 user roles
+  - **Roles**: Proprietário (owner), Gerente (manager), Vendedor (salesperson), Motorista (driver)
+  - **Permissions**: Role-specific access to features (Vendedor can't see costs/margins, Motorista only logistics)
+  - **User Management**: Proprietário can create/manage users, assign roles, activate/deactivate accounts
+  - **Backend Protection**: All sensitive endpoints protected with requireProprietario/requireRole middleware
+  - **Frontend Filtering**: usePermissions hook controls UI visibility based on role
+  - **Menu "Usuários"**: New page for user management (visible only to Proprietário)
+- **ENHANCED PHYSICAL LOCATION**: Improved location tracking with predefined options
+  - **Fixed Options**: Casa, Loja, Pátio da Loja, Oficina, Higienização, Outra Loja
+  - **Custom Option**: "Outro (especificar)" allows custom location input
+  - **Smart Validation**: Locations required for all statuses except Vendido/Arquivado
+  - **Detail Field**: Optional additional detail for each location (e.g., specific mechanic name)
 - **PRODUCTION-READY MULTI-TENANT ISOLATION**: Complete data isolation with empresaId validation on ALL routes
   - Removed `getDefaultCompanyId()` vulnerability
   - Created `getUserWithCompany()` helper for consistent validation
-  - Protected ALL routes: vehicles, costs, images, documents, history, AI features, metrics, observations
+  - Protected ALL routes: vehicles, costs, images, documents, history, AI features, metrics, observations, users
   - Returns 403 if user not linked to a company
   - Disabled insecure `GET /api/costs/all` route
 - **DEPLOYMENT CONFIGURED**: Ready for production deployment via Replit Deploy
@@ -48,10 +60,12 @@ Preferred communication style: Simple, everyday language.
 - **Key UI Patterns**: Kanban board with drag-and-drop, tab-based detail views, modal dialogs, toast notifications, interactive analytics, NotificationCenter with animated badges.
 - **Features**: 
   - Vehicle management: sorting (status, brand, year), comprehensive checklist system, dynamic adaptation for vehicle types (Carro/Moto)
+  - Physical location tracking: 7 predefined options + custom "Outro" field with detail input
   - Document management: PDF upload/download per vehicle
   - Intelligent alerts: vehicles stopped X days, missing photos, missing prices
   - AI features: price suggestions, ad generation (3 styles: economic, complete, urgent)
   - Enhanced dashboard: 6 metrics (ready for sale, in preparation, sold this month, average margin, average days, total stock)
+  - User management: Role-based permissions, invite users, assign roles (Proprietário only)
   - First-time setup: professional onboarding with company configuration
   - Theme customization: Colors apply immediately via page reload after save
 
@@ -73,14 +87,23 @@ Preferred communication style: Simple, everyday language.
   - Insecure routes disabled (e.g., GET /api/costs/all)
 - **Database Schema**: Multi-tenant tables with empresaId isolation:
   - companies (14 fields: branding, contact, locations, alert config)
-  - users (with passwordHash, authProvider, empresaId), vehicles, vehicle_images, vehicle_history, vehicle_costs, vehicle_documents, store_observations
+  - users (with passwordHash, authProvider, empresaId, role, isActive, createdBy, createdAt, updatedAt), vehicles, vehicle_images, vehicle_history, vehicle_costs, vehicle_documents, store_observations
+- **Role-Based Access Control (RBAC)**: 4 user roles with specific permissions:
+  - **Proprietário (Owner)**: Full access including user management, company settings, costs, margins
+  - **Gerente (Manager)**: All features except user management and company settings
+  - **Vendedor (Salesperson)**: Cannot see costs, margins, or profit calculations
+  - **Motorista (Driver)**: Only logistics features (location updates, vehicle movements)
 - **Key Entities**: Vehicle status pipeline (Entrada, Preparação Mecânica, Preparação Estética, Documentação, Pronto para Venda, Vendido, Arquivado), cost categories (Mecânica, Estética, Documentação, Outros).
 - **Architectural Decisions**: 
   - Multi-tenant with empresaId filtering on all queries via getUserWithCompany() helper
+  - Role-based access control (RBAC) with 4 roles: requireProprietario, requireProprietarioOrGerente middleware
+  - User management endpoints protected with requireProprietario + empresaId validation
   - Dual authentication: native (bcrypt + passport-local) and Google OAuth (Replit Auth + OIDC)
+  - First user of a company automatically becomes Proprietário during company creation
   - Public routes: Landing (/), Login (/login), Signup (/signup), Google OAuth (/api/auth/google)
   - Protected routes: All app pages and API endpoints require authentication via isAuthenticated middleware
-  - Separation of vehicle status and physical location (localizacaoFisica required except for Vendido/Arquivado)
+  - Separation of vehicle status and physical location with 7 predefined options (Casa, Loja, Pátio da Loja, Oficina, Higienização, Outra Loja, Outro)
+  - Physical location required except for Vendido/Arquivado statuses
   - Editable vehicle history with complete location tracking
   - Direct image storage in database (Base64)
   - Simplified cost system using `numeric(10,2)` for direct real values
@@ -89,6 +112,7 @@ Preferred communication style: Simple, everyday language.
   - FIPE integration proxy (4 endpoints for brands, models, years, prices)
   - AI integration endpoints (price suggestion, ad generation)
   - Alerts calculation endpoint (vehicles stopped, missing photos, missing prices)
+  - User management endpoints (list, create, update, deactivate users)
 
 ### Data Flow
 Client requests (TanStack Query) -> Express API -> Drizzle ORM -> PostgreSQL -> Response back to client. React Query manages caching.
