@@ -42,6 +42,13 @@ export const storeObservationStatusEnum = pgEnum("store_observation_status", [
   "Resolvido"
 ]);
 
+export const userRoleEnum = pgEnum("user_role", [
+  "proprietario",
+  "gerente",
+  "vendedor",
+  "motorista"
+]);
+
 // Session storage table - Replit Auth
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessions = pgTable(
@@ -65,6 +72,9 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   passwordHash: varchar("password_hash"), // Para autenticação nativa (bcrypt)
   authProvider: varchar("auth_provider").default("local"), // "local" ou "google"
+  role: userRoleEnum("role").default("vendedor"), // Papel do usuário no sistema
+  isActive: varchar("is_active").default("true"), // "true" ou "false"
+  createdBy: varchar("created_by"), // ID do usuário que criou este usuário
   emailVerified: varchar("email_verified").default("false"), // "true" ou "false"
   verificationCode: varchar("verification_code"), // Código de 6 dígitos
   verificationCodeExpiry: timestamp("verification_code_expiry"), // Expiração do código

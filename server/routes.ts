@@ -11,6 +11,8 @@ import path from "path";
 import fs from "fs/promises";
 import { existsSync, createReadStream } from "fs";
 import { createBackup, listBackups, getBackupPath } from "./backup";
+import { requireProprietario, requireProprietarioOrGerente, PERMISSIONS } from "./middleware/roleCheck";
+import bcrypt from "bcrypt";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1222,10 +1224,11 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       // Criar a empresa
       const company = await storage.createCompany(req.body);
       
-      // Vincular empresa ao usuário autenticado
+      // Vincular empresa ao usuário autenticado e definir como PROPRIETÁRIO
       await storage.upsertUser({
         ...user,
         empresaId: company.id,
+        role: "proprietario", // Primeiro usuário é sempre proprietário
       });
       
       io.emit("company:created", company);
@@ -1250,6 +1253,157 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       res.status(500).json({ error: "Erro ao atualizar empresa" });
     }
   });
+
+  // ==================== ROTAS DE GESTÃO DE USUÁRIOS ====================
+  
+  // GET /api/users - Listar todos os usuários da empresa (só Proprietário)
+  app.get("/api/users", isAuthenticated, requireProprietario, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      const users = await storage.getAllUsers(userCompany.empresaId);
+      
+      // Remover informações sensíveis antes de retornar
+      const sanitizedUsers = users.map(user => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        createdBy: user.createdBy,
+      }));
+
+      res.json(sanitizedUsers);
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
+      res.status(500).json({ error: "Erro ao buscar usuários" });
+    }
+  });
+
+  // POST /api/users - Criar novo usuário (só Proprietário)
+  app.post("/api/users", isAuthenticated, requireProprietario, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      const { email, firstName, lastName, role, password } = req.body;
+
+      // Validar campos obrigatórios
+      if (!email || !firstName || !role || !password) {
+        return res.status(400).json({ 
+          error: "Campos obrigatórios: email, firstName, role, password" 
+        });
+      }
+
+      // Verificar se email já existe
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email já cadastrado" });
+      }
+
+      // Validar role
+      const validRoles = ["proprietario", "gerente", "vendedor", "motorista"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ error: "Papel inválido" });
+      }
+
+      // Hash da senha
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // Criar usuário
+      const newUser = await storage.createLocalUser({
+        email,
+        firstName,
+        lastName,
+        role,
+        passwordHash,
+        authProvider: "local",
+        empresaId: userCompany.empresaId,
+        createdBy: userCompany.userId,
+        isActive: "true",
+      });
+
+      // Retornar sem informações sensíveis
+      res.status(201).json({
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        isActive: newUser.isActive,
+        createdAt: newUser.createdAt,
+      });
+    } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      res.status(500).json({ error: "Erro ao criar usuário" });
+    }
+  });
+
+  // PATCH /api/users/:id - Atualizar usuário (só Proprietário)
+  app.patch("/api/users/:id", isAuthenticated, requireProprietario, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      // Buscar usuário a ser atualizado
+      const targetUser = await storage.getUser(req.params.id);
+      if (!targetUser) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Verificar se usuário pertence à mesma empresa
+      if (targetUser.empresaId !== userCompany.empresaId) {
+        return res.status(403).json({ error: "Usuário não pertence a esta empresa" });
+      }
+
+      // Evitar que proprietário desative a si mesmo
+      if (targetUser.id === userCompany.userId && req.body.isActive === "false") {
+        return res.status(400).json({ error: "Você não pode desativar sua própria conta" });
+      }
+
+      const { firstName, lastName, role, isActive } = req.body;
+      const updates: any = {};
+
+      if (firstName !== undefined) updates.firstName = firstName;
+      if (lastName !== undefined) updates.lastName = lastName;
+      if (role !== undefined) {
+        const validRoles = ["proprietario", "gerente", "vendedor", "motorista"];
+        if (!validRoles.includes(role)) {
+          return res.status(400).json({ error: "Papel inválido" });
+        }
+        updates.role = role;
+      }
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const updatedUser = await storage.updateUser(req.params.id, updates);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Erro ao atualizar usuário" });
+      }
+
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        role: updatedUser.role,
+        isActive: updatedUser.isActive,
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      res.status(500).json({ error: "Erro ao atualizar usuário" });
+    }
+  });
+
+  // ==================== FIM DAS ROTAS DE GESTÃO DE USUÁRIOS ====================
 
   // GET /api/backups - Listar todos os backups
   app.get("/api/backups", async (req, res) => {

@@ -40,8 +40,10 @@ export interface IStorage {
   // User operations - Replit Auth + Local Auth
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(empresaId: string): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   createLocalUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<UpsertUser>): Promise<User | undefined>;
   updateUserVerificationCode(userId: string, code: string, expiry: Date): Promise<User | undefined>;
   verifyUserEmail(userId: string): Promise<User | undefined>;
   
@@ -113,6 +115,24 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0];
+  }
+
+  async getAllUsers(empresaId: string): Promise<User[]> {
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.empresaId, empresaId))
+      .orderBy(desc(users.createdAt));
+    return result;
+  }
+
+  async updateUser(id: string, updates: Partial<UpsertUser>): Promise<User | undefined> {
+    const result = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
     return result[0];
   }
 
