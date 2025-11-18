@@ -59,12 +59,15 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   empresaId: varchar("empresa_id"), // Multi-tenant: user belongs to one company
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   passwordHash: varchar("password_hash"), // Para autenticação nativa (bcrypt)
   authProvider: varchar("auth_provider").default("local"), // "local" ou "google"
+  emailVerified: varchar("email_verified").default("false"), // "true" ou "false"
+  verificationCode: varchar("verification_code"), // Código de 6 dígitos
+  verificationCodeExpiry: timestamp("verification_code_expiry"), // Expiração do código
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
