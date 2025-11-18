@@ -1,0 +1,67 @@
+You are an expert full-stack developer. My project is called AutoFlow (car dealership management system).  
+EVERYTHING the user sees must be 100% in perfect Brazilian Portuguese. Never write English in the interface.
+
+Current status:
+- Already works with vehicles, photos, costs, kanban, checklist, OpenAI announcement generator
+- Currently single-tenant (only Capoeiras Automóveis data)
+- Uses OpenAI and has WhatsApp integration capacity.
+
+RULES THAT CAN NEVER BE BROKEN – ZERO DATA LOSS:
+1. Before ANY change in the database → create a full backup in /backups/backup-antes-de-[feature-name]-dd-mm-yyyy-hh-mm.json
+2. Never delete or rename tables/columns → only ADD COLUMN IF NOT EXISTS
+3. Always migrate old data automatically to the new structure
+4. After each successful migration show toast: “Backup automático criado com sucesso em /backups”
+5. Create menu Configurações → Backup with list + download + manual backup button
+
+Implement ALL the features below IN THIS EXACT ORDER. Do ONE feature at a time, test 100 %, and only continue after I say “próxima” or “continua”.
+
+1. Multi-tenant + total data protection
+   - Table “empresas” with all fields (nome_fantasia, razao_social, cnpj, endereco, telefones, email, logo_url, cor_primaria, cor_secundaria, whatsapp_numero, locais_comuns_json)
+   - Add empresa_id (NOT NULL) in ALL existing tables
+   - First access → company registration screen
+   - Automatically migrate ALL current Capoeiras data to a company named “Capoeiras Automóveis” (red colors)
+
+2. Custom theme 100 % per company (logo + primary and secondary colors)
+
+3. Physical location of the vehicle
+   - New field “localizacao_atual” in veículos + select with the locations that the owner registers in Configurações → Locais Comuns
+   - Make location field MANDATORY when changing status (except “Vendido” and “Entregue”)
+
+4. WhatsApp integration (Evolution API or webhook)
+   - Status change → send message to the company’s WhatsApp group
+   - Daily alert at 9 am and weekly voice note report every Saturday at 8 am
+
+5. Automatic FIPE + AI price suggestion
+   - Button “Buscar FIPE” + AI suggestion of ideal selling price (considering cost + desired margin)
+
+6. 100 % responsive mobile (dashboard + kanban + vehicle screen)
+
+7. Advanced announcement generator: 3 styles (barato / completo / urgente) + hashtags + one-click copy with up to 20 resized photos
+
+8. Commission control (vendedores table + automatic calculation + monthly PDF)
+
+9. Smart alerts (daily at 9 am): cars stopped > configurable days, ready without photos, ready without price
+
+10. Force photo + note when advancing any Kanban stage
+
+11. 10 configurable Kanban columns (owner can rename)
+
+12. Dashboard with cards: ready cars, in preparation, sold this month, average margin, average days in stock
+
+13. Voice commands via WhatsApp
+    → user sends “Grok/AutoFlow, onde está o Onix?” or audio → system replies with current location, photo and status
+14. Automatic evaluation by photo sent on WhatsApp → creates draft vehicle with estimated value
+15. Auto-reply on WhatsApp Business when client asks “tem Creta?”, “tem Onix?”, etc.
+16. Daily detective message to owner at 9 am with all problems
+17. Weekly voice note report (Saturday 8 am)
+18. Change log (who changed price/status/cost and when)
+19. PWA installable (manifest + service worker)
+20. Export announcement export with up to 20 photos automatically resized
+21. Menu Configurações → Backup (list + download + manual button)
+22. Button “Fazer backup agora” that also offers Google Drive option (future)
+
+All texts, buttons, toasts, notifications, WhatsApp messages → perfect Brazilian Portuguese.
+
+Start RIGHT NOW with feature 1 (multi-tenant + backup) and wait for my “próxima” before continuing.
+
+Do everything with extreme caution and perfection.
