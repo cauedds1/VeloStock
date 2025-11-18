@@ -73,7 +73,7 @@ export function CompanySetupDialog({ open, onOpenChange, onSuccess }: CompanySet
         <DialogHeader>
           <DialogTitle>Configurar Empresa</DialogTitle>
           <DialogDescription>
-            Configure os dados da sua empresa para começar a usar o AutoFlow
+            Configure os dados da sua empresa para começar a usar o VeloStock
           </DialogDescription>
         </DialogHeader>
 
