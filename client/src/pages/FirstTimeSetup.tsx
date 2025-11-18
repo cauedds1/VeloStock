@@ -38,14 +38,14 @@ export default function FirstTimeSetup() {
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <img 
-              src="/autoflow-logo.png" 
-              alt="AutoFlow" 
-              className="h-24 w-auto mx-auto"
+              src="/velostock-logo.png" 
+              alt="VeloStock" 
+              className="h-28 w-auto mx-auto"
             />
           </div>
-          <CardTitle className="text-3xl">Bem-vindo ao AutoFlow</CardTitle>
+          <CardTitle className="text-3xl">Bem-vindo ao VeloStock</CardTitle>
           <CardDescription className="text-base mt-2">
-            Sistema completo de gestão para concessionárias e lojas de veículos
+            Sistema inteligente de gestão de estoque e operações para concessionárias
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -100,7 +100,7 @@ export default function FirstTimeSetup() {
           <div className="pt-4 border-t flex justify-center">
             <button
               onClick={() => setShowSetup(true)}
-              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-lg"
             >
               Começar Configuração
             </button>

@@ -9,9 +9,9 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  primaryColor: "#dc2626",
-  secondaryColor: "#000000",
-  companyName: "AutoFlow",
+  primaryColor: "#8B5CF6",
+  secondaryColor: "#10B981",
+  companyName: "VeloStock",
   logoUrl: null,
 });
 
@@ -27,9 +27,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const { company } = useCurrentCompany();
 
   const themeValue: ThemeContextType = {
-    primaryColor: company?.corPrimaria || "#dc2626",
-    secondaryColor: company?.corSecundaria || "#000000",
-    companyName: company?.nomeFantasia || "AutoFlow",
+    primaryColor: company?.corPrimaria || "#8B5CF6",
+    secondaryColor: company?.corSecundaria || "#10B981",
+    companyName: company?.nomeFantasia || "VeloStock",
     logoUrl: company?.logoUrl,
   };
 

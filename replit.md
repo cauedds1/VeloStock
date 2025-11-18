@@ -1,7 +1,7 @@
-# AutoFlow - Universal Multi-Tenant SaaS
+# VeloStock - Universal Multi-Tenant SaaS
 
 ## Overview
-AutoFlow is a universal multi-tenant SaaS platform for complete vehicle dealership and store management. Originally designed for "Capoeiras Automóveis," it has evolved into a white-label solution for any automotive business. The system manages vehicles through their preparation pipeline from intake to sale, featuring Kanban-style workflow, detailed tracking, cost management, AI-powered features (price suggestions and ad generation), intelligent alerts, and complete store operations (including inventory/supplies management). The application is localized in Brazilian Portuguese (pt-BR) with a modern, professional design system.
+VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealership and store management. Originally designed for "Capoeiras Automóveis," it has evolved into a white-label solution for any automotive business. The system manages vehicles through their preparation pipeline from intake to sale, featuring Kanban-style workflow, detailed tracking, cost management, AI-powered features (price suggestions and ad generation), intelligent alerts, and complete store operations (including inventory/supplies management). The application is localized in Brazilian Portuguese (pt-BR) with a modern, professional design system.
 
 ## Recent Major Changes (November 2024)
 - **Multi-tenant architecture**: Full data isolation by empresaId across all tables
@@ -11,7 +11,7 @@ AutoFlow is a universal multi-tenant SaaS platform for complete vehicle dealersh
 - **Enhanced dashboard**: 6 key metrics with real-time calculations
 - **First-time setup**: Professional onboarding flow with company configuration
 - **FIPE integration**: Proxy API for real-time vehicle pricing data
-- **AutoFlow branding**: New universal logo and identity (red/black color scheme)
+- **VeloStock branding**: Unique geometric logo and identity (purple/green color scheme)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend
 - **Technology Stack**: React with TypeScript, Vite, Wouter, TanStack React Query, Tailwind CSS.
-- **UI/UX Design**: Dynamic theming system with company-specific colors and logo. Base palette: red (#dc2626) and black (#000000). Material Design principles combined with Linear/Notion aesthetics, Inter or IBM Plex Sans typography, consistent spacing. Utilizes Radix UI primitives and shadcn/ui (New York variant).
+- **UI/UX Design**: Dynamic theming system with company-specific colors and logo. Base palette: purple (#8B5CF6) and green (#10B981). Material Design principles combined with Linear/Notion aesthetics, Inter or IBM Plex Sans typography, consistent spacing. Utilizes Radix UI primitives and shadcn/ui (New York variant).
 - **State Management**: React Query for server state, React hooks for local state, React Hook Form with Zod for form validation. ThemeProvider for company branding.
 - **Key UI Patterns**: Kanban board with drag-and-drop, tab-based detail views, modal dialogs, toast notifications, interactive analytics, NotificationCenter with animated badges.
 - **Features**: 

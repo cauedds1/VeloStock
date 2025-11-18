@@ -68,9 +68,9 @@ function AppContent() {
             <div className="flex items-center gap-3">
               <NotificationCenter />
               <img 
-                src={logoUrl || "/autoflow-logo.png"} 
+                src={logoUrl || "/velostock-logo.png"} 
                 alt={companyName} 
-                className="h-8 w-auto object-contain"
+                className="h-10 w-auto object-contain"
               />
             </div>
           </header>

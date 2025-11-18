@@ -17,8 +17,8 @@ const companySchema = z.object({
   telefone: z.string().optional(),
   telefone2: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
-  corPrimaria: z.string().default("#dc2626"),
-  corSecundaria: z.string().default("#000000"),
+  corPrimaria: z.string().default("#8B5CF6"),
+  corSecundaria: z.string().default("#10B981"),
   whatsappNumero: z.string().optional(),
   locaisComuns: z.string().optional(),
   alertaDiasParado: z.number().default(7),
@@ -40,8 +40,8 @@ export function CompanySetupDialog({ open, onOpenChange, onSuccess }: CompanySet
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      corPrimaria: "#dc2626",
-      corSecundaria: "#000000",
+      corPrimaria: "#8B5CF6",
+      corSecundaria: "#10B981",
       alertaDiasParado: 7,
     },
   });

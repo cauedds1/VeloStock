@@ -61,9 +61,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center gap-3">
           <img 
-            src="/autoflow-logo.png" 
-            alt="AutoFlow" 
-            className="h-12 w-auto object-contain"
+            src="/velostock-logo.png" 
+            alt="VeloStock" 
+            className="h-14 w-auto object-contain"
           />
         </div>
       </SidebarHeader>
