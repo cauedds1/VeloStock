@@ -11,10 +11,23 @@ import { setupLocalAuth } from "./localAuth";
 
 const getOidcConfig = memoize(
   async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
+    const issuerUrl = process.env.ISSUER_URL || "https://replit.com/oidc";
+    const replId = process.env.REPL_ID;
+    
+    if (!replId) {
+      console.error("[AUTH] REPL_ID not found in environment variables");
+      throw new Error("REPL_ID is required for OAuth configuration");
+    }
+    
+    try {
+      return await client.discovery(
+        new URL(issuerUrl),
+        replId
+      );
+    } catch (error) {
+      console.error("[AUTH] Failed to configure OIDC:", error);
+      throw error;
+    }
   },
   { maxAge: 3600 * 1000 }
 );
@@ -89,7 +102,15 @@ export async function setupAuth(app: Express) {
   // Setup local authentication (email/password)
   setupLocalAuth();
 
-  const config = await getOidcConfig();
+  let config;
+  try {
+    config = await getOidcConfig();
+  } catch (error) {
+    console.warn("[AUTH] Failed to configure Google OAuth. Only local authentication will be available.");
+    console.warn("[AUTH] Error details:", error);
+    // Continue without Google OAuth - local auth will still work
+    config = null;
+  }
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -135,6 +156,9 @@ export async function setupAuth(app: Express) {
 
   // Helper function to ensure strategy exists for a domain
   const ensureStrategy = (domain: string) => {
+    if (!config) {
+      throw new Error("OAuth configuration not available");
+    }
     const strategyName = `replitauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {
       const strategy = new Strategy(
@@ -212,8 +236,13 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Google OAuth endpoint
+  // Google OAuth endpoint (only if config is available)
   app.get("/api/auth/google", (req, res, next) => {
+    if (!config) {
+      return res.status(503).json({ 
+        message: "Autenticação com Google não está disponível no momento. Use email e senha." 
+      });
+    }
     const domain = getValidDomain(req);
     ensureStrategy(domain);
     passport.authenticate(`replitauth:${domain}`, {
@@ -223,6 +252,9 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    if (!config) {
+      return res.redirect("/login?error=oauth_unavailable");
+    }
     const domain = getValidDomain(req);
     ensureStrategy(domain);
     passport.authenticate(`replitauth:${domain}`, {
@@ -234,12 +266,17 @@ export async function setupAuth(app: Express) {
   app.get("/api/logout", (req, res) => {
     const domain = getValidDomain(req);
     req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${domain}`,
-        }).href
-      );
+      if (config && process.env.REPL_ID) {
+        res.redirect(
+          client.buildEndSessionUrl(config, {
+            client_id: process.env.REPL_ID,
+            post_logout_redirect_uri: `${req.protocol}://${domain}`,
+          }).href
+        );
+      } else {
+        // Fallback to simple redirect if OAuth is not available
+        res.redirect("/");
+      }
     });
   });
 }
