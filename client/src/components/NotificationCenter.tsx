@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, AlertCircle, CheckCircle2, Package, ClipboardList, Clock, MessageSquare } from "lucide-react";
+import { Bell, AlertCircle, CheckCircle2, Package, ClipboardList, Clock, MessageSquare, Car } from "lucide-react";
+import { useAlerts } from "@/hooks/use-alerts";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -17,6 +18,7 @@ import { Link } from "wouter";
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const { settings } = useSettings();
+  const { data: alertsData } = useAlerts();
 
   const { data: vehicles = [] } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
@@ -152,14 +154,19 @@ export function NotificationCenter() {
   const totalChecklistObservations = showChecklistAlerts ? actualChecklistObservations : 0;
   const displayedObservations = showTaskAlerts ? actualObservationIssues : 0;
   
-  const totalNotifications = totalVehiclesWithChecklistIssues + totalChecklistObservations + displayedObservations;
+  // Adicionar alertas inteligentes
+  const intelligentAlerts = alertsData?.alerts || [];
+  const totalIntelligentAlerts = intelligentAlerts.length;
+  
+  const totalNotifications = totalVehiclesWithChecklistIssues + totalChecklistObservations + displayedObservations + totalIntelligentAlerts;
 
   // Contar tarefas urgentes (>7 dias)
   const urgentCount = 
     vehiclesWithoutChecklist.filter(v => v.isUrgent).length +
     vehiclesWithPendingChecklist.filter(v => v.isUrgent).length +
     vehiclesWithChecklistObservations.filter(v => v.isUrgent).length +
-    pendingObservations.filter(obs => obs.isUrgent).length;
+    pendingObservations.filter(obs => obs.isUrgent).length +
+    (alertsData?.highSeverity || 0);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -196,6 +203,64 @@ export function NotificationCenter() {
 
         <ScrollArea className="h-[400px]">
           <div className="p-4 space-y-4">
+            {/* NOVOS ALERTAS INTELIGENTES */}
+            {intelligentAlerts.length > 0 && (
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                      <Car className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">Alertas do Sistema</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {intelligentAlerts.length} {intelligentAlerts.length === 1 ? 'alerta' : 'alertas'} detectados
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-blue-600 border-blue-600">
+                      {intelligentAlerts.length}
+                    </Badge>
+                  </div>
+                  
+                  <div className="pl-11 space-y-2">
+                    {intelligentAlerts.slice(0, 5).map((alert) => (
+                      <Link 
+                        key={alert.id} 
+                        href={alert.actionUrl || "#"}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-start gap-2 text-xs hover:text-foreground transition-colors p-2 -ml-1.5 rounded hover:bg-accent group ${
+                          alert.severity === "high" 
+                            ? 'bg-pulse-urgent border-l-2 border-red-600 text-red-700 font-medium' 
+                            : alert.severity === "medium"
+                            ? 'border-l-2 border-orange-500'
+                            : 'text-muted-foreground'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            {alert.severity === "high" && <AlertCircle className="h-3.5 w-3.5 text-red-600 animate-pulse-urgent flex-shrink-0" />}
+                            <span className="font-medium">{alert.title}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
+                        </div>
+                        {alert.severity === "high" && (
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
+                            URGENTE
+                          </Badge>
+                        )}
+                      </Link>
+                    ))}
+                    {intelligentAlerts.length > 5 && (
+                      <p className="text-xs text-muted-foreground italic">
+                        + {intelligentAlerts.length - 5} alertas...
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
             {showChecklistAlerts && vehiclesWithoutChecklist.length > 0 && (
               <>
                 <div className="space-y-3">

@@ -1063,13 +1063,13 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
     }
 
     try {
-      const vehicle = await storage.getVehicleById(req.params.id);
+      const vehicle = await storage.getVehicle(req.params.id);
       if (!vehicle) {
         return res.status(404).json({ error: "Veículo não encontrado" });
       }
 
       const costs = await storage.getVehicleCosts(req.params.id);
-      const totalCost = costs.reduce((sum, cost) => sum + (Number(cost.amount) || 0), 0);
+      const totalCost = costs.reduce((sum, cost) => sum + (Number(cost.value) || 0), 0);
 
       const { fipePrice, targetMarginPercent } = req.body;
 
@@ -1117,7 +1117,7 @@ Retorne APENAS um JSON válido no formato:
     }
 
     try {
-      const vehicle = await storage.getVehicleById(req.params.id);
+      const vehicle = await storage.getVehicle(req.params.id);
       if (!vehicle) {
         return res.status(404).json({ error: "Veículo não encontrado" });
       }
@@ -1169,6 +1169,93 @@ Retorne APENAS um JSON válido no formato:
     } catch (error) {
       console.error("Erro ao gerar anúncio:", error);
       res.status(500).json({ error: "Erro ao gerar anúncio" });
+    }
+  });
+
+  // GET /api/alerts - Sistema de alertas inteligentes
+  app.get("/api/alerts", async (req, res) => {
+    try {
+      const companies = await storage.getAllCompanies();
+      if (!companies || companies.length === 0) {
+        return res.json({ alerts: [] });
+      }
+
+      const company = companies[0];
+      const alertDays = company.alertaDiasParado || 7;
+
+      const vehicles = await storage.getAllVehicles();
+      const alerts: any[] = [];
+      const now = new Date();
+
+      for (const vehicle of vehicles) {
+        // Alerta 1: Veículos parados por X dias
+        const allHistory = await storage.getAllVehicleHistory();
+        const vehicleHistory = allHistory.filter(h => h.vehicleId === vehicle.id);
+        const currentStatusEntry = vehicleHistory.find(h => h.toStatus === vehicle.status);
+        const statusChangedAt = currentStatusEntry 
+          ? (currentStatusEntry.movedAt || currentStatusEntry.createdAt)
+          : (vehicle.locationChangedAt || vehicle.createdAt);
+        
+        const timeDiff = now.getTime() - statusChangedAt.getTime();
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+        if (days >= alertDays && vehicle.status !== "Vendido" && vehicle.status !== "Arquivado") {
+          alerts.push({
+            id: `parado-${vehicle.id}`,
+            type: "warning",
+            severity: "medium",
+            title: `Veículo parado há ${days} dias`,
+            message: `${vehicle.brand} ${vehicle.model} está no status "${vehicle.status}" há ${days} dias`,
+            vehicleId: vehicle.id,
+            vehicleName: `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
+            actionUrl: `/veiculo/${vehicle.id}`,
+            createdAt: new Date().toISOString(),
+          });
+        }
+
+        // Alerta 2: Veículos prontos sem foto
+        if (vehicle.status === "Pronto para Venda") {
+          const images = await storage.getVehicleImages(vehicle.id);
+          if (images.length === 0) {
+            alerts.push({
+              id: `sem-foto-${vehicle.id}`,
+              type: "error",
+              severity: "high",
+              title: "Veículo pronto sem foto",
+              message: `${vehicle.brand} ${vehicle.model} está pronto para venda mas não tem fotos`,
+              vehicleId: vehicle.id,
+              vehicleName: `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
+              actionUrl: `/veiculo/${vehicle.id}`,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+
+        // Alerta 3: Veículos prontos sem preço
+        if (vehicle.status === "Pronto para Venda" && !vehicle.salePrice) {
+          alerts.push({
+            id: `sem-preco-${vehicle.id}`,
+            type: "error",
+            severity: "high",
+            title: "Veículo pronto sem preço",
+            message: `${vehicle.brand} ${vehicle.model} está pronto para venda mas não tem preço definido`,
+            vehicleId: vehicle.id,
+            vehicleName: `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
+            actionUrl: `/veiculo/${vehicle.id}`,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      res.json({ 
+        alerts,
+        totalAlerts: alerts.length,
+        highSeverity: alerts.filter(a => a.severity === "high").length,
+        mediumSeverity: alerts.filter(a => a.severity === "medium").length,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar alertas:", error);
+      res.status(500).json({ error: "Erro ao buscar alertas" });
     }
   });
 

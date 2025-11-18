@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { DashboardMetrics } from "@/components/DashboardMetrics";
+import { DashboardMetricsEnhanced } from "@/components/DashboardMetricsEnhanced";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { RecentActivity } from "@/components/RecentActivity";
@@ -19,23 +19,23 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Painel de Controle</h1>
           <p className="mt-2 text-muted-foreground">
-            Visão geral do estoque e movimentação de veículos
+            Visão geral completa do estoque e movimentação
           </p>
         </div>
         <AddVehicleDialog onAdd={(data) => console.log("Novo veículo:", data)} />
       </div>
 
       <div className="space-y-6 mb-8">
-        {/* Métricas principais - mantido */}
-        <DashboardMetrics />
+        {/* Métricas MELHORADAS - 6 cards com métricas essenciais */}
+        <DashboardMetricsEnhanced />
         
-        {/* NOVO: Resumo Financeiro */}
+        {/* Resumo Financeiro */}
         <FinancialSummary />
         
-        {/* NOVO: Alertas e Avisos */}
+        {/* Alertas e Avisos */}
         <DashboardAlerts />
         
-        {/* NOVO: Atividade Recente */}
+        {/* Atividade Recente */}
         <RecentActivity />
       </div>
 
