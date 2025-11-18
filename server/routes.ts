@@ -352,7 +352,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (validatedData.toPhysicalLocation !== undefined) updates.toPhysicalLocation = validatedData.toPhysicalLocation;
       if (validatedData.toPhysicalLocationDetail !== undefined) updates.toPhysicalLocationDetail = validatedData.toPhysicalLocationDetail;
       if (validatedData.notes !== undefined) updates.notes = validatedData.notes;
-      if (validatedData.movedAt !== undefined) updates.movedAt = new Date(validatedData.movedAt);
+      if (validatedData.movedAt !== undefined) {
+        const parsedDate = new Date(validatedData.movedAt);
+        if (isNaN(parsedDate.getTime())) {
+          return res.status(400).json({ error: "Data inválida fornecida" });
+        }
+        updates.movedAt = parsedDate;
+      }
 
       const updatedHistory = await storage.updateVehicleHistory(req.params.historyId, req.params.vehicleId, updates);
       

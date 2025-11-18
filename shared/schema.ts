@@ -154,9 +154,8 @@ export const insertVehicleHistorySchema = createInsertSchema(vehicleHistory).omi
 export const updateVehicleHistorySchema = z.object({
   toStatus: z.enum([
     "Entrada",
-    "Preparação Mecânica",
-    "Preparação Estética",
-    "Documentação",
+    "Em Reparos",
+    "Em Higienização",
     "Pronto para Venda",
     "Vendido",
     "Arquivado"
