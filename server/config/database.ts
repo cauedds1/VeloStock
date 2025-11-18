@@ -4,10 +4,14 @@
  * Em PRODUÇÃO (autoscale): DATABASE_URL está em /tmp/replitdb
  * Em DESENVOLVIMENTO: DATABASE_URL vem de process.env.DATABASE_URL
  * 
+ * IMPORTANTE: Para Autoscale deployments, usa automaticamente o Neon pooler
+ * (substitui .neon.tech por -pooler.neon.tech) para evitar limite de conexões.
+ * 
  * Fonte: https://docs.replit.com/hosting/deployments/postgresql-on-deployments
  */
 export function getDatabaseUrl(): string {
   let databaseUrl: string | undefined;
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // 1. Tentar ler de /tmp/replitdb (PRODUÇÃO)
   try {
@@ -16,7 +20,6 @@ export function getDatabaseUrl(): string {
       databaseUrl = fs.readFileSync('/tmp/replitdb', 'utf8').trim();
       if (databaseUrl) {
         console.log('[Database] ✓ Using DATABASE_URL from /tmp/replitdb (PRODUCTION)');
-        return databaseUrl;
       }
     }
   } catch (error) {
@@ -25,7 +28,9 @@ export function getDatabaseUrl(): string {
   }
 
   // 2. Fallback para variável de ambiente (DESENVOLVIMENTO)
-  databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    databaseUrl = process.env.DATABASE_URL;
+  }
   
   if (!databaseUrl) {
     throw new Error(
@@ -34,9 +39,16 @@ export function getDatabaseUrl(): string {
     );
   }
 
-  const isDev = process.env.NODE_ENV === 'development';
-  const env = isDev ? 'DESENVOLVIMENTO' : 'PRODUÇÃO';
+  // 3. Em PRODUÇÃO, usar Neon pooler para autoscale (evita limite de 4 conexões)
+  if (isProduction && databaseUrl.includes('neon.tech') && !databaseUrl.includes('-pooler')) {
+    databaseUrl = databaseUrl.replace(
+      /([a-z0-9-]+)\.([a-z0-9-]+)\.aws\.neon\.tech/,
+      '$1-pooler.$2.aws.neon.tech'
+    );
+    console.log('[Database] ✓ Using Neon pooler for autoscale deployment');
+  }
   
+  const env = isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO';
   console.log(`[Database] ✓ Conectando ao banco de dados de ${env}`);
 
   return databaseUrl;
