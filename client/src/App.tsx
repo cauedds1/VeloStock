@@ -15,6 +15,7 @@ import Reports from "@/pages/Reports";
 import Notes from "@/pages/Notes";
 import Checklists from "@/pages/Checklists";
 import Settings from "@/pages/Settings";
+import Users from "@/pages/Users";
 import FirstTimeSetup from "@/pages/FirstTimeSetup";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -36,6 +37,7 @@ function MainAppRouter() {
       <Route path="/relatorios" component={Reports} />
       <Route path="/anotacoes" component={Notes} />
       <Route path="/checklists" component={Checklists} />
+      <Route path="/usuarios" component={Users} />
       <Route path="/configuracoes" component={Settings} />
       <Route component={NotFound} />
     </Switch>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Car, Settings, BarChart3, StickyNote, CheckSquare } from "lucide-react";
+import { LayoutDashboard, Car, Settings, BarChart3, StickyNote, CheckSquare, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -12,6 +12,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const menuItems = [
   {
@@ -40,6 +41,11 @@ const menuItems = [
     icon: CheckSquare,
   },
   {
+    title: "Usuários",
+    url: "/usuarios",
+    icon: Users,
+  },
+  {
     title: "Configurações",
     url: "/configuracoes",
     icon: Settings,
@@ -49,12 +55,21 @@ const menuItems = [
 export function AppSidebar() {
   const [location] = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
+  const { can } = usePermissions();
 
   const handleLinkClick = () => {
     if (isMobile) {
       setOpenMobile(false);
     }
   };
+
+  // Filtra itens baseado em permissões
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.url === "/configuracoes") return can.companySettings;
+    if (item.url === "/usuarios") return can.manageUsers;
+    if (item.url === "/") return can.viewDashboard;
+    return true;
+  });
 
   return (
     <Sidebar>
@@ -72,7 +87,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

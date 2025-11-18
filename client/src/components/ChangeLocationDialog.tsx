@@ -62,16 +62,22 @@ export function ChangeLocationDialog({
     status: currentStatus,
     physicalLocation: currentPhysicalLocation || "__none__",
     physicalLocationDetail: currentPhysicalLocationDetail || "",
+    customLocation: "",
     notes: "",
     date: new Date(),
   });
 
   useEffect(() => {
     if (open) {
+      // Verificar se a localização atual é uma das opções pré-definidas
+      const predefinedOptions = ["Casa", "Loja", "Pátio da Loja", "Oficina", "Higienização", "Outra Loja"];
+      const isCustomLocation = currentPhysicalLocation && !predefinedOptions.includes(currentPhysicalLocation);
+      
       setFormData({
         status: currentStatus,
-        physicalLocation: currentPhysicalLocation || "__none__",
+        physicalLocation: isCustomLocation ? "__custom__" : (currentPhysicalLocation || "__none__"),
         physicalLocationDetail: currentPhysicalLocationDetail || "",
+        customLocation: isCustomLocation ? currentPhysicalLocation : "",
         notes: "",
         date: new Date(),
       });
@@ -89,10 +95,16 @@ export function ChangeLocationDialog({
     "Arquivado",
   ];
 
-  const locaisComuns = company?.locaisComuns || ["Matriz", "Filial", "Pátio Externo", "Oficina"];
+  // Opções fixas de localização (inspirado no usuário)
   const physicalLocationOptions = [
     { value: "__none__", label: "Não especificado" },
-    ...locaisComuns.map(local => ({ value: local, label: local })),
+    { value: "Casa", label: "Casa" },
+    { value: "Loja", label: "Loja" },
+    { value: "Pátio da Loja", label: "Pátio da Loja" },
+    { value: "Oficina", label: "Oficina" },
+    { value: "Higienização", label: "Higienização" },
+    { value: "Outra Loja", label: "Outra Loja" },
+    { value: "__custom__", label: "Outro (especificar)" },
   ];
   
   const isLocationRequired = formData.status !== "Vendido" && formData.status !== "Arquivado";
@@ -108,6 +120,16 @@ export function ChangeLocationDialog({
       });
       return;
     }
+
+    // Validar campo customizado
+    if (formData.physicalLocation === "__custom__" && !formData.customLocation.trim()) {
+      toast({
+        title: "Localização obrigatória",
+        description: "Por favor, especifique a localização customizada.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSubmitting(true);
 
@@ -119,8 +141,14 @@ export function ChangeLocationDialog({
       };
 
       if (formData.physicalLocation && formData.physicalLocation !== "__none__") {
-        payload.physicalLocation = formData.physicalLocation;
-        payload.physicalLocationDetail = formData.physicalLocationDetail.trim() || null;
+        // Se for customizado, usar o valor digitado
+        if (formData.physicalLocation === "__custom__") {
+          payload.physicalLocation = formData.customLocation.trim();
+          payload.physicalLocationDetail = formData.physicalLocationDetail.trim() || null;
+        } else {
+          payload.physicalLocation = formData.physicalLocation;
+          payload.physicalLocationDetail = formData.physicalLocationDetail.trim() || null;
+        }
       } else {
         payload.physicalLocation = null;
         payload.physicalLocationDetail = null;
@@ -139,9 +167,10 @@ export function ChangeLocationDialog({
       // Build description for toast
       let description = `Status: ${formData.status}`;
       if (formData.physicalLocation && formData.physicalLocation !== "__none__") {
+        const locationName = formData.physicalLocation === "__custom__" ? formData.customLocation : formData.physicalLocation;
         description += formData.physicalLocationDetail
-          ? ` | Local: ${formData.physicalLocation} - ${formData.physicalLocationDetail}`
-          : ` | Local: ${formData.physicalLocation}`;
+          ? ` | Local: ${locationName} - ${formData.physicalLocationDetail}`
+          : ` | Local: ${locationName}`;
       }
 
       toast({
@@ -214,7 +243,7 @@ export function ChangeLocationDialog({
             </Label>
             <Select
               value={formData.physicalLocation}
-              onValueChange={(value) => setFormData({ ...formData, physicalLocation: value, physicalLocationDetail: "" })}
+              onValueChange={(value) => setFormData({ ...formData, physicalLocation: value, physicalLocationDetail: "", customLocation: "" })}
             >
               <SelectTrigger id="physicalLocation" className={isLocationRequired && formData.physicalLocation === "__none__" ? "border-destructive" : ""}>
                 <SelectValue />
@@ -234,7 +263,23 @@ export function ChangeLocationDialog({
             )}
           </div>
 
-          {formData.physicalLocation && formData.physicalLocation !== "__none__" && (
+          {formData.physicalLocation === "__custom__" && (
+            <div className="space-y-2">
+              <Label htmlFor="customLocation" className="flex items-center gap-2">
+                Especifique a Localização
+                <span className="text-destructive text-sm">*</span>
+              </Label>
+              <Input
+                id="customLocation"
+                placeholder="Ex: Estacionamento Externo, Garagem..."
+                value={formData.customLocation}
+                onChange={(e) => setFormData({ ...formData, customLocation: e.target.value })}
+                required
+              />
+            </div>
+          )}
+
+          {formData.physicalLocation && formData.physicalLocation !== "__none__" && formData.physicalLocation !== "__custom__" && (
             <div className="space-y-2">
               <Label htmlFor="physicalLocationDetail">
                 Detalhe da Localização (opcional)
