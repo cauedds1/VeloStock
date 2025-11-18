@@ -124,18 +124,18 @@ export async function setupAuth(app: Express) {
   const getValidDomain = (req: any): string => {
     // 1. Try x-forwarded-host header (common in production/proxy environments)
     const forwardedHost = req.get("x-forwarded-host");
-    if (forwardedHost && forwardedHost !== "localhost" && forwardedHost !== "hello") {
+    if (forwardedHost && forwardedHost !== "localhost" && forwardedHost !== "hélio") {
       return forwardedHost;
     }
     
     // 2. Try host header
     const hostHeader = req.get("host");
-    if (hostHeader && hostHeader !== "localhost" && hostHeader !== "hello" && !hostHeader.includes("localhost:")) {
+    if (hostHeader && hostHeader !== "localhost" && hostHeader !== "hélio" && !hostHeader.includes("localhost:")) {
       return hostHeader.replace(/:\d+$/, ""); // Remove port if present
     }
     
     // 3. Try request hostname
-    if (req.hostname && req.hostname !== "localhost" && req.hostname !== "hello") {
+    if (req.hostname && req.hostname !== "localhost" && req.hostname !== "hélio") {
       return req.hostname;
     }
     
