@@ -1,32 +1,32 @@
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import { useCurrentCompany } from "../hooks/use-company";
 
-interface ThemeContextType {
+interface CompanyThemeContextType {
   primaryColor: string;
   secondaryColor: string;
   companyName: string;
   logoUrl?: string | null;
 }
 
-const ThemeContext = createContext<ThemeContextType>({
+const CompanyThemeContext = createContext<CompanyThemeContextType>({
   primaryColor: "#8B5CF6",
   secondaryColor: "#10B981",
   companyName: "VeloStock",
   logoUrl: null,
 });
 
-export function useTheme() {
-  return useContext(ThemeContext);
+export function useCompanyTheme() {
+  return useContext(CompanyThemeContext);
 }
 
-interface ThemeProviderProps {
+interface CompanyThemeProviderProps {
   children: ReactNode;
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
+export function CompanyThemeProvider({ children }: CompanyThemeProviderProps) {
   const { company } = useCurrentCompany();
 
-  const themeValue: ThemeContextType = {
+  const themeValue: CompanyThemeContextType = {
     primaryColor: company?.corPrimaria || "#8B5CF6",
     secondaryColor: company?.corSecundaria || "#10B981",
     companyName: company?.nomeFantasia || "VeloStock",
@@ -65,7 +65,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   }, [company]);
 
-  return <ThemeContext.Provider value={themeValue}>{children}</ThemeContext.Provider>;
+  return <CompanyThemeContext.Provider value={themeValue}>{children}</CompanyThemeContext.Provider>;
 }
 
 function hexToHSL(hex: string): string | null {

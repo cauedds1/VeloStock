@@ -1,327 +1,460 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Bell, Moon, Zap, Database, FileText, Download } from "lucide-react";
-import { useSettings } from "@/hooks/use-settings";
+import { Building2, Palette, MapPin, Phone, Mail } from "lucide-react";
+import { useCurrentCompany, useUpdateCompany } from "@/hooks/use-company";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const companySchema = z.object({
+  nomeFantasia: z.string().min(1, "Nome fantasia é obrigatório"),
+  razaoSocial: z.string().optional(),
+  cnpj: z.string().optional(),
+  endereco: z.string().optional(),
+  telefone: z.string().optional(),
+  telefone2: z.string().optional(),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  whatsappNumero: z.string().optional(),
+  corPrimaria: z.string(),
+  corSecundaria: z.string(),
+  alertaDiasParado: z.number(),
+  locaisComuns: z.string().optional(),
+});
+
+type CompanyFormData = z.infer<typeof companySchema>;
 
 export default function Settings() {
-  const { settings, updateSetting } = useSettings();
+  const { company, isLoading } = useCurrentCompany();
+  const updateCompany = useUpdateCompany(company?.id || "");
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [companyInfo, setCompanyInfo] = useState({
-    companyName: "",
-    phone: "",
-    email: "",
-    address: "",
-    cnpj: "",
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<CompanyFormData>({
+    resolver: zodResolver(companySchema),
+    values: company ? {
+      nomeFantasia: company.nomeFantasia,
+      razaoSocial: company.razaoSocial || "",
+      cnpj: company.cnpj || "",
+      endereco: company.endereco || "",
+      telefone: company.telefone || "",
+      telefone2: company.telefone2 || "",
+      email: company.email || "",
+      whatsappNumero: company.whatsappNumero || "",
+      corPrimaria: company.corPrimaria,
+      corSecundaria: company.corSecundaria,
+      alertaDiasParado: company.alertaDiasParado,
+      locaisComuns: company.locaisComuns.join(", "),
+    } : {
+      nomeFantasia: "",
+      corPrimaria: "#8B5CF6",
+      corSecundaria: "#10B981",
+      alertaDiasParado: 7,
+    },
   });
 
-  const { data: companySettings } = useQuery<any>({
-    queryKey: ["/api/company-settings"],
-  });
+  const onSubmit = async (data: CompanyFormData) => {
+    setIsSubmitting(true);
+    try {
+      const locaisArray = data.locaisComuns
+        ? data.locaisComuns.split(",").map((l) => l.trim()).filter(Boolean)
+        : ["Matriz", "Filial", "Pátio Externo", "Oficina"];
 
-  useEffect(() => {
-    if (companySettings) {
-      setCompanyInfo({
-        companyName: companySettings.companyName || "",
-        phone: companySettings.phone || "",
-        email: companySettings.email || "",
-        address: companySettings.address || "",
-        cnpj: companySettings.cnpj || "",
+      await updateCompany.mutateAsync({
+        ...data,
+        locaisComuns: locaisArray,
       });
-    }
-  }, [companySettings]);
 
-  const saveCompanyMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await fetch("/api/company-settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Erro ao salvar configurações");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/company-settings"] });
       toast({
-        title: "Configurações salvas!",
-        description: "As informações da empresa foram atualizadas com sucesso.",
+        title: "Empresa atualizada!",
+        description: "As informações foram atualizadas com sucesso.",
       });
-    },
-    onError: () => {
+    } catch (error) {
+      console.error("Erro ao atualizar empresa:", error);
       toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as configurações.",
+        title: "Erro ao atualizar",
+        description: "Tente novamente",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleSaveCompany = () => {
-    saveCompanyMutation.mutate(companyInfo);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-muted-foreground">Nenhuma empresa cadastrada</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
+        <h1 className="text-3xl font-bold">Configurações</h1>
         <p className="mt-2 text-muted-foreground">
-          Configure o sistema conforme suas preferências
+          Gerencie as informações da sua empresa e personalizações
         </p>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações da Empresa</CardTitle>
-            <CardDescription>
-              Dados da concessionária exibidos no sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="company-name">Nome da Empresa</Label>
-              <Input
-                id="company-name"
-                value={companyInfo.companyName}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, companyName: e.target.value })}
-                placeholder="Nome da empresa"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="company-phone">Telefone</Label>
-              <Input
-                id="company-phone"
-                value={companyInfo.phone}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, phone: e.target.value })}
-                placeholder="(00) 0000-0000"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="company-email">E-mail</Label>
-              <Input
-                id="company-email"
-                type="email"
-                value={companyInfo.email}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, email: e.target.value })}
-                placeholder="contato@empresa.com"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="company-address">Endereço</Label>
-              <Input
-                id="company-address"
-                value={companyInfo.address}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, address: e.target.value })}
-                placeholder="Rua, número, bairro, cidade"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="company-cnpj">CNPJ</Label>
-              <Input
-                id="company-cnpj"
-                value={companyInfo.cnpj}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, cnpj: e.target.value })}
-                placeholder="00.000.000/0000-00"
-              />
-            </div>
-            <Button onClick={handleSaveCompany} disabled={saveCompanyMutation.isPending}>
-              {saveCompanyMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="company" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="company">Informações da Empresa</TabsTrigger>
+          <TabsTrigger value="appearance">Aparência</TabsTrigger>
+          <TabsTrigger value="system">Sistema</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notificações e Alertas
-            </CardTitle>
-            <CardDescription>
-              Configure quando e como você deseja ser notificado
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium">Alertas de Tarefas Pendentes</p>
-                <p className="text-sm text-muted-foreground">
-                  Mostrar notificação ao abrir o sistema
-                </p>
-              </div>
-              <Switch
-                checked={settings.taskAlerts}
-                onCheckedChange={(checked) => updateSetting('taskAlerts', checked)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium">Veículos Parados há Muito Tempo</p>
-                <p className="text-sm text-muted-foreground">
-                  Alertar sobre veículos no mesmo status por mais de 7 dias
-                </p>
-              </div>
-              <Switch
-                checked={settings.stuckVehicleAlerts}
-                onCheckedChange={(checked) => updateSetting('stuckVehicleAlerts', checked)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium">Veículos Prontos para Venda</p>
-                <p className="text-sm text-muted-foreground">
-                  Notificar quando um veículo estiver pronto
-                </p>
-              </div>
-              <Switch
-                checked={settings.readyForSaleAlerts}
-                onCheckedChange={(checked) => updateSetting('readyForSaleAlerts', checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="company" className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Seção 1: Informações Básicas */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Informações da Empresa</CardTitle>
+                    <CardDescription>Dados principais da concessionária</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nomeFantasia">Nome da Empresa *</Label>
+                    <Input
+                      id="nomeFantasia"
+                      {...form.register("nomeFantasia")}
+                      placeholder="Digite o nome da sua empresa"
+                    />
+                    {form.formState.errors.nomeFantasia && (
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.nomeFantasia.message}
+                      </p>
+                    )}
+                  </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5" />
-              Preferências do Sistema
-            </CardTitle>
-            <CardDescription>
-              Personalize a experiência de uso
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Moon className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Modo Escuro</p>
-                  <p className="text-sm text-muted-foreground">
-                    Ativar tema escuro
+                  <div className="space-y-2">
+                    <Label htmlFor="razaoSocial">Razão Social</Label>
+                    <Input
+                      id="razaoSocial"
+                      {...form.register("razaoSocial")}
+                      placeholder="Razão social completa"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cnpj">CNPJ</Label>
+                    <Input
+                      id="cnpj"
+                      {...form.register("cnpj")}
+                      placeholder="00.000.000/0000-00"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="endereco">Endereço</Label>
+                    <Input
+                      id="endereco"
+                      {...form.register("endereco")}
+                      placeholder="Rua, número, bairro, cidade"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Seção 2: Contato */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <Phone className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Informações de Contato</CardTitle>
+                    <CardDescription>Telefones e e-mail</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone">Telefone Principal</Label>
+                    <Input
+                      id="telefone"
+                      {...form.register("telefone")}
+                      placeholder="(00) 0000-0000"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsappNumero">WhatsApp</Label>
+                    <Input
+                      id="whatsappNumero"
+                      {...form.register("whatsappNumero")}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone2">Telefone Secundário</Label>
+                    <Input
+                      id="telefone2"
+                      {...form.register("telefone2")}
+                      placeholder="(00) 0000-0000"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...form.register("email")}
+                      placeholder="contato@empresa.com"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Seção 3: Locais Físicos */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <MapPin className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Configurações do Sistema</CardTitle>
+                    <CardDescription>Locais e alertas</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="locaisComuns">Locais Físicos (separados por vírgula)</Label>
+                  <Input
+                    id="locaisComuns"
+                    {...form.register("locaisComuns")}
+                    placeholder="Matriz, Filial, Pátio Externo, Oficina"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Onde os veículos podem estar localizados fisicamente
                   </p>
                 </div>
-              </div>
-              <Switch
-                checked={settings.darkMode}
-                onCheckedChange={(checked) => updateSetting('darkMode', checked)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium">Confirmação de Exclusão</p>
-                <p className="text-sm text-muted-foreground">
-                  Pedir confirmação antes de excluir veículos
-                </p>
-              </div>
-              <Switch
-                checked={settings.deleteConfirmation}
-                onCheckedChange={(checked) => updateSetting('deleteConfirmation', checked)}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium">Atualização Automática</p>
-                <p className="text-sm text-muted-foreground">
-                  Atualizar dados automaticamente a cada 30 segundos
-                </p>
-              </div>
-              <Switch
-                checked={settings.autoUpdate}
-                onCheckedChange={(checked) => updateSetting('autoUpdate', checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Dados e Backup
-            </CardTitle>
-            <CardDescription>
-              Gerencie seus dados e faça backups
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Download className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Exportar Dados</p>
-                  <p className="text-sm text-muted-foreground">
-                    Baixar todos os dados em formato CSV
+                <div className="space-y-2">
+                  <Label htmlFor="alertaDiasParado">Alerta de Veículos Parados (dias)</Label>
+                  <Input
+                    id="alertaDiasParado"
+                    type="number"
+                    {...form.register("alertaDiasParado", { valueAsNumber: true })}
+                    placeholder="7"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Receba alertas quando um veículo ficar parado por este período
                   </p>
                 </div>
-              </div>
-              <Button variant="outline" size="sm" disabled>
-                Em breve
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
+              >
+                {isSubmitting ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Relatório Geral</p>
+          </form>
+        </TabsContent>
+
+        <TabsContent value="appearance" className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <Palette className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Personalização de Cores</CardTitle>
+                    <CardDescription>
+                      Escolha as cores que representam sua marca
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="corPrimaria">Cor Primária</Label>
+                    <div className="flex gap-3">
+                      <Input
+                        id="corPrimaria"
+                        type="color"
+                        {...form.register("corPrimaria")}
+                        className="h-14 w-24 cursor-pointer"
+                      />
+                      <Input
+                        {...form.register("corPrimaria")}
+                        placeholder="#8B5CF6"
+                        className="h-14 flex-1 font-mono text-lg"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Cor principal dos botões, links e destaques do sistema
+                    </p>
+                    <div className="space-y-2 pt-2">
+                      <p className="text-xs font-medium text-muted-foreground">Preview:</p>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          style={{ backgroundColor: form.watch("corPrimaria") }}
+                          className="text-white"
+                        >
+                          Botão Primário
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="corSecundaria">Cor Secundária</Label>
+                    <div className="flex gap-3">
+                      <Input
+                        id="corSecundaria"
+                        type="color"
+                        {...form.register("corSecundaria")}
+                        className="h-14 w-24 cursor-pointer"
+                      />
+                      <Input
+                        {...form.register("corSecundaria")}
+                        placeholder="#10B981"
+                        className="h-14 flex-1 font-mono text-lg"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Cor secundária para acentos e elementos complementares
+                    </p>
+                    <div className="space-y-2 pt-2">
+                      <p className="text-xs font-medium text-muted-foreground">Preview:</p>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          variant="outline"
+                          style={{ borderColor: form.watch("corSecundaria"), color: form.watch("corSecundaria") }}
+                        >
+                          Botão Secundário
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="rounded-lg border p-4 bg-muted/50">
+                  <h4 className="font-medium mb-3">💡 Dica de Cores</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Use o modo claro/escuro no canto superior direito para ver como as cores ficam em cada tema.
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Gerar relatório completo em PDF
+                    As cores serão aplicadas em todo o sistema: botões, links, destaques e sidebar.
                   </p>
                 </div>
-              </div>
-              <Button variant="outline" size="sm" disabled>
-                Em breve
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
+              >
+                {isSubmitting ? "Salvando..." : "Salvar Cores"}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </form>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Integração OpenAI</CardTitle>
-            <CardDescription>
-              Configuração do gerador de anúncios com IA
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Status da API</p>
-                <p className="text-sm text-muted-foreground">
-                  OpenAI API está configurada e ativa
-                </p>
+        <TabsContent value="system" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Sistema</CardTitle>
+              <CardDescription>Detalhes e integr ações</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Versão do VeloStock</p>
+                  <p className="text-sm text-muted-foreground">1.0.0 - Controle Interno</p>
+                </div>
               </div>
-              <div className="flex h-3 w-3 rounded-full bg-green-500" />
-            </div>
-            <Separator />
-            <div className="grid gap-2">
-              <Label htmlFor="ai-model">Modelo de IA</Label>
-              <Input
-                id="ai-model"
-                defaultValue="GPT-4"
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">
-                Modelo otimizado para gerar anúncios persuasivos e únicos
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">OpenAI API</p>
+                  <p className="text-sm text-muted-foreground">
+                    Geração de anúncios e sugestão de preços
+                  </p>
+                </div>
+                <div className="flex h-3 w-3 rounded-full bg-green-500" />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Integração FIPE</p>
+                  <p className="text-sm text-muted-foreground">
+                    Consulta de preços de referência
+                  </p>
+                </div>
+                <div className="flex h-3 w-3 rounded-full bg-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sobre o VeloStock</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">VeloStock</strong> é um sistema completo de controle 
+                interno para lojas e concessionárias de veículos.
               </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <p className="text-sm text-muted-foreground">
+                Gerencie onde cada veículo está, o que precisa ser comprado (copos, material de limpeza), 
+                checklists de preparação e muito mais - tudo em um único lugar.
+              </p>
+              <Separator />
+              <p className="text-xs text-muted-foreground">
+                Sistema focado em controle operacional interno, não é um sistema de gestão comercial.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { ModeToggle } from "@/components/ModeToggle";
 import Dashboard from "@/pages/Dashboard";
 import VehicleDetails from "@/pages/VehicleDetails";
 import Vehicles from "@/pages/Vehicles";
@@ -36,12 +37,13 @@ function MainAppRouter() {
   );
 }
 
-import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { CompanyThemeProvider, useCompanyTheme } from "@/components/CompanyThemeProvider";
 
 function AppContent() {
   const [location, setLocation] = useLocation();
   const { hasCompany, isLoading } = useCurrentCompany();
-  const { logoUrl, companyName } = useTheme();
+  const { logoUrl, companyName } = useCompanyTheme();
 
   useEffect(() => {
     if (!isLoading && !hasCompany && location !== "/setup") {
@@ -67,6 +69,7 @@ function AppContent() {
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-3">
               <NotificationCenter />
+              <ModeToggle />
               <img 
                 src={logoUrl || "/velostock-logo.svg"} 
                 alt={companyName} 
@@ -84,23 +87,15 @@ function AppContent() {
 }
 
 export default function App() {
-  const { settings } = useSettings();
-  
-  useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [settings.darkMode]);
-
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <AppContent />
-          <Toaster />
-        </TooltipProvider>
+      <ThemeProvider defaultTheme="system" storageKey="velo-theme">
+        <CompanyThemeProvider>
+          <TooltipProvider>
+            <AppContent />
+            <Toaster />
+          </TooltipProvider>
+        </CompanyThemeProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
