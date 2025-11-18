@@ -61,10 +61,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center gap-3">
           <img 
-            src="/logo.png" 
-            alt="Capoeiras Automóveis" 
+            src="/autoflow-logo.png" 
+            alt="AutoFlow" 
             className="h-12 w-auto object-contain"
-            style={{ mixBlendMode: 'screen' }}
           />
         </div>
       </SidebarHeader>

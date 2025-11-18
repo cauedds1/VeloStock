@@ -20,19 +20,9 @@ import { useEffect } from "react";
 import { useCurrentCompany } from "@/hooks/use-company";
 import { useLocation } from "wouter";
 
-function Router() {
-  const [location, setLocation] = useLocation();
-  const { hasCompany, isLoading } = useCurrentCompany();
-
-  useEffect(() => {
-    if (!isLoading && !hasCompany && location !== "/setup") {
-      setLocation("/setup");
-    }
-  }, [hasCompany, isLoading, location, setLocation]);
-
+function MainAppRouter() {
   return (
     <Switch>
-      <Route path="/setup" component={FirstTimeSetup} />
       <Route path="/" component={Dashboard} />
       <Route path="/veiculos" component={Vehicles} />
       <Route path="/veiculo/:id" component={VehicleDetails} />
@@ -49,12 +39,24 @@ function Router() {
 import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
 
 function AppContent() {
+  const [location, setLocation] = useLocation();
+  const { hasCompany, isLoading } = useCurrentCompany();
   const { logoUrl, companyName } = useTheme();
+
+  useEffect(() => {
+    if (!isLoading && !hasCompany && location !== "/setup") {
+      setLocation("/setup");
+    }
+  }, [hasCompany, isLoading, location, setLocation]);
 
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
+
+  if (location === "/setup") {
+    return <FirstTimeSetup />;
+  }
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
@@ -66,15 +68,14 @@ function AppContent() {
             <div className="flex items-center gap-3">
               <NotificationCenter />
               <img 
-                src={logoUrl || "/logo.png"} 
+                src={logoUrl || "/autoflow-logo.png"} 
                 alt={companyName} 
                 className="h-8 w-auto object-contain"
-                style={{ mixBlendMode: 'screen' }}
               />
             </div>
           </header>
           <main className="flex-1 overflow-auto">
-            <Router />
+            <MainAppRouter />
           </main>
         </div>
       </div>

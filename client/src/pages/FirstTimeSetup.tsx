@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useCurrentCompany } from "../hooks/use-company";
 import { CompanySetupDialog } from "../components/CompanySetupDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Building2, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 export default function FirstTimeSetup() {
   const [, setLocation] = useLocation();
@@ -36,12 +36,16 @@ export default function FirstTimeSetup() {
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <Building2 className="h-8 w-8 text-primary" />
+          <div className="mx-auto mb-4">
+            <img 
+              src="/autoflow-logo.png" 
+              alt="AutoFlow" 
+              className="h-24 w-auto mx-auto"
+            />
           </div>
           <CardTitle className="text-3xl">Bem-vindo ao AutoFlow</CardTitle>
           <CardDescription className="text-base mt-2">
-            Sistema de gestão para concessionárias de veículos
+            Sistema completo de gestão para concessionárias e lojas de veículos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -49,45 +53,57 @@ export default function FirstTimeSetup() {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-medium">Gestão Completa de Veículos</h4>
+                <h4 className="font-medium">Gestão Completa da Loja</h4>
                 <p className="text-sm text-muted-foreground">
-                  Controle total do estoque, custos, documentos e histórico
+                  Controle veículos, estoque de suprimentos, custos e documentos
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-medium">Kanban Visual</h4>
+                <h4 className="font-medium">Pipeline Visual de Preparação</h4>
                 <p className="text-sm text-muted-foreground">
-                  Acompanhe o status de cada veículo em tempo real
+                  Kanban para acompanhar cada veículo da entrada até a venda
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-medium">Gerador de Anúncios com IA</h4>
+                <h4 className="font-medium">Inteligência Artificial Integrada</h4>
                 <p className="text-sm text-muted-foreground">
-                  Crie anúncios profissionais automaticamente
+                  Sugestão de preços e gerador de anúncios profissionais
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-medium">Tema Customizável</h4>
+                <h4 className="font-medium">Alertas Inteligentes</h4>
                 <p className="text-sm text-muted-foreground">
-                  Personalize com as cores e logo da sua empresa
+                  Notificações automáticas para veículos parados, sem fotos ou sem preço
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium">Personalização Total</h4>
+                <p className="text-sm text-muted-foreground">
+                  Cores, logo e configurações adaptadas à sua empresa
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t">
-            <p className="text-sm text-muted-foreground text-center">
-              Vamos começar configurando sua empresa no sistema
-            </p>
+          <div className="pt-4 border-t flex justify-center">
+            <button
+              onClick={() => setShowSetup(true)}
+              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Começar Configuração
+            </button>
           </div>
         </CardContent>
       </Card>
