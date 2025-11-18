@@ -4,7 +4,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import multer from "multer";
 import { z } from "zod";
-import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema } from "@shared/schema";
+import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema } from "@shared/schema";
 import OpenAI from "openai";
 import path from "path";
 import fs from "fs/promises";
@@ -344,13 +344,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Entrada de histórico não encontrada" });
       }
 
-      const updates: any = {};
+      // Validar e parsear usando schema específico para updates
+      const validatedData = updateVehicleHistorySchema.parse(req.body);
       
-      if (req.body.toStatus !== undefined) updates.toStatus = req.body.toStatus;
-      if (req.body.toPhysicalLocation !== undefined) updates.toPhysicalLocation = req.body.toPhysicalLocation;
-      if (req.body.toPhysicalLocationDetail !== undefined) updates.toPhysicalLocationDetail = req.body.toPhysicalLocationDetail;
-      if (req.body.notes !== undefined) updates.notes = req.body.notes;
-      if (req.body.movedAt !== undefined) updates.movedAt = new Date(req.body.movedAt);
+      const updates: any = {};
+      if (validatedData.toStatus !== undefined) updates.toStatus = validatedData.toStatus;
+      if (validatedData.toPhysicalLocation !== undefined) updates.toPhysicalLocation = validatedData.toPhysicalLocation;
+      if (validatedData.toPhysicalLocationDetail !== undefined) updates.toPhysicalLocationDetail = validatedData.toPhysicalLocationDetail;
+      if (validatedData.notes !== undefined) updates.notes = validatedData.notes;
+      if (validatedData.movedAt !== undefined) updates.movedAt = new Date(validatedData.movedAt);
 
       const updatedHistory = await storage.updateVehicleHistory(req.params.historyId, req.params.vehicleId, updates);
       
@@ -363,6 +365,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedHistory);
     } catch (error) {
       console.error("Erro ao atualizar histórico:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+      }
       res.status(500).json({ error: "Erro ao atualizar histórico" });
     }
   });
@@ -742,7 +747,15 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
   // POST /api/store-observations - Criar nova observação
   app.post("/api/store-observations", async (req, res) => {
     try {
-      const observationData = insertStoreObservationSchema.parse(req.body);
+      const empresaId = await getDefaultCompanyId();
+      if (!empresaId) {
+        return res.status(400).json({ error: "Nenhuma empresa cadastrada no sistema" });
+      }
+
+      const observationData = insertStoreObservationSchema.parse({
+        ...req.body,
+        empresaId,
+      });
       const newObservation = await storage.createStoreObservation(observationData);
       
       io.emit("storeObservationCreated", newObservation);

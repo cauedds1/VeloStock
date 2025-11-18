@@ -151,7 +151,24 @@ export const insertVehicleHistorySchema = createInsertSchema(vehicleHistory).omi
   createdAt: true,
 });
 
+export const updateVehicleHistorySchema = z.object({
+  toStatus: z.enum([
+    "Entrada",
+    "Preparação Mecânica",
+    "Preparação Estética",
+    "Documentação",
+    "Pronto para Venda",
+    "Vendido",
+    "Arquivado"
+  ]).optional(),
+  toPhysicalLocation: z.string().nullable().optional(),
+  toPhysicalLocationDetail: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  movedAt: z.string().datetime().optional(),
+});
+
 export type InsertVehicleHistory = z.infer<typeof insertVehicleHistorySchema>;
+export type UpdateVehicleHistory = z.infer<typeof updateVehicleHistorySchema>;
 export type VehicleHistory = typeof vehicleHistory.$inferSelect;
 
 // Vehicle costs table
@@ -228,6 +245,9 @@ export const insertStoreObservationSchema = createInsertSchema(storeObservations
   id: true,
   createdAt: true,
   updatedAt: true,
+  resolvedAt: true,
+}).extend({
+  empresaId: z.string().optional(),
 });
 
 export type InsertStoreObservation = z.infer<typeof insertStoreObservationSchema>;

@@ -184,6 +184,25 @@ export function hasChecklistStarted(rawChecklist: any, vehicleType: VehicleType 
     return false;
   }
   
-  const presence = getCategoryPresence(rawChecklist, vehicleType);
-  return Object.values(presence).some(v => v === true);
+  // Verificar se há PELO MENOS UM ITEM marcado (não apenas categorias vazias)
+  const categories = getChecklistCategories(vehicleType);
+  
+  for (const category of Object.keys(categories)) {
+    const categoryData = rawChecklist[category];
+    
+    // Se a categoria existe e é um array
+    if (Array.isArray(categoryData)) {
+      // Verificar se tem pelo menos um item marcado
+      const hasItems = categoryData.some((item: any) => {
+        // Item pode ser string (formato legado) ou objeto
+        if (typeof item === 'string') return true;
+        if (typeof item === 'object' && item !== null && item.item) return true;
+        return false;
+      });
+      
+      if (hasItems) return true;
+    }
+  }
+  
+  return false;
 }
