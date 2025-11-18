@@ -309,13 +309,16 @@ export default function Settings() {
                       <Input
                         id="corPrimaria"
                         type="color"
-                        {...form.register("corPrimaria")}
+                        value={form.watch("corPrimaria")}
+                        onChange={(e) => form.setValue("corPrimaria", e.target.value)}
                         className="h-14 w-24 cursor-pointer"
                       />
                       <Input
-                        {...form.register("corPrimaria")}
+                        value={form.watch("corPrimaria")}
+                        onChange={(e) => form.setValue("corPrimaria", e.target.value)}
                         placeholder="#8B5CF6"
-                        className="h-14 flex-1 font-mono text-lg"
+                        className="h-14 flex-1 font-mono text-lg uppercase"
+                        maxLength={7}
                       />
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -342,13 +345,16 @@ export default function Settings() {
                       <Input
                         id="corSecundaria"
                         type="color"
-                        {...form.register("corSecundaria")}
+                        value={form.watch("corSecundaria")}
+                        onChange={(e) => form.setValue("corSecundaria", e.target.value)}
                         className="h-14 w-24 cursor-pointer"
                       />
                       <Input
-                        {...form.register("corSecundaria")}
+                        value={form.watch("corSecundaria")}
+                        onChange={(e) => form.setValue("corSecundaria", e.target.value)}
                         placeholder="#10B981"
-                        className="h-14 flex-1 font-mono text-lg"
+                        className="h-14 flex-1 font-mono text-lg uppercase"
+                        maxLength={7}
                       />
                     </div>
                     <p className="text-sm text-muted-foreground">
