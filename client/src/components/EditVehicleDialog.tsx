@@ -44,6 +44,7 @@ import { Upload, Trash2, Star } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const vehicleFormSchema = z.object({
   brand: z.string().min(1, "Marca é obrigatória"),
@@ -86,6 +87,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const { settings } = useSettings();
+  const { can } = usePermissions();
   const [activeTab, setActiveTab] = useState("info");
   const [newImages, setNewImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<Array<{ id: string; imageUrl: string; order: number }>>(vehicle.images || []);
@@ -428,47 +430,49 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
 
                 <div className="flex justify-between gap-3 pt-4 border-t mt-6">
                   <div>
-                    {settings.deleteConfirmation ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir Veículo
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir veículo?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir este veículo permanentemente? 
-                              Todos os dados relacionados (fotos, histórico, custos) serão removidos e não poderão ser recuperados.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleDelete}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    {can.deleteVehicles && (
+                      settings.deleteConfirmation ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                             >
-                              Confirmar Exclusão
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={handleDelete}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir Veículo
-                      </Button>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir Veículo
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir veículo?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir este veículo permanentemente? 
+                                Todos os dados relacionados (fotos, histórico, custos) serão removidos e não poderão ser recuperados.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDelete}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Confirmar Exclusão
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={handleDelete}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir Veículo
+                        </Button>
+                      )
                     )}
                   </div>
                   <div className="flex gap-3">

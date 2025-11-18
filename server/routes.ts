@@ -356,8 +356,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DELETE /api/vehicles/:id - Deletar veículo (COM VALIDAÇÃO DE EMPRESA)
-  app.delete("/api/vehicles/:id", isAuthenticated, async (req: any, res) => {
+  // DELETE /api/vehicles/:id - Deletar veículo (APENAS GERENTE E PROPRIETÁRIO)
+  app.delete("/api/vehicles/:id", isAuthenticated, requireProprietarioOrGerente, async (req: any, res) => {
     try {
       const userId = req.user.claims?.id || req.user.claims?.sub;
       if (!userId) {

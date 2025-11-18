@@ -122,20 +122,23 @@ export async function setupAuth(app: Express) {
 
   // Helper function to get valid domain from request
   const getValidDomain = (req: any): string => {
+    // Lista de domínios inválidos que devem ser ignorados
+    const invalidDomains = ["localhost", "hello", "hélio", "helium"];
+    
     // 1. Try x-forwarded-host header (common in production/proxy environments)
     const forwardedHost = req.get("x-forwarded-host");
-    if (forwardedHost && forwardedHost !== "localhost" && forwardedHost !== "hélio") {
+    if (forwardedHost && !invalidDomains.includes(forwardedHost)) {
       return forwardedHost;
     }
     
     // 2. Try host header
     const hostHeader = req.get("host");
-    if (hostHeader && hostHeader !== "localhost" && hostHeader !== "hélio" && !hostHeader.includes("localhost:")) {
+    if (hostHeader && !invalidDomains.includes(hostHeader) && !hostHeader.includes("localhost:")) {
       return hostHeader.replace(/:\d+$/, ""); // Remove port if present
     }
     
     // 3. Try request hostname
-    if (req.hostname && req.hostname !== "localhost" && req.hostname !== "hélio") {
+    if (req.hostname && !invalidDomains.includes(req.hostname)) {
       return req.hostname;
     }
     

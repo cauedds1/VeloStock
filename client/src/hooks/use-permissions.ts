@@ -34,8 +34,11 @@ export function usePermissions() {
     // Adicionar custos
     addCosts: isProprietario || isGerente,
     
-    // Editar veículos
-    editVehicles: isProprietario || isGerente || isVendedor,
+    // Editar veículos (TODOS podem editar)
+    editVehicles: true,
+    
+    // Excluir veículos (APENAS Gerente e Proprietário)
+    deleteVehicles: isProprietario || isGerente,
     
     // Atualizar localização física
     updateLocation: true, // Todos podem
