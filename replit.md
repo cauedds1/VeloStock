@@ -4,6 +4,18 @@
 VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealership and store management. Originally designed for "Capoeiras Automóveis," it has evolved into a white-label solution for any automotive business. The system manages vehicles through their preparation pipeline from intake to sale, featuring Kanban-style workflow, detailed tracking, cost management, AI-powered features (price suggestions and ad generation), intelligent alerts, and complete store operations (including inventory/supplies management). The application is localized in Brazilian Portuguese (pt-BR) with a modern, professional design system.
 
 ## Recent Major Changes (November 2024)
+- **PRODUCTION-READY MULTI-TENANT ISOLATION**: Complete data isolation with empresaId validation on ALL routes
+  - Removed `getDefaultCompanyId()` vulnerability
+  - Created `getUserWithCompany()` helper for consistent validation
+  - Protected ALL routes: vehicles, costs, images, documents, history, AI features, metrics, observations
+  - Returns 403 if user not linked to a company
+  - Disabled insecure `GET /api/costs/all` route
+- **DEPLOYMENT CONFIGURED**: Ready for production deployment via Replit Deploy
+  - Autoscale deployment type for optimal performance
+  - Build: `npm run build` (Vite + esbuild)
+  - Run: `npm run start` (production mode)
+  - Public landing page as homepage
+- **THEME FIXES**: Custom company colors now apply immediately via page reload after save
 - **Multi-tenant architecture**: Full data isolation by empresaId across all tables
 - **Production-ready authentication**: Dual authentication system with native email/password and Google OAuth
 - **Custom branding**: Each company can configure logo and color theme
@@ -14,6 +26,15 @@ VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealers
 - **FIPE integration**: Proxy API for real-time vehicle pricing data
 - **VeloStock branding**: Unique geometric logo and identity (purple/green color scheme)
 - **Public landing page**: Professional marketing page with authentication options
+
+## How to Deploy (Publish)
+1. Click the "Deploy" button in Replit interface
+2. The site will be published with:
+   - Landing page (`/`) as the public homepage with login options
+   - Google OAuth and email/password authentication
+   - All features protected behind authentication
+   - Each company sees only their own data (multi-tenant isolation)
+3. Optional: Add a custom domain in deployment settings
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -32,6 +53,7 @@ Preferred communication style: Simple, everyday language.
   - AI features: price suggestions, ad generation (3 styles: economic, complete, urgent)
   - Enhanced dashboard: 6 metrics (ready for sale, in preparation, sold this month, average margin, average days, total stock)
   - First-time setup: professional onboarding with company configuration
+  - Theme customization: Colors apply immediately via page reload after save
 
 ### Backend
 - **Technology Stack**: Node.js with Express.js, TypeScript, PostgreSQL (via Neon serverless driver), Drizzle ORM.
@@ -42,12 +64,19 @@ Preferred communication style: Simple, everyday language.
   - Session management with PostgreSQL store, 30-day TTL (persistent login), environment-aware secure cookies
   - Protected API routes with isAuthenticated middleware
   - User-company linking via empresaId for multi-tenant isolation
+- **Multi-Tenant Security**: COMPLETE data isolation enforced:
+  - `getUserWithCompany(req)` helper extracts empresaId from authenticated user
+  - ALL routes validate empresaId before data access
+  - Returns 403 if user not linked to a company
+  - ALL storage methods filter by empresaId
+  - Routes protected: vehicles, costs, images, documents, history, AI, metrics, observations
+  - Insecure routes disabled (e.g., GET /api/costs/all)
 - **Database Schema**: Multi-tenant tables with empresaId isolation:
   - companies (14 fields: branding, contact, locations, alert config)
   - users (with passwordHash, authProvider, empresaId), vehicles, vehicle_images, vehicle_history, vehicle_costs, vehicle_documents, store_observations
 - **Key Entities**: Vehicle status pipeline (Entrada, Preparação Mecânica, Preparação Estética, Documentação, Pronto para Venda, Vendido, Arquivado), cost categories (Mecânica, Estética, Documentação, Outros).
 - **Architectural Decisions**: 
-  - Multi-tenant with empresaId filtering on all queries
+  - Multi-tenant with empresaId filtering on all queries via getUserWithCompany() helper
   - Dual authentication: native (bcrypt + passport-local) and Google OAuth (Replit Auth + OIDC)
   - Public routes: Landing (/), Login (/login), Signup (/signup), Google OAuth (/api/auth/google)
   - Protected routes: All app pages and API endpoints require authentication via isAuthenticated middleware
@@ -70,6 +99,9 @@ Multer handles file uploads (10MB limit per image, 5 images per vehicle) and doc
 ### Build and Deployment
 - **Development**: Vite dev server (client) and Express (backend) with HMR.
 - **Production**: Optimized client bundle and bundled server code served by a single Node.js process.
+- **Deployment Type**: Autoscale (stateless web app with external PostgreSQL database)
+- **Build Command**: `npm run build` (Vite + esbuild bundling)
+- **Run Command**: `npm run start` (NODE_ENV=production)
 
 ## External Dependencies
 

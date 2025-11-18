@@ -69,11 +69,10 @@ export default function Settings() {
         ...data,
         locaisComuns: locaisArray,
       });
-
-      toast({
-        title: "Empresa atualizada!",
-        description: "As informações foram atualizadas com sucesso.",
-      });
+      
+      // Toast já é exibido pelo hook useUpdateCompany
+      // Forçar reload da página para aplicar cores imediatamente
+      window.location.reload();
     } catch (error) {
       console.error("Erro ao atualizar empresa:", error);
       toast({
@@ -81,7 +80,6 @@ export default function Settings() {
         description: "Tente novamente",
         variant: "destructive",
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
