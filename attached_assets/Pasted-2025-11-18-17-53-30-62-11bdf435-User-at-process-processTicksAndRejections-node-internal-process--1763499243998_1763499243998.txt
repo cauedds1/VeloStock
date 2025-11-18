@@ -1,0 +1,80 @@
+2025-11-18 17:53:30.62
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:30.62
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:30.62
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:30.62
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:30.95
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:30.95
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:30.95
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:30.95
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:35.78
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:35.78
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:35.78
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:35.78
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:36.18
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:36.18
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:36.18
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:36.18
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:36.18
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:36.18
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:36.18
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:36.18
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)

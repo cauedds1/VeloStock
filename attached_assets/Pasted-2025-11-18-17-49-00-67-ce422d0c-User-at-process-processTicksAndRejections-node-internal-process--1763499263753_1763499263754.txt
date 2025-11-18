@@ -1,0 +1,132 @@
+2025-11-18 17:49:00.67
+ce422d0c
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:49:00.67
+ce422d0c
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:49:00.67
+ce422d0c
+User
+code: 'EAI_AGAIN',
+2025-11-18 17:49:00.67
+ce422d0c
+User
+}
+2025-11-18 17:52:51.09
+11bdf435
+System
+starting up user application
+2025-11-18 17:52:51.09
+11bdf435
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+2025-11-18 17:52:51.09
+11bdf435
+System
+forwarding local port 5000 to external port 80 (mapped as 1104)
+2025-11-18 17:52:52.06
+11bdf435
+User
+> NODE_ENV=production REPL_ID='' ISSUER_URL='' OAUTH_DISABLED=true node dist/index.js
+2025-11-18 17:52:52.06
+11bdf435
+User
+> rest-express@1.0.0 start
+2025-11-18 17:52:53.01
+11bdf435
+User
+[Database] ✓ Conectando ao banco de dados de PRODUÇÃO
+2025-11-18 17:52:53.09
+11bdf435
+User
+[AUTH] Google OAuth disabled. Using email/password authentication only.
+2025-11-18 17:52:53.16
+11bdf435
+User
+8:52:53 PM [express] Server running on port 5000
+2025-11-18 17:53:30.62
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:30.62
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:30.62
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:30.62
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:30.95
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:30.95
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:30.95
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:30.95
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:35.78
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:35.78
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:35.78
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:35.78
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:36.18
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:53:36.18
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:36.18
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:36.18
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:36.18
+11bdf435
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-18 17:53:36.18
+11bdf435
+User
+at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+2025-11-18 17:53:36.18
+11bdf435
+User
+Error: getaddrinfo EAI_AGAIN helium
+2025-11-18 17:53:36.18
+11bdf435
+User
+at async PGStore._asyncQuery (/home/runner/workspace/node_modules/connect-pg-simple/index.js:322:21)
+2025-11-18 17:54:03.79
+ce422d0c
+System
+system: received signal terminated

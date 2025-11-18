@@ -8,6 +8,7 @@ import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import { setupLocalAuth } from "./localAuth";
+import { getDatabaseUrl } from "./config/database";
 
 // OAuth COMPLETELY DISABLED - No OIDC config to prevent DNS lookups
 // const getOidcConfig = ... (removed to prevent helium DNS lookup)
@@ -16,7 +17,7 @@ export function getSession() {
   const sessionTtl = 30 * 24 * 60 * 60 * 1000; // 30 days
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    conString: getDatabaseUrl(),
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",
