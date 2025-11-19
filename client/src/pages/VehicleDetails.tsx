@@ -7,6 +7,7 @@ import { VehicleTimeline } from "@/components/VehicleTimeline";
 import { VehicleCosts } from "@/components/VehicleCosts";
 import { VehicleDocuments } from "@/components/VehicleDocuments";
 import { AdGenerator } from "@/components/AdGenerator";
+import { PriceSuggestion } from "@/components/PriceSuggestion";
 import { EditVehicleDialog } from "@/components/EditVehicleDialog";
 import { AddCostDialog } from "@/components/AddCostDialog";
 import { EditCostDialog } from "@/components/EditCostDialog";
@@ -42,7 +43,7 @@ export default function VehicleDetails() {
   const getInitialTab = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const tabParam = searchParams.get('tab');
-    const validTabs = ['visao-geral', 'historico', 'custos', 'anotacoes', 'anuncio', 'midia', 'documentos', 'checklist'];
+    const validTabs = ['visao-geral', 'historico', 'custos', 'anotacoes', 'preco', 'anuncio', 'midia', 'documentos', 'checklist'];
     return validTabs.includes(tabParam || '') ? (tabParam || "visao-geral") : "visao-geral";
   };
   
@@ -445,6 +446,9 @@ export default function VehicleDetails() {
             <TabsTrigger value="anotacoes" data-testid="tab-anotacoes">
               Observações Gerais
             </TabsTrigger>
+            <TabsTrigger value="preco" data-testid="tab-preco">
+              Sugestão de Preço
+            </TabsTrigger>
             <TabsTrigger value="anuncio" data-testid="tab-anuncio">
               Anúncio
             </TabsTrigger>
@@ -705,6 +709,17 @@ export default function VehicleDetails() {
                 {isSavingNotes ? "Salvando..." : "Salvar Observações"}
               </Button>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="preco">
+            <PriceSuggestion
+              vehicleId={vehicleId}
+              vehicleData={{
+                brand: vehicle.brand,
+                model: vehicle.model,
+                year: vehicle.year,
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="anuncio">

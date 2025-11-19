@@ -1,0 +1,201 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sparkles, TrendingUp, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useFipePriceByVehicle } from "@/hooks/use-fipe";
+
+interface PriceSuggestionProps {
+  vehicleId: string;
+  vehicleData: {
+    brand: string;
+    model: string;
+    year: number;
+  };
+}
+
+export function PriceSuggestion({ vehicleId, vehicleData }: PriceSuggestionProps) {
+  const [suggestedPrice, setSuggestedPrice] = useState("");
+  const [reasoning, setReasoning] = useState("");
+  const [fipePrice, setFipePrice] = useState("");
+  const [targetMargin, setTargetMargin] = useState("20");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  
+  const fipeMutation = useFipePriceByVehicle(
+    vehicleData.brand,
+    vehicleData.model,
+    vehicleData.year
+  );
+
+  const handleSuggestPrice = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Passo 1: Buscar preço FIPE automaticamente
+      toast({
+        title: "Consultando FIPE...",
+        description: "Buscando preço de referência para o veículo.",
+      });
+
+      let fipeValue = "";
+      try {
+        const fipeData = await fipeMutation.mutateAsync();
+        fipeValue = fipeData.Valor.replace("R$", "").trim();
+        setFipePrice(fipeValue);
+        
+        toast({
+          title: "Preço FIPE encontrado!",
+          description: `${fipeData.Marca} ${fipeData.Modelo}: ${fipeData.Valor}`,
+        });
+      } catch (fipeError: any) {
+        console.warn("Erro ao buscar FIPE:", fipeError);
+        toast({
+          title: "FIPE não encontrado",
+          description: "Continuando sugestão sem referência FIPE...",
+          variant: "default",
+        });
+      }
+
+      // Passo 2: Chamar IA para sugerir preço
+      toast({
+        title: "Gerando sugestão...",
+        description: "A IA está analisando custos e margem desejada.",
+      });
+
+      const response = await fetch(`/api/vehicles/${vehicleId}/suggest-price`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fipePrice: fipeValue || undefined,
+          targetMarginPercent: parseInt(targetMargin) || 20,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 400 && errorData.error?.includes("API key")) {
+          throw new Error("A chave da API da OpenAI não está configurada.");
+        } else if (response.status === 429) {
+          throw new Error("Limite de uso da API excedido. Tente mais tarde.");
+        } else {
+          throw new Error(errorData.error || "Erro ao gerar sugestão");
+        }
+      }
+
+      const data = await response.json();
+      setSuggestedPrice(data.suggestedPrice?.toString() || "");
+      setReasoning(data.reasoning || "");
+      
+      toast({
+        title: "Sugestão gerada!",
+        description: `Preço sugerido: R$ ${data.suggestedPrice?.toFixed(2)}`,
+      });
+    } catch (error) {
+      console.error("Erro ao sugerir preço:", error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Não foi possível gerar a sugestão. Tente novamente.";
+      
+      toast({
+        title: "Erro ao sugerir preço",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card className="p-6">
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          Sugestão de Preço com IA
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Análise inteligente baseada em custos, margem desejada e preço FIPE de referência
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="targetMargin">Margem de Lucro Desejada (%)</Label>
+          <Input
+            id="targetMargin"
+            type="number"
+            value={targetMargin}
+            onChange={(e) => setTargetMargin(e.target.value)}
+            placeholder="20"
+            min="0"
+            max="100"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Padrão: 20% de margem sobre o custo total
+          </p>
+        </div>
+
+        <Button
+          onClick={handleSuggestPrice}
+          disabled={isLoading}
+          className="w-full"
+          size="lg"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              {fipeMutation.isPending ? "Consultando FIPE..." : "Gerando sugestão..."}
+            </>
+          ) : (
+            <>
+              <TrendingUp className="mr-2 h-5 w-5" />
+              Sugerir Preço de Venda
+            </>
+          )}
+        </Button>
+
+        {fipePrice && (
+          <div className="p-4 bg-muted rounded-md">
+            <p className="text-sm font-medium text-muted-foreground">
+              Preço de Referência FIPE
+            </p>
+            <p className="text-2xl font-bold text-foreground">{fipePrice}</p>
+          </div>
+        )}
+
+        {suggestedPrice && (
+          <div className="space-y-3">
+            <div className="p-4 bg-primary/10 rounded-md border border-primary/20">
+              <p className="text-sm font-medium text-muted-foreground">
+                Preço Sugerido pela IA
+              </p>
+              <p className="text-3xl font-bold text-primary">
+                R$ {parseFloat(suggestedPrice).toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+            </div>
+
+            {reasoning && (
+              <div className="p-4 bg-muted rounded-md">
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  Justificativa
+                </p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">
+                  {reasoning}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
