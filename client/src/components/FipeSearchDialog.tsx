@@ -80,7 +80,7 @@ export function FipeSearchDialog() {
   // Query para buscar valor FIPE
   const {
     data: fipeValue,
-    isLoading: loadingValue,
+    isFetching: loadingValue,
     refetch: fetchValue,
   } = useQuery<FipeValue>({
     queryKey: [
