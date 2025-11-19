@@ -18,6 +18,7 @@ import leadsRoutes from "./routes/leads";
 import followupsRoutes from "./routes/followups";
 import activityLogRoutes from "./routes/activityLog";
 import costApprovalsRoutes from "./routes/costApprovals";
+import billsRoutes from "./routes/bills";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1806,6 +1807,11 @@ Retorne APENAS um JSON válido no formato:
   // APROVAÇÕES DE CUSTOS
   // ============================================
   app.use("/api/approvals", isAuthenticated, costApprovalsRoutes);
+
+  // ============================================
+  // CONTAS A PAGAR E A RECEBER
+  // ============================================
+  app.use("/api/bills", isAuthenticated, billsRoutes);
 
   // ============================================
   // GERENCIAR ACESSOS (Permissões Customizadas - Proprietário apenas)
