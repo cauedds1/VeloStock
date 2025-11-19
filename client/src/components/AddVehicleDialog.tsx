@@ -131,6 +131,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
         formData.append("kmOdometer", String(data.kmOdometer));
       }
       if (data.fuelType) formData.append("fuelType", data.fuelType);
+      if (data.fipeReferencePrice) formData.append("fipeReferencePrice", data.fipeReferencePrice);
 
       images.forEach((image) => {
         formData.append("images", image);

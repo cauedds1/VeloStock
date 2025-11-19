@@ -89,6 +89,22 @@ export function useFipePrice(
   });
 }
 
+// Utilitário para normalizar strings (remover acentos e case-insensitive)
+function normalizeString(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // Remove diacríticos/acentos
+}
+
+// Aliases comuns de marcas
+const BRAND_ALIASES: Record<string, string[]> = {
+  "chevrolet": ["gm", "chevy"],
+  "volkswagen": ["vw"],
+  "mercedes-benz": ["mercedes"],
+  "land rover": ["landrover"],
+};
+
 // Hook para buscar preço FIPE automaticamente baseado em marca/modelo/ano (texto)
 export function useFipePriceByVehicle(brand?: string, model?: string, year?: number) {
   return useMutation({
@@ -102,11 +118,28 @@ export function useFipePriceByVehicle(brand?: string, model?: string, year?: num
       if (!brandsResponse.ok) throw new Error("Erro ao buscar marcas");
       const brands: FipeBrand[] = await brandsResponse.json();
 
-      // 2. Encontrar marca correspondente (case-insensitive, partial match)
-      const matchedBrand = brands.find((b) =>
-        b.nome.toLowerCase().includes(brand.toLowerCase()) ||
-        brand.toLowerCase().includes(b.nome.toLowerCase())
-      );
+      // 2. Encontrar marca correspondente (fuzzy match com aliases e normalização)
+      const normalizedBrand = normalizeString(brand);
+      
+      const matchedBrand = brands.find((b) => {
+        const normalizedBrandName = normalizeString(b.nome);
+        
+        // Match direto
+        if (normalizedBrandName.includes(normalizedBrand) || normalizedBrand.includes(normalizedBrandName)) {
+          return true;
+        }
+        
+        // Match por aliases
+        for (const [canonical, aliases] of Object.entries(BRAND_ALIASES)) {
+          if (normalizedBrandName.includes(canonical)) {
+            if (aliases.some(alias => normalizedBrand.includes(alias))) {
+              return true;
+            }
+          }
+        }
+        
+        return false;
+      });
 
       if (!matchedBrand) {
         throw new Error(`Marca "${brand}" não encontrada na tabela FIPE`);
@@ -117,11 +150,13 @@ export function useFipePriceByVehicle(brand?: string, model?: string, year?: num
       if (!modelsResponse.ok) throw new Error("Erro ao buscar modelos");
       const modelsData: { modelos: FipeModel[] } = await modelsResponse.json();
 
-      // 4. Encontrar modelo correspondente
-      const matchedModel = modelsData.modelos.find((m) =>
-        m.nome.toLowerCase().includes(model.toLowerCase()) ||
-        model.toLowerCase().includes(m.nome.toLowerCase())
-      );
+      // 4. Encontrar modelo correspondente (fuzzy match com normalização)
+      const normalizedModel = normalizeString(model);
+      
+      const matchedModel = modelsData.modelos.find((m) => {
+        const normalizedModelName = normalizeString(m.nome);
+        return normalizedModelName.includes(normalizedModel) || normalizedModel.includes(normalizedModelName);
+      });
 
       if (!matchedModel) {
         throw new Error(`Modelo "${model}" não encontrado para a marca ${matchedBrand.nome}`);

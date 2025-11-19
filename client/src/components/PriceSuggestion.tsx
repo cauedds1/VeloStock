@@ -89,12 +89,16 @@ export function PriceSuggestion({ vehicleId, vehicleData }: PriceSuggestionProps
       }
 
       const data = await response.json();
-      setSuggestedPrice(data.suggestedPrice?.toString() || "");
+      const priceValue = typeof data.suggestedPrice === 'number' 
+        ? data.suggestedPrice 
+        : parseFloat(data.suggestedPrice?.toString() || "0");
+      
+      setSuggestedPrice(priceValue.toString());
       setReasoning(data.reasoning || "");
       
       toast({
         title: "Sugestão gerada!",
-        description: `Preço sugerido: R$ ${data.suggestedPrice?.toFixed(2)}`,
+        description: `Preço sugerido: R$ ${priceValue.toFixed(2)}`,
       });
     } catch (error) {
       console.error("Erro ao sugerir preço:", error);
