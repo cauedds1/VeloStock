@@ -51,6 +51,9 @@ export function usePermissions() {
     
     // Ver dashboard
     viewDashboard: isProprietario || isGerente || isVendedor,
+    
+    // Contas a Pagar/Receber (apenas proprietário)
+    viewBills: isProprietario,
   };
 
   return {
