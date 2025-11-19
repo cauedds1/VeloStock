@@ -53,10 +53,25 @@ export default function Bills() {
 
   const { data: dashboard } = useQuery<DashboardData>({
     queryKey: ["/api/bills/dashboard"],
+    queryFn: async () => {
+      const response = await fetch("/api/bills/dashboard");
+      if (!response.ok) throw new Error("Erro ao buscar dashboard");
+      return response.json();
+    },
   });
 
   const { data: bills = [], isLoading } = useQuery<Bill[]>({
-    queryKey: ["/api/bills", { tipo: tipoFilter !== "todos" ? tipoFilter : undefined, status: statusFilter !== "todos" ? statusFilter : undefined }],
+    queryKey: ["/api/bills", tipoFilter, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (tipoFilter !== "todos") params.append("tipo", tipoFilter);
+      if (statusFilter !== "todos") params.append("status", statusFilter);
+      
+      const url = params.toString() ? `/api/bills?${params.toString()}` : "/api/bills";
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Erro ao buscar contas");
+      return response.json();
+    },
   });
 
   const createMutation = useMutation({
