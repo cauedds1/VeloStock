@@ -735,7 +735,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const vehicles = await storage.getAllVehicles(user.empresaId);
       
-      const totalVehicles = vehicles.length;
+      // Total em estoque = todos exceto Vendido e Arquivado
+      const totalVehicles = vehicles.filter(v => 
+        v.status !== "Vendido" && v.status !== "Arquivado"
+      ).length;
       const readyForSale = vehicles.filter(v => v.status === "Pronto para Venda").length;
       
       // Calcular custo médio por veículo (apenas do mês atual)

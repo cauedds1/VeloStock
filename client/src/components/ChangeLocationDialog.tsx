@@ -31,6 +31,7 @@ import { MapPin, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { SaleDialog, SaleData } from "@/components/SaleDialog";
 
 interface ChangeLocationDialogProps {
   vehicleId: string;
@@ -55,6 +56,8 @@ export function ChangeLocationDialog({
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaleDialogOpen, setIsSaleDialogOpen] = useState(false);
+  const [vehicleName, setVehicleName] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -109,6 +112,23 @@ export function ChangeLocationDialog({
   
   const isLocationRequired = formData.status !== "Vendido" && formData.status !== "Arquivado";
 
+  useEffect(() => {
+    const fetchVehicleData = async () => {
+      try {
+        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        if (response.ok) {
+          const vehicle = await response.json();
+          setVehicleName(`${vehicle.brand} ${vehicle.model} ${vehicle.year}`);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do veículo:", error);
+      }
+    };
+    if (open) {
+      fetchVehicleData();
+    }
+  }, [open, vehicleId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -121,7 +141,6 @@ export function ChangeLocationDialog({
       return;
     }
 
-    // Validar campo customizado
     if (formData.physicalLocation === "__custom__" && !formData.customLocation.trim()) {
       toast({
         title: "Localização obrigatória",
@@ -131,6 +150,15 @@ export function ChangeLocationDialog({
       return;
     }
     
+    if (formData.status === "Vendido") {
+      setIsSaleDialogOpen(true);
+      return;
+    }
+
+    await submitStatusChange();
+  };
+
+  const submitStatusChange = async (saleData?: SaleData) => {
     setIsSubmitting(true);
 
     try {
@@ -141,7 +169,6 @@ export function ChangeLocationDialog({
       };
 
       if (formData.physicalLocation && formData.physicalLocation !== "__none__") {
-        // Se for customizado, usar o valor digitado
         if (formData.physicalLocation === "__custom__") {
           payload.physicalLocation = formData.customLocation.trim();
           payload.physicalLocationDetail = formData.physicalLocationDetail.trim() || null;
@@ -154,6 +181,16 @@ export function ChangeLocationDialog({
         payload.physicalLocationDetail = null;
       }
 
+      if (saleData) {
+        payload.vendedorId = saleData.vendedorId;
+        payload.vendedorNome = saleData.vendedorNome;
+        payload.repassadoPara = saleData.repassadoPara;
+        payload.dataVenda = saleData.dataVenda;
+        payload.valorVenda = saleData.valorVenda;
+        payload.formaPagamento = saleData.formaPagamento;
+        payload.observacoesVenda = saleData.observacoesVenda;
+      }
+
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -164,7 +201,6 @@ export function ChangeLocationDialog({
         throw new Error("Erro ao atualizar veículo");
       }
 
-      // Build description for toast
       let description = `Status: ${formData.status}`;
       if (formData.physicalLocation && formData.physicalLocation !== "__none__") {
         const locationName = formData.physicalLocation === "__custom__" ? formData.customLocation : formData.physicalLocation;
@@ -184,6 +220,7 @@ export function ChangeLocationDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
 
       setOpen(false);
+      setIsSaleDialogOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar veículo:", error);
       toast({
@@ -194,6 +231,10 @@ export function ChangeLocationDialog({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSaleDataSave = (saleData: SaleData) => {
+    submitStatusChange(saleData);
   };
 
   const defaultTrigger = (
@@ -353,6 +394,12 @@ export function ChangeLocationDialog({
           </div>
         </form>
       </DialogContent>
+      <SaleDialog
+        open={isSaleDialogOpen}
+        onOpenChange={setIsSaleDialogOpen}
+        onSave={handleSaleDataSave}
+        vehicleName={vehicleName}
+      />
     </Dialog>
   );
 }

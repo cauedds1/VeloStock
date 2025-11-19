@@ -167,8 +167,10 @@ export default function Vehicles() {
         <AddVehicleDialog />
       </div>
 
-      <div className="mb-6 flex gap-4 flex-wrap">
-        <div className="relative flex-1">
+      {/* Filtros reorganizados */}
+      <div className="mb-6 space-y-3">
+        {/* Busca */}
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar veículo por marca, modelo ou placa..."
@@ -177,45 +179,51 @@ export default function Vehicles() {
             className="pl-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[240px]">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[240px]">
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Ordenar" />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {sortBy === "status" && (
-          <Select value={priorityStatus} onValueChange={setPriorityStatus}>
-            <SelectTrigger className="w-[240px]">
-              <SelectValue placeholder="Status prioritário" />
+        
+        {/* Linha de filtros */}
+        <div className="flex gap-3 flex-wrap items-center">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Todos os Status" />
             </SelectTrigger>
             <SelectContent>
-              {PRIORITY_STATUS_OPTIONS.map((option) => (
+              {STATUS_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        )}
+          
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-52">
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {sortBy === "status" && (
+            <Select value={priorityStatus} onValueChange={setPriorityStatus}>
+              <SelectTrigger className="w-52">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
