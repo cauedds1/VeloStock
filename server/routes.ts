@@ -247,6 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         physicalLocationDetail: req.body.physicalLocationDetail || null,
         kmOdometer: req.body.kmOdometer != null && req.body.kmOdometer !== "" ? parseInt(req.body.kmOdometer) : null,
         fuelType: req.body.fuelType || null,
+        fipeReferencePrice: req.body.fipeReferencePrice || null,
         features: req.body.features ? JSON.parse(req.body.features) : null,
         notes: req.body.notes || null,
         mainImageUrl: null,

@@ -102,6 +102,7 @@ export const vehicles = pgTable("vehicles", {
   kmOdometer: integer("km_odometer"),
   fuelType: text("fuel_type"),
   salePrice: numeric("sale_price", { precision: 10, scale: 2 }), // stored in reais
+  fipeReferencePrice: text("fipe_reference_price"), // Preço FIPE consultado (string da API)
   mainImageUrl: text("main_image_url"),
   features: text("features").array(),
   notes: text("notes"),
