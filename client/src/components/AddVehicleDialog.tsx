@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -90,6 +90,13 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   );
   
   const priceMutation = useFipePriceByVersion();
+
+  // Limpar cache de versões quando marca, modelo ou ano mudam
+  useEffect(() => {
+    setFipeVersions([]);
+    setFipeMetadata(null);
+    form.setValue("version", "");
+  }, [form.watch("brand"), form.watch("model"), form.watch("year")]);
 
   // Carregar versões automaticamente quando usuário abre o dropdown "Versão"
   const handleLoadVersions = async () => {
@@ -290,7 +297,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
                 name="version"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Versão (FIPE)</FormLabel>
+                    <FormLabel>Versão</FormLabel>
                     <Select 
                       onValueChange={handleVersionChange}
                       value={field.value}

@@ -97,12 +97,15 @@ function normalizeString(str: string): string {
     .replace(/[\u0300-\u036f]/g, ""); // Remove diacríticos/acentos
 }
 
-// Aliases comuns de marcas
+// Aliases comuns de marcas (bidirecional: tanto a chave quanto os valores podem ser buscados)
 const BRAND_ALIASES: Record<string, string[]> = {
-  "chevrolet": ["gm", "chevy"],
-  "volkswagen": ["vw"],
-  "mercedes-benz": ["mercedes"],
+  "chevrolet": ["gm", "chevy", "general motors"],
+  "volkswagen": ["vw", "volks"],
+  "mercedes-benz": ["mercedes", "benz"],
   "land rover": ["landrover"],
+  "gm": ["chevrolet", "chevy", "general motors"],
+  "vw": ["volkswagen", "volks"],
+  "mercedes": ["mercedes-benz", "benz"],
 };
 
 // Hook para buscar VERSÕES disponíveis baseado em marca/modelo/ano (texto)
@@ -125,16 +128,22 @@ export function useFipeVehicleVersions(brand?: string, model?: string, year?: nu
       const matchedBrand = brands.find((b) => {
         const normalizedBrandName = normalizeString(b.nome);
         
-        // Match direto
+        // Match direto (bidirecional)
         if (normalizedBrandName.includes(normalizedBrand) || normalizedBrand.includes(normalizedBrandName)) {
           return true;
         }
         
-        // Match por aliases
+        // Match por aliases (bidirecional: input pode ser alias ou canonical)
         for (const [canonical, aliases] of Object.entries(BRAND_ALIASES)) {
-          if (normalizedBrandName.includes(canonical)) {
-            if (aliases.some(alias => normalizedBrand.includes(alias))) {
-              return true;
+          // Se o nome da marca FIPE contém o canonical ou qualquer alias
+          const allVariants = [canonical, ...aliases];
+          
+          for (const variant of allVariants) {
+            // Se a marca FIPE contém variant e o input contém outro variant
+            if (normalizedBrandName.includes(variant)) {
+              if (allVariants.some(v => normalizedBrand.includes(v))) {
+                return true;
+              }
             }
           }
         }

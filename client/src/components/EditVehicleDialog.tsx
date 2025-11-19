@@ -63,6 +63,7 @@ const vehicleFormSchema = z.object({
     return isNaN(num) ? null : num;
   }, z.number().nullable()),
   fuelType: z.string().nullable(),
+  fipeReferencePrice: z.string().optional(),
 });
 
 type VehicleFormData = z.infer<typeof vehicleFormSchema>;
@@ -113,6 +114,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
       location: vehicle.location,
       kmOdometer: vehicle.kmOdometer || null,
       fuelType: vehicle.fuelType || null,
+      fipeReferencePrice: vehicle.fipeReferencePrice || "",
     },
   });
 
@@ -123,6 +125,13 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
   );
   
   const priceMutation = useFipePriceByVersion();
+
+  // Limpar cache de versões quando marca, modelo ou ano mudam
+  useEffect(() => {
+    setFipeVersions([]);
+    setFipeMetadata(null);
+    form.setValue("version", "");
+  }, [form.watch("brand"), form.watch("model"), form.watch("year")]);
 
   useEffect(() => {
     form.reset({
@@ -136,6 +145,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
       location: vehicle.location,
       kmOdometer: vehicle.kmOdometer || null,
       fuelType: vehicle.fuelType || null,
+      fipeReferencePrice: vehicle.fipeReferencePrice || "",
     });
     setExistingImages(vehicle.images || []);
     setNewImages([]);
@@ -244,6 +254,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
       });
       
       const priceValue = result.Valor.replace("R$", "").trim();
+      form.setValue("fipeReferencePrice", priceValue);
       
       toast({
         title: "Preço FIPE atualizado!",
@@ -396,7 +407,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
                 name="version"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Versão (FIPE)</FormLabel>
+                    <FormLabel>Versão</FormLabel>
                     <Select 
                       onValueChange={handleVersionChange}
                       value={field.value}
