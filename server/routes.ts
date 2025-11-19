@@ -1743,16 +1743,22 @@ Retorne APENAS um JSON válido no formato:
   });
 
   // GET /api/alerts - Sistema de alertas inteligentes
-  app.get("/api/alerts", async (req, res) => {
+  app.get("/api/alerts", async (req: any, res) => {
     try {
+      // Obter informações do usuário e sua role
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(403).json({ error: "Usuário não está vinculado a uma empresa" });
+      }
+      const { empresaId, role } = userInfo;
+      
       const companies = await storage.getAllCompanies();
-      if (!companies || companies.length === 0) {
+      const company = companies.find(c => c.id === empresaId);
+      if (!company) {
         return res.json({ alerts: [] });
       }
 
-      const company = companies[0];
       const alertDays = company.alertaDiasParado || 7;
-      const empresaId = company.id;
 
       const vehicles = await storage.getAllVehicles(empresaId);
       const alerts: any[] = [];
@@ -1834,30 +1840,32 @@ Retorne APENAS um JSON válido no formato:
         }
       }
 
-      // Alerta 4: Contas vencidas (já atualizadas no início do handler)
-      const contasVencidas = await db
-        .select()
-        .from(billsPayable)
-        .where(
-          and(
-            eq(billsPayable.empresaId, empresaId),
-            eq(billsPayable.status, "vencido")
-          )
-        );
+      // Alerta 4: Contas vencidas (APENAS para Proprietário e Gerente)
+      if (role === "Proprietário" || role === "Gerente") {
+        const contasVencidas = await db
+          .select()
+          .from(billsPayable)
+          .where(
+            and(
+              eq(billsPayable.empresaId, empresaId),
+              eq(billsPayable.status, "vencido")
+            )
+          );
 
-      for (const conta of contasVencidas) {
-        const diasVencidos = Math.floor((now.getTime() - new Date(conta.dataVencimento).getTime()) / (1000 * 60 * 60 * 24));
-        const tipoConta = conta.tipo === "a_pagar" ? "a pagar" : "a receber";
-        
-        alerts.push({
-          id: `conta-vencida-${conta.id}`,
-          type: "error",
-          severity: "high",
-          title: `Conta ${tipoConta} vencida`,
-          message: `${conta.descricao} - R$ ${conta.valor} venceu há ${diasVencidos} dias`,
-          actionUrl: "/bills",
-          createdAt: new Date().toISOString(),
-        });
+        for (const conta of contasVencidas) {
+          const diasVencidos = Math.floor((now.getTime() - new Date(conta.dataVencimento).getTime()) / (1000 * 60 * 60 * 24));
+          const tipoConta = conta.tipo === "a_pagar" ? "a pagar" : "a receber";
+          
+          alerts.push({
+            id: `conta-vencida-${conta.id}`,
+            type: "error",
+            severity: "high",
+            title: `Conta ${tipoConta} vencida`,
+            message: `${conta.descricao} - R$ ${conta.valor} venceu há ${diasVencidos} dias`,
+            actionUrl: "/bills",
+            createdAt: new Date().toISOString(),
+          });
+        }
       }
 
       res.json({ 
