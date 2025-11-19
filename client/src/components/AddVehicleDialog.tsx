@@ -29,8 +29,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./ImageUpload";
-import { Plus } from "lucide-react";
+import { Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useFipePriceByVehicle } from "@/hooks/use-fipe";
 
 const vehicleFormSchema = z.object({
   brand: z.string().min(1, "Marca é obrigatória"),
@@ -46,6 +47,7 @@ const vehicleFormSchema = z.object({
     return isNaN(num) ? null : num;
   }, z.number().nullable().optional()),
   fuelType: z.string().nullable().optional(),
+  fipeReferencePrice: z.string().optional(),
 });
 
 type VehicleFormData = z.infer<typeof vehicleFormSchema>;
@@ -72,8 +74,47 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
       status: "Entrada",
       kmOdometer: null,
       fuelType: null,
+      fipeReferencePrice: "",
     },
   });
+
+  const fipeMutation = useFipePriceByVehicle(
+    form.watch("brand"),
+    form.watch("model"),
+    form.watch("year")
+  );
+
+  const handleConsultFipe = async () => {
+    const brand = form.getValues("brand");
+    const model = form.getValues("model");
+    const year = form.getValues("year");
+
+    if (!brand || !model || !year) {
+      toast({
+        title: "Campos incompletos",
+        description: "Preencha marca, modelo e ano para consultar o preço FIPE.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await fipeMutation.mutateAsync();
+      const priceValue = result.Valor.replace("R$", "").trim();
+      form.setValue("fipeReferencePrice", priceValue);
+      
+      toast({
+        title: "Preço FIPE encontrado!",
+        description: `${result.Marca} ${result.Modelo} (${result.AnoModelo}): ${result.Valor}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao consultar FIPE",
+        description: error.message || "Não foi possível encontrar o preço. Verifique os dados.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const onSubmit = async (data: VehicleFormData) => {
     try {
@@ -323,6 +364,43 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
                         <SelectItem value="Híbrido">Híbrido</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <FormField
+                control={form.control}
+                name="fipeReferencePrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Preço de Referência FIPE
+                    </FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: R$ 45.000,00"
+                          {...field}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleConsultFipe}
+                        disabled={fipeMutation.isPending}
+                      >
+                        {fipeMutation.isPending ? "Consultando..." : "Consultar FIPE"}
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Consulta automática do preço FIPE baseado na marca, modelo e ano
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
