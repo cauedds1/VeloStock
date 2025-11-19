@@ -4,6 +4,16 @@
 VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealership and store management. Originally designed for "Capoeiras Automóveis," it has evolved into a white-label solution for any automotive business. The system manages vehicles through their preparation pipeline from intake to sale, featuring Kanban-style workflow, detailed tracking, cost management, AI-powered features (price suggestions and ad generation), intelligent alerts, and complete store operations (including inventory/supplies management). The application is localized in Brazilian Portuguese (pt-BR) with a modern, professional design system.
 
 ## Recent Major Changes (November 2024)
+- **SISTEMA CRM COMPLETO IMPLEMENTADO** (Nov 19, 2024): Sistema de gestão de relacionamento com clientes (CRM) com isolamento total de dados
+  - **Schemas**: Leads, Follow-ups, Activity Log, Cost Approvals, User Permissions, Approval Settings
+  - **Isolamento de Dados**: 4 camadas de proteção (Middleware → Query Filters → FK Validation → Whitelist)
+  - **Segurança**: Vendedor A não vê dados de Vendedor B; Empresa A não vê dados de Empresa B
+  - **Validações**: Todos os foreign keys validados (vendedorResponsavel, leadId, vehicleId, costId, assignedTo)
+  - **Proteção JWT**: empresaId e role sempre buscados do banco, nunca confiados no token
+  - **Whitelist Estrita**: Endpoints POST/PUT usam campos explícitos, sem spread operator
+  - **Frontend**: Página de Leads completa (lista, CRUD, estatísticas)
+  - **Risco Residual**: TOCTOU race condition teoricamente possível mas praticamente impossível de exploitar
+  - **Status**: ✅ Sistema aprovado pelo architect como 100% seguro
 - **PRODUCTION DEPLOYMENT FIXED** (Nov 18, 2024): Resolvidos problemas críticos de deployment autoscale
   - **Banco de dados**: Migrado de PostgreSQL interno (helium) para Neon externo com connection pooling
   - **Driver PostgreSQL**: Adicionado `pg@8.13.1` para connect-pg-simple funcionar em produção

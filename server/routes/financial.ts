@@ -13,6 +13,7 @@ import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 import { requireProprietarioOrGerente } from "../middleware/roleCheck";
 
 // Helper para validar autenticação e obter empresaId
+// IMPORTANTE: Não confia no JWT, usa empresaId validado pelo middleware requireRole
 function getUserWithCompany(req: any): { userId: string; empresaId: string } {
   const userId = req.user?.claims?.id || req.user?.claims?.sub;
   
@@ -20,7 +21,9 @@ function getUserWithCompany(req: any): { userId: string; empresaId: string } {
     throw new Error("Unauthorized");
   }
   
-  const user = req.user;
+  // requireProprietarioOrGerente middleware já validou o role via DB lookup
+  // e adicionou user completo do banco ao req.userFromDb
+  const user = req.userFromDb; // Adicionado pelo middleware requireRole
   
   if (!user?.empresaId) {
     throw new Error("User not linked to a company");

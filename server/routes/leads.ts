@@ -73,12 +73,34 @@ router.post("/", async (req: any, res) => {
     const { userId, empresaId } = req.companyUser;
     const leadData = req.body;
     
-    // Criar lead
+    // SECURITY: Validar vendedorResponsavel pertence à mesma empresa (se fornecido)
+    const vendedorResponsavel = leadData.vendedorResponsavel || userId;
+    
+    if (leadData.vendedorResponsavel) {
+      const [vendedor] = await db.select().from(users).where(
+        and(
+          eq(users.id, leadData.vendedorResponsavel),
+          eq(users.empresaId, empresaId)
+        )
+      );
+      
+      if (!vendedor) {
+        return res.status(400).json({ error: "Vendedor inválido ou não pertence à mesma empresa" });
+      }
+    }
+    
+    // Criar lead (sem spread para evitar injeção de campos sensíveis)
     const [newLead] = await db.insert(leads).values({
-      ...leadData,
+      nome: leadData.nome,
+      telefone: leadData.telefone,
+      email: leadData.email,
+      origem: leadData.origem,
+      status: leadData.status || "Novo",
+      observacoes: leadData.observacoes,
+      veiculoInteresse: leadData.veiculoInteresse,
       empresaId,
       criadoPor: userId,
-      vendedorResponsavel: leadData.vendedorResponsavel || userId, // Se não especificar, atribui a si mesmo
+      vendedorResponsavel,
     }).returning();
     
     // Registrar no activity log
@@ -128,37 +150,60 @@ router.put("/:id", async (req: any, res) => {
       }
     }
     
-    // Se estiver transferindo lead, validar que novo vendedor existe e pertence à empresa
-    if (updates.vendedorResponsavel && updates.vendedorResponsavel !== existingLead.vendedorResponsavel) {
-      const [newVendedor] = await db.select().from(users).where(eq(users.id, updates.vendedorResponsavel));
+    // SECURITY: Validar vendedorResponsavel pertence à mesma empresa
+    if (updates.vendedorResponsavel) {
+      const [vendedor] = await db.select().from(users).where(
+        and(
+          eq(users.id, updates.vendedorResponsavel),
+          eq(users.empresaId, empresaId)
+        )
+      );
       
-      if (!newVendedor || newVendedor.empresaId !== empresaId) {
-        return res.status(400).json({ error: "Vendedor inválido" });
+      if (!vendedor) {
+        return res.status(400).json({ error: "Vendedor inválido ou não pertence à mesma empresa" });
       }
       
-      // Transferir follow-ups pendentes para o novo vendedor
-      await db.update(followUps)
-        .set({ assignedTo: updates.vendedorResponsavel })
-        .where(and(
-          eq(followUps.leadId, id),
-          eq(followUps.status, "Pendente")
-        ));
-      
-      // Registrar transferência no log
-      await db.insert(activityLog).values({
-        empresaId,
-        userId,
-        userName: `${req.companyUser.firstName} ${req.companyUser.lastName}`,
-        activityType: "lead_updated",
-        entityType: "lead",
-        entityId: id,
-        description: `Transferiu lead "${existingLead.nome}" para ${newVendedor.firstName} ${newVendedor.lastName}`,
-      });
+      // Se estiver transferindo lead para outro vendedor
+      if (updates.vendedorResponsavel !== existingLead.vendedorResponsavel) {
+        const newVendedor = vendedor;
+        
+        // Transferir follow-ups pendentes para o novo vendedor
+        await db.update(followUps)
+          .set({ assignedTo: updates.vendedorResponsavel })
+          .where(and(
+            eq(followUps.leadId, id),
+            eq(followUps.status, "Pendente")
+          ));
+        
+        // Registrar transferência no log
+        await db.insert(activityLog).values({
+          empresaId,
+          userId,
+          userName: `${req.companyUser.firstName} ${req.companyUser.lastName}`,
+          activityType: "lead_updated",
+          entityType: "lead",
+          entityId: id,
+          description: `Transferiu lead "${existingLead.nome}" para ${newVendedor.firstName} ${newVendedor.lastName}`,
+        });
+      }
     }
+    
+    // SECURITY: WHITELIST de campos permitidos (NÃO usar spread direto do cliente)
+    const safeUpdates: any = {
+      updatedAt: new Date(),
+    };
+    
+    // Campos permitidos para atualização
+    const allowedFields = ['nome', 'telefone', 'email', 'origem', 'status', 'observacoes', 'vendedorResponsavel', 'veiculoInteresse'];
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        safeUpdates[field] = updates[field];
+      }
+    });
     
     // Atualizar lead
     const [updated] = await db.update(leads)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(safeUpdates)
       .where(eq(leads.id, id))
       .returning();
     

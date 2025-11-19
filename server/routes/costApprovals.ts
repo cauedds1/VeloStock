@@ -160,6 +160,20 @@ router.post("/", async (req: any, res) => {
     const { userId, empresaId } = req.companyUser;
     const { costId, valor } = req.body;
     
+    // CRITICAL: Validar que o custo pertence à mesma empresa
+    if (costId) {
+      const [cost] = await db.select().from(vehicleCosts).where(
+        and(
+          eq(vehicleCosts.id, costId),
+          eq(vehicleCosts.empresaId, empresaId)
+        )
+      );
+      
+      if (!cost) {
+        return res.status(400).json({ error: "Custo inválido ou não pertence à mesma empresa" });
+      }
+    }
+    
     const [newApproval] = await db.insert(costApprovals).values({
       empresaId,
       costId,

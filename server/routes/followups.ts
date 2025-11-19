@@ -122,12 +122,45 @@ router.post("/", async (req: any, res) => {
     const { userId, empresaId, role } = req.companyUser;
     const followUpData = req.body;
     
-    // Validar que assignedTo pertence à empresa
+    // SECURITY: Validar assignedTo pertence à empresa
     if (followUpData.assignedTo) {
-      const [assignee] = await db.select().from(users).where(eq(users.id, followUpData.assignedTo));
+      const [assignee] = await db.select().from(users).where(
+        and(
+          eq(users.id, followUpData.assignedTo),
+          eq(users.empresaId, empresaId)
+        )
+      );
       
-      if (!assignee || assignee.empresaId !== empresaId) {
-        return res.status(400).json({ error: "Usuário atribuído inválido" });
+      if (!assignee) {
+        return res.status(400).json({ error: "Usuário atribuído inválido ou não pertence à mesma empresa" });
+      }
+    }
+    
+    // SECURITY: Validar leadId pertence à mesma empresa (se fornecido)
+    if (followUpData.leadId) {
+      const [lead] = await db.select().from(leads).where(
+        and(
+          eq(leads.id, followUpData.leadId),
+          eq(leads.empresaId, empresaId)
+        )
+      );
+      
+      if (!lead) {
+        return res.status(400).json({ error: "Lead inválido ou não pertence à mesma empresa" });
+      }
+    }
+    
+    // SECURITY: Validar vehicleId pertence à mesma empresa (se fornecido)
+    if (followUpData.vehicleId) {
+      const [vehicle] = await db.select().from(vehicles).where(
+        and(
+          eq(vehicles.id, followUpData.vehicleId),
+          eq(vehicles.empresaId, empresaId)
+        )
+      );
+      
+      if (!vehicle) {
+        return res.status(400).json({ error: "Veículo inválido ou não pertence à mesma empresa" });
       }
     }
     
@@ -137,8 +170,15 @@ router.post("/", async (req: any, res) => {
       ? (followUpData.assignedTo || userId)
       : userId;
     
+    // SECURITY: Criar follow-up com whitelist explícita (NÃO usar spread)
     const [newFollowUp] = await db.insert(followUps).values({
-      ...followUpData,
+      titulo: followUpData.titulo,
+      descricao: followUpData.descricao,
+      status: followUpData.status || "Pendente",
+      dataAgendada: followUpData.dataAgendada,
+      leadId: followUpData.leadId,
+      vehicleId: followUpData.vehicleId,
+      observacoes: followUpData.observacoes,
       empresaId,
       assignedTo,
       criadoPor: userId,
@@ -184,13 +224,53 @@ router.put("/:id", async (req: any, res) => {
       }
     }
     
+    // SECURITY: Validar leadId e vehicleId pertencem à mesma empresa (se fornecidos)
+    if (updates.leadId) {
+      const [lead] = await db.select().from(leads).where(
+        and(
+          eq(leads.id, updates.leadId),
+          eq(leads.empresaId, empresaId)
+        )
+      );
+      
+      if (!lead) {
+        return res.status(400).json({ error: "Lead inválido ou não pertence à mesma empresa" });
+      }
+    }
+    
+    if (updates.vehicleId) {
+      const [vehicle] = await db.select().from(vehicles).where(
+        and(
+          eq(vehicles.id, updates.vehicleId),
+          eq(vehicles.empresaId, empresaId)
+        )
+      );
+      
+      if (!vehicle) {
+        return res.status(400).json({ error: "Veículo inválido ou não pertence à mesma empresa" });
+      }
+    }
+    
+    // SECURITY: WHITELIST de campos permitidos (NÃO usar spread direto do cliente)
+    const safeUpdates: any = {
+      updatedAt: new Date(),
+    };
+    
+    // Campos permitidos para atualização
+    const allowedFields = ['titulo', 'descricao', 'status', 'dataAgendada', 'leadId', 'vehicleId', 'observacoes'];
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        safeUpdates[field] = updates[field];
+      }
+    });
+    
     // Se está marcando como concluído, adicionar timestamp
-    if (updates.status === "Concluído" && existing.status !== "Concluído") {
-      updates.concluidoEm = new Date();
+    if (safeUpdates.status === "Concluído" && existing.status !== "Concluído") {
+      safeUpdates.concluidoEm = new Date();
     }
     
     const [updated] = await db.update(followUps)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(safeUpdates)
       .where(eq(followUps.id, id))
       .returning();
     

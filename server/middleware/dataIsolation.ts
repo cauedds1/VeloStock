@@ -1,33 +1,51 @@
 import type { Request, Response, NextFunction } from "express";
 
+import { storage } from "../storage";
+
 /**
  * Middleware centralizado que extrai userId, empresaId e role do usuário autenticado
+ * CRITICAL: Busca SEMPRE do banco de dados, NUNCA confia no JWT
  * Rejeita requisições se o usuário não estiver vinculado a uma empresa
  */
-export function requireCompanyUser(req: any, res: Response, next: NextFunction) {
-  const userId = req.user?.claims?.id || req.user?.claims?.sub;
-  
-  if (!userId) {
-    return res.status(401).json({ error: "Não autenticado" });
+export async function requireCompanyUser(req: any, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.claims?.id || req.user?.claims?.sub;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    
+    // CRITICAL: Buscar usuário completo DO BANCO (não confiar no JWT)
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    
+    if (!user.empresaId) {
+      return res.status(403).json({ error: "Usuário não está vinculado a uma empresa" });
+    }
+    
+    // Verificar se usuário está ativo
+    if (user.isActive === "false") {
+      return res.status(403).json({ error: "Usuário inativo" });
+    }
+    
+    // CRITICAL: Adiciona informações DO BANCO ao request (não do JWT)
+    req.companyUser = {
+      userId,
+      empresaId: user.empresaId, // Do banco, não do JWT
+      role: user.role || "vendedor", // Do banco, não do JWT
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    };
+    
+    next();
+  } catch (error) {
+    console.error("Erro no middleware requireCompanyUser:", error);
+    res.status(500).json({ error: "Erro ao validar usuário" });
   }
-  
-  const user = req.user;
-  
-  if (!user?.empresaId) {
-    return res.status(403).json({ error: "Usuário não está vinculado a uma empresa" });
-  }
-  
-  // Adiciona informações do usuário ao request
-  req.companyUser = {
-    userId,
-    empresaId: user.empresaId,
-    role: user.role || "vendedor",
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-  };
-  
-  next();
 }
 
 /**

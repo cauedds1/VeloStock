@@ -38,8 +38,9 @@ export function requireRole(allowedRoles: UserRole[]) {
         });
       }
 
-      // Anexar role ao request para uso posterior
+      // Anexar role e user ao request para uso posterior
       (req as any).userRole = user.role;
+      (req as any).userFromDb = user; // Para garantir empresaId vem do banco, não do JWT
 
       next();
     } catch (error) {
