@@ -1881,6 +1881,71 @@ Retorne APENAS um JSON válido no formato:
   });
 
   // ============================================
+  // BUSCA FIPE
+  // ============================================
+  app.post("/api/fipe/search", isAuthenticated, async (req: any, res) => {
+    try {
+      const { plate } = req.body;
+
+      if (!plate) {
+        return res.status(400).json({ message: "Placa é obrigatória" });
+      }
+
+      // Validação básica de placa brasileira
+      const plateRegex = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+      const cleanPlate = plate.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      
+      if (!plateRegex.test(cleanPlate) && cleanPlate.length !== 7) {
+        return res.status(400).json({ message: "Formato de placa inválido" });
+      }
+
+      // Verificar se as credenciais da API existem
+      const bearerToken = process.env.APIBRASIL_BEARER_TOKEN;
+      const deviceToken = process.env.APIBRASIL_DEVICE_TOKEN;
+
+      if (!bearerToken || !deviceToken) {
+        return res.status(503).json({ 
+          message: "API FIPE não configurada. Entre em contato com o administrador do sistema." 
+        });
+      }
+
+      // Chamar a API Brasil
+      const response = await fetch("https://gateway.apibrasil.io/api/v2/vehicles/dados", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${bearerToken}`,
+          "DeviceToken": deviceToken,
+        },
+        body: JSON.stringify({ placa: cleanPlate }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro na API Brasil:", errorText);
+        
+        if (response.status === 404) {
+          return res.status(404).json({ 
+            message: "Veículo não encontrado na base de dados FIPE. Verifique a placa e tente novamente." 
+          });
+        }
+        
+        return res.status(response.status).json({ 
+          message: "Erro ao buscar dados do veículo. Tente novamente mais tarde." 
+        });
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error("Erro ao buscar FIPE:", error);
+      res.status(500).json({ 
+        message: error.message || "Erro ao buscar dados da FIPE" 
+      });
+    }
+  });
+
+  // ============================================
   // MÓDULO FINANCEIRO (Proprietário/Gerente apenas)
   // ============================================
   app.use("/api/financial", isAuthenticated, financialRoutes);

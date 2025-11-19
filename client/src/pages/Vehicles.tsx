@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowUpDown } from "lucide-react";
 import { AddVehicleDialog } from "@/components/AddVehicleDialog";
+import { FipeSearchDialog } from "@/components/FipeSearchDialog";
 import { Link } from "wouter";
 import {
   Select,
@@ -194,14 +195,17 @@ export default function Vehicles() {
 
   return (
     <div className="flex h-full flex-col p-8">
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-8 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Veículos</h1>
           <p className="mt-2 text-muted-foreground">
             Gerencie todos os veículos do estoque
           </p>
         </div>
-        <AddVehicleDialog />
+        <div className="flex gap-3 flex-wrap">
+          <FipeSearchDialog />
+          <AddVehicleDialog />
+        </div>
       </div>
 
       {/* Filtros reorganizados */}
