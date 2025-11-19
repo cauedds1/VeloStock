@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface Brand {
   codigo: string;
@@ -48,11 +49,13 @@ interface FipeValue {
 }
 
 export function FipeSearchDialog() {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState("carros");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [fipeResult, setFipeResult] = useState<FipeValue | null>(null);
 
   // Query para buscar marcas
   const { data: brands = [], isLoading: loadingBrands } = useQuery<Brand[]>({
@@ -82,6 +85,7 @@ export function FipeSearchDialog() {
     data: fipeValue,
     isFetching: loadingValue,
     refetch: fetchValue,
+    isError,
   } = useQuery<FipeValue>({
     queryKey: [
       "/api/fipe/value",
@@ -95,9 +99,26 @@ export function FipeSearchDialog() {
     enabled: false, // Só busca quando clicar no botão
   });
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (selectedBrand && selectedModel && selectedYear) {
-      fetchValue();
+      try {
+        const result = await fetchValue();
+        if (result.data) {
+          setFipeResult(result.data);
+        } else if (result.isError) {
+          toast({
+            title: "Erro ao buscar FIPE",
+            description: "Não foi possível obter o valor FIPE. Tente novamente mais tarde.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erro ao buscar FIPE",
+          description: "Não foi possível obter o valor FIPE. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -106,6 +127,7 @@ export function FipeSearchDialog() {
     setSelectedBrand("");
     setSelectedModel("");
     setSelectedYear("");
+    setFipeResult(null);
   };
 
   const formatCurrency = (value: string) => {
@@ -175,6 +197,7 @@ export function FipeSearchDialog() {
                   setSelectedBrand(value);
                   setSelectedModel("");
                   setSelectedYear("");
+                  setFipeResult(null);
                 }}
                 disabled={brands.length === 0}
               >
@@ -203,6 +226,7 @@ export function FipeSearchDialog() {
                 onValueChange={(value) => {
                   setSelectedModel(value);
                   setSelectedYear("");
+                  setFipeResult(null);
                 }}
                 disabled={!selectedBrand || models.length === 0}
               >
@@ -228,7 +252,10 @@ export function FipeSearchDialog() {
             ) : (
               <Select
                 value={selectedYear}
-                onValueChange={setSelectedYear}
+                onValueChange={(value) => {
+                  setSelectedYear(value);
+                  setFipeResult(null);
+                }}
                 disabled={!selectedModel || years.length === 0}
               >
                 <SelectTrigger data-testid="select-year">
@@ -268,7 +295,7 @@ export function FipeSearchDialog() {
           </Button>
 
           {/* Resultado */}
-          {fipeValue && (
+          {fipeResult && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Valor FIPE</CardTitle>
@@ -280,13 +307,13 @@ export function FipeSearchDialog() {
                       Marca/Modelo
                     </p>
                     <p className="text-base font-semibold" data-testid="text-brand-model">
-                      {fipeValue.Marca} {fipeValue.Modelo}
+                      {fipeResult.Marca} {fipeResult.Modelo}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Ano</p>
                     <p className="text-base" data-testid="text-year">
-                      {fipeValue.AnoModelo}
+                      {fipeResult.AnoModelo}
                     </p>
                   </div>
                   <div>
@@ -294,7 +321,7 @@ export function FipeSearchDialog() {
                       Combustível
                     </p>
                     <p className="text-base" data-testid="text-fuel">
-                      {fipeValue.Combustivel}
+                      {fipeResult.Combustivel}
                     </p>
                   </div>
                   <div>
@@ -302,7 +329,7 @@ export function FipeSearchDialog() {
                       Código FIPE
                     </p>
                     <p className="text-base" data-testid="text-fipe-code">
-                      {fipeValue.CodigoFipe}
+                      {fipeResult.CodigoFipe}
                     </p>
                   </div>
                 </div>
@@ -315,10 +342,10 @@ export function FipeSearchDialog() {
                     className="text-2xl font-bold text-primary"
                     data-testid="text-fipe-value"
                   >
-                    {formatCurrency(fipeValue.Valor)}
+                    {formatCurrency(fipeResult.Valor)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Referência: {fipeValue.MesReferencia}
+                    Referência: {fipeResult.MesReferencia}
                   </p>
                 </div>
               </CardContent>
