@@ -26,6 +26,7 @@ import {
   companySettings,
   vehicleDocuments,
   companies,
+  userPermissions,
 } from "@shared/schema";
 import { normalizeChecklistData } from "@shared/checklistUtils";
 import { db } from "./db";
@@ -417,6 +418,38 @@ export class DatabaseStorage implements IStorage {
   async deleteVehicleDocument(id: string): Promise<boolean> {
     const result = await db.delete(vehicleDocuments).where(eq(vehicleDocuments.id, id)).returning();
     return result.length > 0;
+  }
+
+  // User Permissions (Custom Permissions)
+  async getUserPermissions(userId: string, empresaId: string) {
+    const result = await db.select()
+      .from(userPermissions)
+      .where(and(
+        eq(userPermissions.userId, userId),
+        eq(userPermissions.empresaId, empresaId)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateUserPermissions(userId: string, empresaId: string, permissions: any) {
+    const existing = await this.getUserPermissions(userId, empresaId);
+    
+    if (existing) {
+      const [updated] = await db.update(userPermissions)
+        .set({ ...permissions, updatedAt: new Date() })
+        .where(and(
+          eq(userPermissions.userId, userId),
+          eq(userPermissions.empresaId, empresaId)
+        ))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(userPermissions)
+        .values({ userId, empresaId, ...permissions })
+        .returning();
+      return created;
+    }
   }
 }
 

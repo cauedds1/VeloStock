@@ -112,6 +112,12 @@ export const vehicles = pgTable("vehicles", {
     lataria?: Array<{ item: string; observation?: string }>;
     documentacao?: Array<{ item: string; observation?: string }>;
   }>().default({}),
+  // Campos de venda e comissão
+  vendedorId: varchar("vendedor_id"), // FK para users - quem vendeu o veículo
+  dataVenda: timestamp("data_venda"), // Quando foi vendido
+  valorVenda: numeric("valor_venda", { precision: 10, scale: 2 }), // Valor real da venda (pode ser diferente do salePrice)
+  formaPagamento: text("forma_pagamento"), // À vista, financiado, etc
+  observacoesVenda: text("observacoes_venda"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   locationChangedAt: timestamp("location_changed_at").defaultNow().notNull(),
@@ -324,3 +330,178 @@ export const insertCompanySettingsSchema = createInsertSchema(companySettings).o
 
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
 export type CompanySettings = typeof companySettings.$inferSelect;
+
+// ============================================
+// MÓDULO FINANCEIRO
+// ============================================
+
+// Enums para módulo financeiro
+export const expenseCategoryEnum = pgEnum("expense_category", [
+  "Aluguel",
+  "Energia",
+  "Água",
+  "Internet",
+  "Telefone",
+  "Salários",
+  "Impostos",
+  "Marketing",
+  "Manutenção",
+  "Combustível",
+  "Outros"
+]);
+
+export const transactionTypeEnum = pgEnum("transaction_type", [
+  "Receita", // Venda de veículo
+  "Despesa"  // Despesa operacional
+]);
+
+export const commissionStatusEnum = pgEnum("commission_status", [
+  "A Pagar",
+  "Paga",
+  "Cancelada"
+]);
+
+// Configuração de comissões por vendedor
+export const commissionsConfig = pgTable("commissions_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull(),
+  vendedorId: varchar("vendedor_id").notNull(), // FK para users
+  percentualComissao: numeric("percentual_comissao", { precision: 5, scale: 2 }).notNull(), // Ex: 5.00 para 5%
+  ativo: varchar("ativo").default("true"), // "true" ou "false"
+  observacoes: text("observacoes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCommissionsConfigSchema = createInsertSchema(commissionsConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCommissionsConfig = z.infer<typeof insertCommissionsConfigSchema>;
+export type CommissionsConfig = typeof commissionsConfig.$inferSelect;
+
+// Despesas operacionais
+export const operationalExpenses = pgTable("operational_expenses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull(),
+  categoria: expenseCategoryEnum("categoria").notNull(),
+  descricao: text("descricao").notNull(),
+  valor: numeric("valor", { precision: 10, scale: 2 }).notNull(), // Valor em reais
+  dataVencimento: timestamp("data_vencimento"),
+  dataPagamento: timestamp("data_pagamento"),
+  pago: varchar("pago").default("false"), // "true" ou "false"
+  formaPagamento: text("forma_pagamento"), // Dinheiro, Cartão, Transferência, etc
+  observacoes: text("observacoes"),
+  criadoPor: varchar("criado_por"), // ID do usuário que criou
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertOperationalExpenseSchema = createInsertSchema(operationalExpenses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOperationalExpense = z.infer<typeof insertOperationalExpenseSchema>;
+export type OperationalExpense = typeof operationalExpenses.$inferSelect;
+
+// Comissões de vendedores (registro de comissões calculadas e pagas)
+export const commissionPayments = pgTable("commission_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull(),
+  vendedorId: varchar("vendedor_id").notNull(), // FK para users
+  veiculoId: varchar("veiculo_id"), // FK para vehicles (opcional - pode ser comissão agrupada)
+  percentualAplicado: numeric("percentual_aplicado", { precision: 5, scale: 2 }).notNull(),
+  valorBase: numeric("valor_base", { precision: 10, scale: 2 }).notNull(), // Valor sobre o qual a comissão foi calculada
+  valorComissao: numeric("valor_comissao", { precision: 10, scale: 2 }).notNull(), // Valor da comissão
+  status: commissionStatusEnum("status").default("A Pagar"),
+  dataPagamento: timestamp("data_pagamento"),
+  formaPagamento: text("forma_pagamento"),
+  observacoes: text("observacoes"),
+  criadoPor: varchar("criado_por"), // ID do usuário que criou
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCommissionPaymentSchema = createInsertSchema(commissionPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCommissionPayment = z.infer<typeof insertCommissionPaymentSchema>;
+export type CommissionPayment = typeof commissionPayments.$inferSelect;
+
+// Metas de vendas
+export const salesTargets = pgTable("sales_targets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull(),
+  vendedorId: varchar("vendedor_id"), // Null = meta da loja inteira
+  mesReferencia: integer("mes_referencia").notNull(), // 1-12
+  anoReferencia: integer("ano_referencia").notNull(), // 2024, 2025, etc
+  metaQuantidade: integer("meta_quantidade"), // Quantidade de veículos a vender
+  metaValor: numeric("meta_valor", { precision: 10, scale: 2 }), // Valor total a vender
+  observacoes: text("observacoes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSalesTargetSchema = createInsertSchema(salesTargets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSalesTarget = z.infer<typeof insertSalesTargetSchema>;
+export type SalesTarget = typeof salesTargets.$inferSelect;
+
+// ============================================
+// PERMISSÕES CUSTOMIZADAS (GRANULARES)
+// ============================================
+
+// Permissões granulares por usuário (override do papel padrão)
+export const userPermissions = pgTable("user_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull(),
+  userId: varchar("user_id").notNull(), // FK para users
+  // Menu e páginas
+  acessarDashboard: varchar("acessar_dashboard").default("true"),
+  acessarVeiculos: varchar("acessar_veiculos").default("true"),
+  acessarCustos: varchar("acessar_custos").default("true"),
+  acessarAlerts: varchar("acessar_alerts").default("true"),
+  acessarObservacoes: varchar("acessar_observacoes").default("true"),
+  acessarConfiguracoes: varchar("acessar_configuracoes").default("false"),
+  acessarUsuarios: varchar("acessar_usuarios").default("false"),
+  // Módulo Financeiro
+  acessarFinanceiro: varchar("acessar_financeiro").default("false"),
+  acessarDashboardFinanceiro: varchar("acessar_dashboard_financeiro").default("false"),
+  acessarComissoes: varchar("acessar_comissoes").default("false"),
+  acessarDespesas: varchar("acessar_despesas").default("false"),
+  acessarRelatorios: varchar("acessar_relatorios").default("false"),
+  // Ações em veículos
+  criarVeiculos: varchar("criar_veiculos").default("true"),
+  editarVeiculos: varchar("editar_veiculos").default("true"),
+  deletarVeiculos: varchar("deletar_veiculos").default("false"),
+  verCustosVeiculos: varchar("ver_custos_veiculos").default("true"),
+  editarCustosVeiculos: varchar("editar_custos_veiculos").default("true"),
+  verMargensLucro: varchar("ver_margens_lucro").default("false"),
+  // Funcionalidades AI
+  usarSugestaoPreco: varchar("usar_sugestao_preco").default("true"),
+  usarGeracaoAnuncios: varchar("usar_geracao_anuncios").default("true"),
+  // Data
+  criadoPor: varchar("criado_por"), // ID do proprietário que configurou
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserPermissionsSchema = createInsertSchema(userPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserPermissions = z.infer<typeof insertUserPermissionsSchema>;
+export type UserPermissions = typeof userPermissions.$inferSelect;

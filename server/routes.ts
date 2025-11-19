@@ -13,6 +13,7 @@ import { existsSync, createReadStream } from "fs";
 import { createBackup, listBackups, getBackupPath } from "./backup";
 import { requireProprietario, requireProprietarioOrGerente, PERMISSIONS } from "./middleware/roleCheck";
 import bcrypt from "bcrypt";
+import financialRoutes from "./routes/financial";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1736,6 +1737,87 @@ Retorne APENAS um JSON válido no formato:
     } catch (error) {
       console.error("Erro ao buscar alertas:", error);
       res.status(500).json({ error: "Erro ao buscar alertas" });
+    }
+  });
+
+  // ============================================
+  // MÓDULO FINANCEIRO (Proprietário/Gerente apenas)
+  // ============================================
+  app.use("/api/financial", isAuthenticated, financialRoutes);
+
+  // ============================================
+  // GERENCIAR ACESSOS (Permissões Customizadas - Proprietário apenas)
+  // ============================================
+  
+  // Buscar permissões de um usuário
+  app.get("/api/users/:userId/permissions", isAuthenticated, requireProprietario, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(403).json({ error: "Usuário não está vinculado a uma empresa" });
+      }
+      const { empresaId } = userInfo;
+      const { userId } = req.params;
+
+      const permissions = await storage.getUserPermissions(userId, empresaId);
+      
+      res.json(permissions || {
+        // Valores padrão se não houver permissões customizadas
+        userId,
+        empresaId,
+        acessarDashboard: "true",
+        acessarVeiculos: "true",
+        acessarCustos: "true",
+        acessarAlerts: "true",
+        acessarObservacoes: "true",
+        acessarConfiguracoes: "false",
+        acessarUsuarios: "false",
+        acessarFinanceiro: "false",
+        acessarDashboardFinanceiro: "false",
+        acessarComissoes: "false",
+        acessarDespesas: "false",
+        acessarRelatorios: "false",
+        criarVeiculos: "true",
+        editarVeiculos: "true",
+        deletarVeiculos: "false",
+        verCustosVeiculos: "true",
+        editarCustosVeiculos: "true",
+        verMargensLucro: "false",
+        usarSugestaoPreco: "true",
+        usarGeracaoAnuncios: "true",
+      });
+    } catch (error) {
+      console.error("Erro ao buscar permissões do usuário:", error);
+      res.status(500).json({ error: "Erro ao buscar permissões" });
+    }
+  });
+
+  // Atualizar permissões de um usuário
+  app.put("/api/users/:userId/permissions", isAuthenticated, requireProprietario, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(403).json({ error: "Usuário não está vinculado a uma empresa" });
+      }
+      const { empresaId, userId: proprietarioId } = userInfo;
+      const { userId } = req.params;
+      const permissions = req.body;
+
+      // Validar que o usuário pertence à mesma empresa
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser || targetUser.empresaId !== empresaId) {
+        return res.status(403).json({ error: "Usuário não pertence a esta empresa" });
+      }
+
+      const updated = await storage.updateUserPermissions(userId, empresaId, {
+        ...permissions,
+        criadoPor: proprietarioId,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Erro ao atualizar permissões do usuário:", error);
+      res.status(500).json({ error: "Erro ao atualizar permissões" });
     }
   });
 
