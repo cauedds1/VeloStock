@@ -41,9 +41,11 @@ export function getDatabaseUrl(): string {
 
   // 3. Em PRODUÇÃO, usar Neon pooler para autoscale (evita limite de 4 conexões)
   if (isProduction && databaseUrl.includes('neon.tech') && !databaseUrl.includes('-pooler')) {
+    // Exemplo: ep-icy-art-ah7hafdz.c-3.us-east-1.aws.neon.tech
+    // Vira:    ep-icy-art-ah7hafdz-pooler.c-3.us-east-1.aws.neon.tech
     databaseUrl = databaseUrl.replace(
-      /([a-z0-9-]+)\.([a-z0-9-]+)\.aws\.neon\.tech/,
-      '$1-pooler.$2.aws.neon.tech'
+      /(ep-[a-z0-9-]+)\.(c-\d+\.us-[a-z]+-\d+\.aws\.neon\.tech)/,
+      '$1-pooler.$2'
     );
     console.log('[Database] ✓ Using Neon pooler for autoscale deployment');
   }
