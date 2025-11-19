@@ -5,13 +5,14 @@ VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealers
 
 ## Recent Major Changes (November 2024)
 - **INTEGRAÇÃO FIPE COMPLETA E FUNCIONAL** (Nov 19, 2024): Sistema de consulta FIPE integrado ao cadastro de veículos e sugestão de preços com IA
-  - **Hooks FIPE**: `useFipeBrands`, `useFipeModels`, `useFipeYears`, `useFipePrice`, `useFipePriceByVehicle` (fuzzy matching automático)
+  - **Hooks FIPE**: `useFipeBrands`, `useFipeModels`, `useFipeYears`, `useFipePrice`, `useFipeVehicleVersions`, `useFipePriceByVersion`
   - **Fuzzy Matching Robusto**: Normalização de acentos (NFD), aliases de marcas (GM/Chevrolet, VW/Volkswagen), matching bidirecional
-  - **Cadastro de Veículo**: Botão "Consultar FIPE" no formulário, campo fipeReferencePrice (persiste no banco)
+  - **Seletor de Versões**: Dropdown inteligente para escolher motorização/acabamento exato (ex: Polo 1.0 TSI vs 1.6 MSI)
+  - **Cadastro de Veículo**: Botão "Consultar FIPE" → Lista de versões → Seleção manual → Preço específico persistido
   - **Sugestão de Preço**: Nova aba "Sugestão de Preço" com busca FIPE automática + IA (GPT-4o-mini)
-  - **Fluxo Completo**: FIPE → Margem de Lucro → IA → Preço Sugerido + Justificativa
-  - **Correções Críticas**: toFixed() com parseFloat, persistência fipeReferencePrice, fuzzy matching com normalização
-  - **Status**: ✅ 100% funcional e aprovado pelo architect
+  - **Fluxo Completo**: FIPE → Seleção de Versão → Margem de Lucro → IA → Preço Sugerido + Justificativa
+  - **Correções Críticas**: toFixed() com parseFloat, persistência fipeReferencePrice, fuzzy matching com normalização, seleção de versões
+  - **Status**: ✅ 100% funcional com seleção de versões
 - **SISTEMA CRM COMPLETO IMPLEMENTADO** (Nov 19, 2024): Sistema de gestão de relacionamento com clientes (CRM) com isolamento total de dados
   - **Schemas**: Leads, Follow-ups, Activity Log, Cost Approvals, User Permissions, Approval Settings
   - **Isolamento de Dados**: 4 camadas de proteção (Middleware → Query Filters → FK Validation → Whitelist)

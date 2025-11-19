@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles, TrendingUp, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useFipePriceByVehicle } from "@/hooks/use-fipe";
+import { useFipeVehicleVersions, useFipePriceByVersion } from "@/hooks/use-fipe";
+import type { FipeYear } from "@/hooks/use-fipe";
 
 interface PriceSuggestionProps {
   vehicleId: string;
