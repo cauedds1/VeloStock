@@ -32,7 +32,7 @@ import { ImageUpload } from "./ImageUpload";
 import { Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFipeVehicleVersions, useFipePriceByVersion } from "@/hooks/use-fipe";
-import type { FipeYear } from "@/hooks/use-fipe";
+import type { FipeVersion } from "@/hooks/use-fipe";
 
 const vehicleFormSchema = z.object({
   brand: z.string().min(1, "Marca é obrigatória"),
@@ -61,8 +61,8 @@ interface AddVehicleDialogProps {
 export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   const [open, setOpen] = useState(false);
   const [images, setImages] = useState<File[]>([]);
-  const [fipeVersions, setFipeVersions] = useState<FipeYear[]>([]);
-  const [fipeMetadata, setFipeMetadata] = useState<{brandId: string, modelId: string} | null>(null);
+  const [fipeVersions, setFipeVersions] = useState<FipeVersion[]>([]);
+  const [fipeMetadata, setFipeMetadata] = useState<{brandId: string} | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -126,7 +126,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
     try {
       const result = await versionsMutation.mutateAsync();
       setFipeVersions(result.versions);
-      setFipeMetadata({ brandId: result.brandId, modelId: result.modelId });
+      setFipeMetadata({ brandId: result.brandId });
       
       if (result.versions.length === 0) {
         toast({
@@ -145,16 +145,20 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   };
 
   // Quando usuário seleciona uma versão, buscar preço FIPE automaticamente
-  const handleVersionChange = async (versionCode: string) => {
-    form.setValue("version", versionCode);
-    
+  const handleVersionChange = async (versionJson: string) => {
     if (!fipeMetadata) return;
 
     try {
+      // Parse da versão selecionada
+      const version: FipeVersion = JSON.parse(versionJson);
+      // Salvar JSON completo no form (será parseado no submit)
+      form.setValue("version", versionJson);
+
+      // Buscar preço com brandId + modelId + yearCode específicos
       const result = await priceMutation.mutateAsync({ 
         brandId: fipeMetadata.brandId, 
-        modelId: fipeMetadata.modelId, 
-        versionCode 
+        modelId: String(version.modelId), 
+        versionCode: version.yearCode 
       });
       
       const priceValue = result.Valor.replace("R$", "").trim();
@@ -317,9 +321,9 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
                       </FormControl>
                       <SelectContent>
                         {fipeVersions.length > 0 ? (
-                          fipeVersions.map((version) => (
-                            <SelectItem key={version.codigo} value={version.codigo}>
-                              {version.nome}
+                          fipeVersions.map((version, index) => (
+                            <SelectItem key={`${version.modelId}-${version.yearCode}-${index}`} value={JSON.stringify(version)}>
+                              {version.label}
                             </SelectItem>
                           ))
                         ) : (

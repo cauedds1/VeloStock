@@ -108,8 +108,17 @@ const BRAND_ALIASES: Record<string, string[]> = {
   "mercedes": ["mercedes-benz", "benz"],
 };
 
-// Hook para buscar VERSÕES disponíveis baseado em marca/modelo/ano (texto)
-// Retorna lista de versões para o usuário selecionar a correta
+// Interface para versão FIPE completa (modelo + ano + combustível)
+export interface FipeVersion {
+  label: string;          // Ex: "Fiesta 1.5 16V Flex Mec. 5p 2017 Gasolina"
+  modelId: number;        // Código do modelo FIPE
+  modelName: string;      // Nome completo do modelo
+  yearCode: string;       // Código do ano (usado para buscar preço)
+  yearLabel: string;      // Ex: "2017 Gasolina" ou "32000-1" 
+}
+
+// Hook para buscar TODAS as VERSÕES disponíveis baseado em marca/modelo/ano (texto)
+// Retorna lista completa de versões para o usuário selecionar a correta
 export function useFipeVehicleVersions(brand?: string, model?: string, year?: number) {
   return useMutation({
     mutationFn: async () => {
@@ -161,10 +170,9 @@ export function useFipeVehicleVersions(brand?: string, model?: string, year?: nu
       if (!modelsResponse.ok) throw new Error("Erro ao buscar modelos");
       const modelsData: { modelos: FipeModel[] } = await modelsResponse.json();
 
-      // 4. Encontrar modelo correspondente (fuzzy match priorizando mais genérico/curto)
+      // 4. Encontrar TODOS os modelos correspondentes (não apenas 1)
       const normalizedModel = normalizeString(model);
       
-      // Filtrar todos os modelos que correspondem ao input
       const candidateModels = modelsData.modelos.filter((m) => {
         const normalizedModelName = normalizeString(m.nome);
         
@@ -184,36 +192,53 @@ export function useFipeVehicleVersions(brand?: string, model?: string, year?: nu
       if (candidateModels.length === 0) {
         throw new Error(`Modelo "${model}" não encontrado para a marca ${matchedBrand.nome}`);
       }
+
+      // 5. Para cada modelo candidato, buscar anos disponíveis e filtrar pelo ano desejado
+      const allVersions: FipeVersion[] = [];
       
-      // Escolher o modelo mais curto/genérico (geralmente tem mais versões/anos disponíveis)
-      const matchedModel = candidateModels.reduce((shortest, current) => 
-        current.nome.length < shortest.nome.length ? current : shortest
-      );
-
-      // 5. Buscar anos disponíveis
-      const yearsResponse = await fetch(
-        `/api/fipe/brands/${matchedBrand.codigo}/models/${matchedModel.codigo}/years`
-      );
-      if (!yearsResponse.ok) throw new Error("Erro ao buscar anos");
-      const years: FipeYear[] = await yearsResponse.json();
-
-      // 6. Filtrar versões do ano especificado
-      const yearVersions = years.filter(
-        (y) => y.nome.includes(year.toString())
-      );
-
-      if (yearVersions.length === 0) {
-        throw new Error(`Ano ${year} não encontrado para ${matchedBrand.nome} ${matchedModel.nome}`);
+      for (const candidateModel of candidateModels) {
+        try {
+          // Buscar anos disponíveis para este modelo
+          const yearsResponse = await fetch(
+            `/api/fipe/brands/${matchedBrand.codigo}/models/${candidateModel.codigo}/years`
+          );
+          
+          if (!yearsResponse.ok) continue; // Skip se falhar
+          
+          const years: FipeYear[] = await yearsResponse.json();
+          
+          // Filtrar apenas os anos que correspondem ao ano desejado
+          const matchingYears = years.filter(y => y.nome.includes(year.toString()));
+          
+          // Adicionar cada combinação modelo+ano como uma versão
+          for (const yearData of matchingYears) {
+            allVersions.push({
+              label: `${candidateModel.nome} ${yearData.nome}`,
+              modelId: candidateModel.codigo,
+              modelName: candidateModel.nome,
+              yearCode: yearData.codigo,
+              yearLabel: yearData.nome,
+            });
+          }
+        } catch (error) {
+          // Se falhar para um modelo específico, continua com os outros
+          console.error(`Erro ao buscar anos para modelo ${candidateModel.nome}:`, error);
+        }
       }
+
+      if (allVersions.length === 0) {
+        throw new Error(`Nenhuma versão encontrada para ${matchedBrand.nome} ${model} ${year}`);
+      }
+
+      // Ordenar alfabeticamente por label
+      allVersions.sort((a, b) => a.label.localeCompare(b.label));
 
       // Retornar dados para seleção de versão
       return {
         brandId: matchedBrand.codigo,
         brandName: matchedBrand.nome,
-        modelId: matchedModel.codigo,
-        modelName: matchedModel.nome,
         year,
-        versions: yearVersions,
+        versions: allVersions,
       };
     },
   });

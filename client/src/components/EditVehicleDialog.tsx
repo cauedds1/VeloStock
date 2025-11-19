@@ -46,7 +46,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useFipeVehicleVersions, useFipePriceByVersion } from "@/hooks/use-fipe";
-import type { FipeYear } from "@/hooks/use-fipe";
+import type { FipeVersion } from "@/hooks/use-fipe";
 
 const vehicleFormSchema = z.object({
   brand: z.string().min(1, "Marca é obrigatória"),
@@ -98,8 +98,8 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
   const [newImages, setNewImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<Array<{ id: string; imageUrl: string; order: number }>>(vehicle.images || []);
   const [coverImageIndex, setCoverImageIndex] = useState(0);
-  const [fipeVersions, setFipeVersions] = useState<FipeYear[]>([]);
-  const [fipeMetadata, setFipeMetadata] = useState<{brandId: string, modelId: string} | null>(null);
+  const [fipeVersions, setFipeVersions] = useState<FipeVersion[]>([]);
+  const [fipeMetadata, setFipeMetadata] = useState<{brandId: string} | null>(null);
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleFormSchema),
@@ -228,7 +228,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
     try {
       const result = await versionsMutation.mutateAsync();
       setFipeVersions(result.versions);
-      setFipeMetadata({ brandId: result.brandId, modelId: result.modelId });
+      setFipeMetadata({ brandId: result.brandId });
       
       if (result.versions.length === 0) {
         toast({
@@ -246,16 +246,20 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
     }
   };
 
-  const handleVersionChange = async (versionCode: string) => {
-    form.setValue("version", versionCode);
-    
+  const handleVersionChange = async (versionJson: string) => {
     if (!fipeMetadata) return;
 
     try {
+      // Parse da versão selecionada
+      const version: FipeVersion = JSON.parse(versionJson);
+      // Salvar JSON completo no form (será parseado no submit)
+      form.setValue("version", versionJson);
+
+      // Buscar preço com brandId + modelId + yearCode específicos
       const result = await priceMutation.mutateAsync({ 
         brandId: fipeMetadata.brandId, 
-        modelId: fipeMetadata.modelId, 
-        versionCode 
+        modelId: String(version.modelId), 
+        versionCode: version.yearCode 
       });
       
       const priceValue = result.Valor.replace("R$", "").trim();
@@ -427,9 +431,9 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
                       </FormControl>
                       <SelectContent>
                         {fipeVersions.length > 0 ? (
-                          fipeVersions.map((version) => (
-                            <SelectItem key={version.codigo} value={version.codigo}>
-                              {version.nome}
+                          fipeVersions.map((version, index) => (
+                            <SelectItem key={`${version.modelId}-${version.yearCode}-${index}`} value={JSON.stringify(version)}>
+                              {version.label}
                             </SelectItem>
                           ))
                         ) : (
