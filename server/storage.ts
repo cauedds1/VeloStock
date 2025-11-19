@@ -13,6 +13,8 @@ import {
   type InsertStoreObservation,
   type CompanySettings,
   type InsertCompanySettings,
+  type AdvancedCompanySettings,
+  type InsertAdvancedCompanySettings,
   type VehicleDocument,
   type InsertVehicleDocument,
   type Company,
@@ -24,6 +26,7 @@ import {
   vehicleCosts,
   storeObservations,
   companySettings,
+  advancedCompanySettings,
   vehicleDocuments,
   companies,
   userPermissions,
@@ -396,6 +399,37 @@ export class DatabaseStorage implements IStorage {
       return result[0];
     } else {
       const result = await db.insert(companySettings).values({ ...settings, updatedAt: new Date() }).returning();
+      return result[0];
+    }
+  }
+
+  // Advanced Company Settings (categorias customizadas, origens de leads)
+  async getAdvancedSettings(empresaId: string) {
+    const result = await db.select()
+      .from(advancedCompanySettings)
+      .where(eq(advancedCompanySettings.empresaId, empresaId))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateAdvancedSettings(empresaId: string, settings: Partial<InsertAdvancedCompanySettings>) {
+    const existing = await this.getAdvancedSettings(empresaId);
+    
+    if (existing) {
+      const updates: any = { updatedAt: new Date() };
+      
+      if (settings.categoriasCustos !== undefined) updates.categoriasCustos = settings.categoriasCustos;
+      if (settings.origensLeads !== undefined) updates.origensLeads = settings.origensLeads;
+      
+      const result = await db.update(advancedCompanySettings)
+        .set(updates)
+        .where(eq(advancedCompanySettings.empresaId, empresaId))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(advancedCompanySettings)
+        .values({ empresaId, ...settings, updatedAt: new Date() })
+        .returning();
       return result[0];
     }
   }

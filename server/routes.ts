@@ -1033,6 +1033,43 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
     }
   });
 
+  // Advanced Settings endpoints (categorias customizadas, origens de leads, etc)
+  
+  // GET /api/settings/advanced - Buscar configurações avançadas
+  app.get("/api/settings/advanced", isAuthenticated, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+      
+      const settings = await storage.getAdvancedSettings(userCompany.empresaId);
+      res.json(settings || {
+        categoriasCustos: ["Mecânica", "Estética", "Documentação", "Outros"],
+        origensLeads: ["WhatsApp", "Site", "Indicação", "Loja Física", "Redes Sociais", "Telefone"],
+      });
+    } catch (error) {
+      console.error("Erro ao buscar configurações avançadas:", error);
+      res.status(500).json({ error: "Erro ao buscar configurações avançadas" });
+    }
+  });
+
+  // PUT /api/settings/advanced - Atualizar configurações avançadas (Proprietário apenas)
+  app.put("/api/settings/advanced", isAuthenticated, requireProprietario, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+      
+      const updatedSettings = await storage.updateAdvancedSettings(userCompany.empresaId, req.body);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Erro ao atualizar configurações avançadas:", error);
+      res.status(500).json({ error: "Erro ao atualizar configurações avançadas" });
+    }
+  });
+
   // Vehicle Documents endpoints
   
   // GET /api/vehicles/:id/documents - Listar documentos do veículo
