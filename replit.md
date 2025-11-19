@@ -4,6 +4,13 @@
 VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealership and store management. Originally designed for "Capoeiras Automóveis," it has evolved into a white-label solution for any automotive business. The system manages vehicles through their preparation pipeline from intake to sale, featuring Kanban-style workflow, detailed tracking, cost management, AI-powered features (price suggestions and ad generation), intelligent alerts, and complete store operations (including inventory/supplies management). The application is localized in Brazilian Portuguese (pt-BR) with a modern, professional design system.
 
 ## Recent Major Changes (November 2024)
+- **PRODUCTION DEPLOYMENT FIXED** (Nov 18, 2024): Resolvidos problemas críticos de deployment autoscale
+  - **Banco de dados**: Migrado de PostgreSQL interno (helium) para Neon externo com connection pooling
+  - **Driver PostgreSQL**: Adicionado `pg@8.13.1` para connect-pg-simple funcionar em produção
+  - **Neon Pooler**: Configurado auto-conversão para `-pooler.neon.tech` em produção (evita limite de conexões)
+  - **DATABASE_URL**: Lê de `/tmp/replitdb` em deployments autoscale, fallback para env var em dev
+  - **Autenticação**: 100% email/password (OAuth Google completamente removido para evitar DNS lookups)
+  - **Status**: ✅ Site publicado e funcionando em produção
 - **ROLE-BASED ACCESS CONTROL (RBAC)**: Complete permission system with 4 user roles
   - **Roles**: Proprietário (owner), Gerente (manager), Vendedor (salesperson), Motorista (driver)
   - **Permissions**: Role-specific access to features (Vendedor can't see costs/margins, Motorista only logistics)
@@ -22,14 +29,8 @@ VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealers
   - Protected ALL routes: vehicles, costs, images, documents, history, AI features, metrics, observations, users
   - Returns 403 if user not linked to a company
   - Disabled insecure `GET /api/costs/all` route
-- **DEPLOYMENT CONFIGURED**: Ready for production deployment via Replit Deploy
-  - Autoscale deployment type for optimal performance
-  - Build: `npm run build` (Vite + esbuild)
-  - Run: `npm run start` (production mode)
-  - Public landing page as homepage
 - **THEME FIXES**: Custom company colors now apply immediately via page reload after save
 - **Multi-tenant architecture**: Full data isolation by empresaId across all tables
-- **Production-ready authentication**: Dual authentication system with native email/password and Google OAuth
 - **Custom branding**: Each company can configure logo and color theme
 - **AI integration**: OpenAI-powered price suggestions and ad generation (3 styles)
 - **Intelligent alerts**: Automated notifications for stuck vehicles, missing photos/prices
@@ -43,10 +44,13 @@ VeloStock is a universal multi-tenant SaaS platform for complete vehicle dealers
 1. Click the "Deploy" button in Replit interface
 2. The site will be published with:
    - Landing page (`/`) as the public homepage with login options
-   - Google OAuth and email/password authentication
+   - Email/password authentication only (OAuth removed)
    - All features protected behind authentication
    - Each company sees only their own data (multi-tenant isolation)
+   - External Neon PostgreSQL database with connection pooling for autoscale
 3. Optional: Add a custom domain in deployment settings
+
+**Production URL**: https://auto-flow-autoflowcapoeir.replit.app (or your custom domain)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -72,10 +76,11 @@ Preferred communication style: Simple, everyday language.
 ### Backend
 - **Technology Stack**: Node.js with Express.js, TypeScript, PostgreSQL (via Neon serverless driver), Drizzle ORM.
 - **API Design**: RESTful API using JSON, session-based authentication, Multer for file uploads, WebSocket for real-time updates.
-- **Authentication**: Dual authentication system:
+- **Authentication**: Email/password only:
   - **Native auth**: Email/password with bcrypt hashing, passport-local strategy
-  - **Google OAuth**: Replit Auth integration with OIDC, automatic user creation
-  - Session management with PostgreSQL store, 30-day TTL (persistent login), environment-aware secure cookies
+  - **OAuth removed**: Google OAuth completely removed to prevent DNS lookups in autoscale deployments
+  - Session management with PostgreSQL store (connect-pg-simple), 30-day TTL (persistent login)
+  - Secure cookies in production (HTTPS), lax cookies in development
   - Protected API routes with isAuthenticated middleware
   - User-company linking via empresaId for multi-tenant isolation
 - **Multi-Tenant Security**: COMPLETE data isolation enforced:
@@ -130,8 +135,12 @@ Multer handles file uploads (10MB limit per image, 5 images per vehicle) and doc
 ## External Dependencies
 
 ### Database
-- **Neon PostgreSQL**: Serverless PostgreSQL.
-- **Drizzle ORM**: Type-safe ORM.
+- **Neon PostgreSQL**: Serverless PostgreSQL with connection pooling for autoscale deployments
+  - Development: Uses `DATABASE_URL` environment variable
+  - Production: Reads from `/tmp/replitdb` file (Replit autoscale requirement)
+  - Auto-converts to pooler URL (`-pooler.neon.tech`) in production to avoid 4-connection limit
+- **Drizzle ORM**: Type-safe ORM
+- **connect-pg-simple**: PostgreSQL session store (requires `pg@8` driver)
 
 ### AI Integration
 - **OpenAI API**: GPT-4o-mini model for cost-effective AI features:
