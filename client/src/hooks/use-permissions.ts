@@ -60,7 +60,7 @@ export function usePermissions() {
     
     // Ver abas de veículos
     viewOverviewTab: true, // Todos podem ver visão geral
-    viewHistoryTab: isProprietario || isGerente || isVendedor, // Motorista NÃO vê
+    viewHistoryTab: true, // Todos podem ver histórico
     viewCostsTab: true, // Todos podem ver custos
     viewNotesTab: true, // Todos podem ver observações
     viewPriceTab: isProprietario || isGerente, // Apenas proprietário e gerente
