@@ -1,5 +1,18 @@
 # VeloStock - Universal Multi-Tenant SaaS
 
+## 📦 Sistema de Backup e Migração de Dados
+
+**IMPORTANTE**: Este projeto possui um sistema completo de backup que preserva TODOS os dados (usuários, carros, observações, etc.) para migração entre contas Replit ou restauração.
+
+### Comandos Rápidos:
+- `npm run db:backup` - Cria backup completo do banco de dados
+- `npm run db:list-backups` - Lista todos os backups disponíveis  
+- `npm run db:restore <arquivo>` - Restaura um backup
+
+📖 **Documentação completa**: Veja `README_BACKUP.md` para instruções detalhadas sobre como versionar backups no GitHub e migrar entre contas Replit.
+
+---
+
 ## Overview
 VeloStock is a universal multi-tenant SaaS platform for comprehensive vehicle dealership and store management. It originated from "Capoeiras Automóveis" and has evolved into a white-label solution for any automotive business. The system manages vehicles from intake to sale using a Kanban-style workflow, tracks detailed costs, and incorporates AI for price suggestions and ad generation. Key features include intelligent alerts, complete store operations, and inventory management. The application is localized in Brazilian Portuguese (pt-BR) and features a modern, professional design. Its business vision is to provide a scalable, secure, and feature-rich platform to streamline operations for automotive dealerships, enhancing efficiency and profitability through advanced tools and multi-tenancy.
 

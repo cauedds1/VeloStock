@@ -1,0 +1,7 @@
+# Esta pasta armazena os backups do banco de dados
+# 
+# Para criar um backup: npm run db:backup
+# Para restaurar: npm run db:restore <arquivo>
+# Para listar: npm run db:list-backups
+#
+# Veja README_BACKUP.md para mais informações
