@@ -20,15 +20,44 @@ npm start
 
 ---
 
-## 📦 Backup Automático - A Funcionalidade Mais Importante!
+## 🔥 Backup de PRODUÇÃO - A Funcionalidade Mais Importante!
 
-### Como Funciona
+### ⚠️ IMPORTANTE: Backup de Desenvolvimento vs Produção
 
-Quando você quiser enviar o projeto pro GitHub **com todos os dados do banco**:
+Existem **DOIS** bancos de dados:
+- **Desenvolvimento**: Dados de teste (quando você está programando)
+- **Produção**: Dados REAIS que o dono da revenda usa (deployment)
+
+**Você precisa fazer backup de PRODUÇÃO!** 🔥
+
+## 📦 Backup Automático
+
+### 🎯 Backup COMPLETO - DEV + PRODUÇÃO (RECOMENDADO) 
+
+**Para salvar TUDO de uma vez (desenvolvimento + produção):**
+
+#### 1. Configure DATABASE_URL_PRODUCTION (uma vez):
+1. Deployments > Clique no deployment ativo > Environment variables
+2. Copie a `DATABASE_URL`
+3. Vá em Secrets (cadeado) > New Secret
+4. Nome: `DATABASE_URL_PRODUCTION`, Valor: (cole a URL)
+
+#### 2. Faça push com backup COMPLETO:
+```bash
+npm run push-full
+```
+
+**Isso faz backup de:**
+- ✅ Banco de DESENVOLVIMENTO (seus testes)
+- ✅ Banco de PRODUÇÃO (dados reais do dono da revenda)
+
+**Tudo no GitHub!** 🎉
+
+### Opções Alternativas
 
 ```bash
-# Ao invés de 'git push', use:
-npm run push
+npm run push-prod    # Só backup de PRODUÇÃO
+npm run push         # Só backup de DESENVOLVIMENTO
 ```
 
 **O que acontece automaticamente:**

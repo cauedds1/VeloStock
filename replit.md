@@ -4,28 +4,39 @@
 
 **IMPORTANTE**: Este projeto possui um sistema completo de backup que preserva TODOS os dados (usuários, carros, observações, etc.) para migração entre contas Replit ou restauração.
 
-### 🚀 Push Automático com Backup (RECOMENDADO)
+### 🚀 Push Automático com Backup COMPLETO (RECOMENDADO)
 
 **Ao invés de `git push`, use:**
 ```bash
-npm run push
+npm run push-full
 ```
 
-Isso automaticamente:
-1. ✅ Cria backup atualizado do banco de dados
-2. ✅ Adiciona o backup ao Git
-3. ✅ Envia tudo junto pro GitHub
+Isso automaticamente faz backup de:
+1. ✅ Banco de DESENVOLVIMENTO (dados de teste)
+2. ✅ Banco de PRODUÇÃO (dados reais do dono da revenda)
+3. ✅ Adiciona ambos ao Git
+4. ✅ Envia tudo junto pro GitHub
 
-**Resultado**: O dono da revenda pode clonar o projeto em qualquer plataforma e ter TODOS os dados (usuários, senhas, carros, observações) funcionando imediatamente!
+**Resultado**: Se você perder a conta Replit, pode recuperar TUDO em outra conta - o dono da revenda terá todos os dados (usuários, senhas, carros, observações) funcionando imediatamente!
 
-### Comandos Manuais (se preferir):
-- `npm run db:backup` - Cria backup completo do banco de dados
-- `npm run db:list-backups` - Lista todos os backups disponíveis  
-- `npm run db:restore <arquivo>` - Restaura um backup
+#### Configuração Inicial (uma vez):
+1. Deployments > Deployment ativo > Environment variables
+2. Copie DATABASE_URL
+3. Secrets (cadeado) > New Secret: `DATABASE_URL_PRODUCTION` = (URL copiada)
+
+### Comandos Disponíveis:
+- `npm run push-full` - Push com backup de DEV + PROD (RECOMENDADO)
+- `npm run push-prod` - Push com backup só de PRODUÇÃO
+- `npm run push` - Push com backup só de DESENVOLVIMENTO
+- `npm run db:backup` - Backup manual de desenvolvimento
+- `npm run db:backup-prod` - Backup manual de produção
+- `npm run db:restore-prod <arquivo>` - Restaurar dados de produção
+- `npm run db:list-backups` - Listar todos os backups
 
 📖 **Documentação completa**: 
-- `README_PUSH_AUTOMATICO.md` - Como usar o push automático
-- `README_BACKUP.md` - Instruções detalhadas de backup manual
+- `GUIA_SIMPLES.md` - Guia ultra-simplificado ⭐ **LEIA PRIMEIRO**
+- `GUIA_COMPLETO_PRODUCAO.md` - Guia completo passo a passo
+- `README.md` - Documentação principal do projeto
 
 ---
 
