@@ -226,6 +226,7 @@ export function ChangeLocationDialog({
         payload.vendedorNome = selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : null;
         payload.repassadoPara = formData.isRepassado ? formData.repassadoPara.trim() : null;
         payload.salePrice = formData.salePrice ? parseFloat(formData.salePrice) : null;
+        payload.dataVenda = new Date().toISOString(); // Data de venda
       }
 
       const response = await fetch(`/api/vehicles/${vehicleId}`, {
@@ -255,6 +256,13 @@ export function ChangeLocationDialog({
       queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/history`] });
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/metrics"] });
+      
+      // Invalidar dados financeiros quando status muda para "Vendido"
+      if (isVendido) {
+        queryClient.invalidateQueries({ queryKey: ["/api/financial/metrics"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/financial/sellers/ranking"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/costs/all"] });
+      }
 
       setOpen(false);
     } catch (error) {
