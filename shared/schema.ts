@@ -147,17 +147,17 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
     if (val === null || val === undefined || val === "") return null;
     const num = typeof val === 'string' ? parseFloat(val) : val;
     return isNaN(num) ? null : num;
-  }).nullable(),
+  }).nullable().optional(),
   salePrice: z.union([z.string(), z.number(), z.null()]).transform((val) => {
     if (val === null || val === undefined || val === "") return null;
     const num = typeof val === 'string' ? parseFloat(val) : val;
     return isNaN(num) ? null : num;
-  }).nullable(),
+  }).nullable().optional(),
   valorVenda: z.union([z.string(), z.number(), z.null()]).transform((val) => {
     if (val === null || val === undefined || val === "") return null;
     const num = typeof val === 'string' ? parseFloat(val) : val;
     return isNaN(num) ? null : num;
-  }).nullable(),
+  }).nullable().optional(),
 }).omit({
   id: true,
   createdAt: true,
