@@ -142,7 +142,23 @@ export const vehicles = pgTable("vehicles", {
   locationChangedAt: timestamp("location_changed_at").defaultNow().notNull(),
 });
 
-export const insertVehicleSchema = createInsertSchema(vehicles).omit({
+export const insertVehicleSchema = createInsertSchema(vehicles, {
+  purchasePrice: z.union([z.string(), z.number(), z.null()]).transform((val) => {
+    if (val === null || val === undefined || val === "") return null;
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return isNaN(num) ? null : num;
+  }).nullable(),
+  salePrice: z.union([z.string(), z.number(), z.null()]).transform((val) => {
+    if (val === null || val === undefined || val === "") return null;
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return isNaN(num) ? null : num;
+  }).nullable(),
+  valorVenda: z.union([z.string(), z.number(), z.null()]).transform((val) => {
+    if (val === null || val === undefined || val === "") return null;
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return isNaN(num) ? null : num;
+  }).nullable(),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
