@@ -237,6 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Motoristas não devem ver NENHUMA informação de venda/financeira
       if (user.role === "motorista") {
+        delete vehicleData.purchasePrice;
         delete vehicleData.salePrice;
         delete vehicleData.fipeReferencePrice;
         delete vehicleData.vendedorId;
@@ -276,12 +277,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         brand: req.body.brand,
         model: req.body.model,
         year: parseInt(req.body.year),
+        version: req.body.version || null,
         color: req.body.color,
         plate: req.body.plate,
         vehicleType: req.body.vehicleType || "Carro",
         status: req.body.status || "Entrada",
         physicalLocation: req.body.physicalLocation || null,
         physicalLocationDetail: req.body.physicalLocationDetail || null,
+        purchasePrice: req.body.purchasePrice != null && req.body.purchasePrice !== "" ? parseFloat(req.body.purchasePrice) : null,
         kmOdometer: req.body.kmOdometer != null && req.body.kmOdometer !== "" ? parseInt(req.body.kmOdometer) : null,
         fuelType: req.body.fuelType || null,
         fipeReferencePrice: req.body.fipeReferencePrice || null,
@@ -1718,7 +1721,9 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       }
 
       const costs = await storage.getVehicleCosts(req.params.id);
-      const totalCost = costs.reduce((sum, cost) => sum + (Number(cost.value) || 0), 0);
+      const operationalCosts = costs.reduce((sum, cost) => sum + (Number(cost.value) || 0), 0);
+      const purchasePrice = Number(vehicle.purchasePrice) || 0;
+      const totalCost = purchasePrice + operationalCosts;
 
       const { fipePrice, targetMarginPercent } = req.body;
 
@@ -1729,6 +1734,8 @@ Analise as informações abaixo e sugira um preço de venda adequado:
 
 Veículo: ${vehicle.brand} ${vehicle.model} ${vehicle.year}
 Cor: ${vehicle.color || "Não especificada"}
+Preço de Aquisição (quanto a loja pagou): R$ ${purchasePrice.toFixed(2)}
+Custos Operacionais (reparos, higienização, etc): R$ ${operationalCosts.toFixed(2)}
 Custo Total Investido: R$ ${totalCost.toFixed(2)}
 Preço FIPE (referência de mercado): ${fipePrice ? `R$ ${fipePrice}` : "Não disponível"}
 Margem de Lucro Desejada: ${targetMarginPercent || 20}%

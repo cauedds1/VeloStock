@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./ImageUpload";
 import { Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useFipeVehicleVersions, useFipePriceByVersion } from "@/hooks/use-fipe";
 import type { FipeVersion } from "@/hooks/use-fipe";
 
@@ -43,6 +44,11 @@ const vehicleFormSchema = z.object({
   plate: z.string().min(7, "Placa inválida"),
   vehicleType: z.enum(["Carro", "Moto"]),
   status: z.string().min(1, "Status é obrigatório"),
+  purchasePrice: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }, z.number().nullable().optional()),
   kmOdometer: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return null;
     const num = Number(val);
@@ -64,6 +70,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   const [fipeVersions, setFipeVersions] = useState<FipeVersion[]>([]);
   const [fipeMetadata, setFipeMetadata] = useState<{brandId: string} | null>(null);
   const { toast } = useToast();
+  const { can } = usePermissions();
   const queryClient = useQueryClient();
 
   const form = useForm<VehicleFormData>({
@@ -188,6 +195,9 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
       formData.append("vehicleType", data.vehicleType);
       formData.append("status", data.status);
       
+      if (data.purchasePrice != null) {
+        formData.append("purchasePrice", String(data.purchasePrice));
+      }
       if (data.kmOdometer != null) {
         formData.append("kmOdometer", String(data.kmOdometer));
       }
@@ -422,6 +432,35 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
                   </FormItem>
                 )}
               />
+
+              {can.viewCosts && (
+                <FormField
+                  control={form.control}
+                  name="purchasePrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preço de Aquisição (R$)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Quanto a loja pagou"
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                          data-testid="input-purchase-price"
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        Valor que a loja pagou pelo veículo
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}

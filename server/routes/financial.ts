@@ -372,10 +372,25 @@ router.get("/metrics", async (req, res) => {
       )
     );
 
-  // Custos dos veículos vendidos no período
-  const custosResult = await db
+  // Preço de aquisição dos veículos vendidos no período
+  const aquisicaoResult = await db
     .select({
-      custoTotal: sql<string>`COALESCE(SUM(${vehicleCosts.value}), 0)`,
+      aquisicaoTotal: sql<string>`COALESCE(SUM(${vehicles.purchasePrice}), 0)`,
+    })
+    .from(vehicles)
+    .where(
+      and(
+        eq(vehicles.empresaId, empresaId),
+        eq(vehicles.status, "Vendido"),
+        gte(vehicles.dataVenda, startDate),
+        lte(vehicles.dataVenda, endDate)
+      )
+    );
+
+  // Custos operacionais dos veículos vendidos no período (reparos, higienização, etc)
+  const custosOperacionaisResult = await db
+    .select({
+      custoOperacionalTotal: sql<string>`COALESCE(SUM(${vehicleCosts.value}), 0)`,
     })
     .from(vehicleCosts)
     .innerJoin(vehicles, eq(vehicleCosts.vehicleId, vehicles.id))
@@ -419,16 +434,21 @@ router.get("/metrics", async (req, res) => {
     );
 
   const vendas = vendasResult[0];
-  const custos = custosResult[0];
+  const aquisicao = aquisicaoResult[0];
+  const custosOperacionais = custosOperacionaisResult[0];
   const despesas = despesasResult[0];
   const comissoes = comissoesResult[0];
 
   const receitaTotal = parseFloat(vendas.receitaTotal);
-  const custoTotal = parseFloat(custos.custoTotal);
+  const custoAquisicao = parseFloat(aquisicao.aquisicaoTotal);
+  const custoOperacional = parseFloat(custosOperacionais.custoOperacionalTotal);
   const despesaTotal = parseFloat(despesas.despesaTotal);
   const comissaoTotal = parseFloat(comissoes.comissaoTotal);
 
-  const lucroLiquido = receitaTotal - custoTotal - despesaTotal - comissaoTotal;
+  // Custo total = preço de aquisição + custos operacionais
+  const custoTotalVeiculos = custoAquisicao + custoOperacional;
+  
+  const lucroLiquido = receitaTotal - custoTotalVeiculos - despesaTotal - comissaoTotal;
   const margemLucro = receitaTotal > 0 ? (lucroLiquido / receitaTotal) * 100 : 0;
 
   res.json({
@@ -439,10 +459,12 @@ router.get("/metrics", async (req, res) => {
       ticketMedio: parseFloat(vendas.ticketMedio),
     },
     custos: {
-      veiculos: custoTotal,
-      operacionais: despesaTotal,
+      aquisicao: custoAquisicao, // Preço de aquisição dos veículos
+      operacionais: custoOperacional, // Reparos, higienização, etc
+      veiculos: custoTotalVeiculos, // Total de custos de veículos
+      despesas: despesaTotal, // Despesas operacionais gerais
       comissoes: comissaoTotal,
-      total: custoTotal + despesaTotal + comissaoTotal,
+      total: custoTotalVeiculos + despesaTotal + comissaoTotal,
     },
     resultados: {
       lucroLiquido,

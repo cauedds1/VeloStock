@@ -57,6 +57,11 @@ const vehicleFormSchema = z.object({
   plate: z.string().min(7, "Placa inválida"),
   vehicleType: z.enum(["Carro", "Moto"]),
   location: z.string().min(1, "Localização é obrigatória"),
+  purchasePrice: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }, z.number().nullable().optional()),
   kmOdometer: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return null;
     const num = Number(val);
@@ -79,6 +84,7 @@ interface EditVehicleDialogProps {
     plate: string;
     vehicleType?: "Carro" | "Moto";
     location: string;
+    purchasePrice?: number | null;
     kmOdometer?: number | null;
     fuelType?: string | null;
     fipeReferencePrice?: string | null;
@@ -112,6 +118,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
       plate: vehicle.plate,
       vehicleType: vehicle.vehicleType || "Carro",
       location: vehicle.location,
+      purchasePrice: vehicle.purchasePrice || null,
       kmOdometer: vehicle.kmOdometer || null,
       fuelType: vehicle.fuelType || null,
       fipeReferencePrice: vehicle.fipeReferencePrice || "",
@@ -148,6 +155,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
       plate: vehicle.plate,
       vehicleType: vehicle.vehicleType || "Carro",
       location: vehicle.location,
+      purchasePrice: vehicle.purchasePrice || null,
       kmOdometer: vehicle.kmOdometer || null,
       fuelType: vehicle.fuelType || null,
       fipeReferencePrice: vehicle.fipeReferencePrice || "",
@@ -525,6 +533,32 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
                   </FormItem>
                 )}
               />
+
+              {can.viewCosts && (
+                <FormField
+                  control={form.control}
+                  name="purchasePrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preço de Aquisição (R$)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Quanto a loja pagou"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        Valor que a loja pagou pelo veículo
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
