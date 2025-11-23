@@ -185,12 +185,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hasNotes: !!vehicle.notes,
           };
           
-          // Motoristas não devem ver informações de venda/financeiras
+          // Motoristas não devem ver NENHUMA informação de venda/financeira
           if (user.role === "motorista") {
+            // Remover campos financeiros diretos
             delete (vehicleData as any).salePrice;
             delete (vehicleData as any).fipeReferencePrice;
             delete (vehicleData as any).vendedorId;
             delete (vehicleData as any).vendedorNome;
+            delete (vehicleData as any).valorVenda;
+            delete (vehicleData as any).comissao;
+            delete (vehicleData as any).lucroLiquido;
+            delete (vehicleData as any).margem;
+            // Remover dados de custo (motoristas só veem status de preparação)
+            delete (vehicleData as any).totalCosts;
+            delete (vehicleData as any).costs;
           }
           
           return vehicleData;
@@ -225,7 +233,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const images = await storage.getVehicleImages(vehicle.id);
-      res.json({ ...vehicle, images });
+      const vehicleData: any = { ...vehicle, images };
+      
+      // Motoristas não devem ver NENHUMA informação de venda/financeira
+      if (user.role === "motorista") {
+        delete vehicleData.salePrice;
+        delete vehicleData.fipeReferencePrice;
+        delete vehicleData.vendedorId;
+        delete vehicleData.vendedorNome;
+        delete vehicleData.valorVenda;
+        delete vehicleData.comissao;
+        delete vehicleData.lucroLiquido;
+        delete vehicleData.margem;
+        delete vehicleData.totalCosts;
+        delete vehicleData.costs;
+      }
+      
+      res.json(vehicleData);
     } catch (error) {
       console.error("Erro ao buscar veículo:", error);
       res.status(500).json({ error: "Erro ao buscar veículo" });
@@ -487,6 +511,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const history = await storage.getVehicleHistory(req.params.id);
+      
+      // Motoristas não devem ver dados financeiros no histórico
+      const user = await storage.getUser(userCompany.userId);
+      if (user?.role === "motorista") {
+        return res.json([]);  // Histórico vazio para motoristas
+      }
+      
       res.json(history);
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
@@ -585,6 +616,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const costs = await storage.getVehicleCosts(req.params.id);
+      
+      // Motoristas não devem ver dados de custos
+      const user = await storage.getUser(userCompany.userId);
+      if (user?.role === "motorista") {
+        return res.json([]);  // Lista de custos vazia para motoristas
+      }
+      
       res.json(costs);
     } catch (error) {
       console.error("Erro ao buscar custos:", error);
@@ -1373,7 +1411,7 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         return res.status(403).json({ error: "Acesso negado. Você não pode editar outra empresa." });
       }
 
-      // Sanitizar e validar comissãoFixaGlobal
+      // Sanitizar e validar comissãoFixaGlobal rigorosamente
       const updateData = { ...req.body };
       if ('comissaoFixaGlobal' in updateData) {
         if (updateData.comissaoFixaGlobal === null || updateData.comissaoFixaGlobal === '') {
@@ -1383,7 +1421,8 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
           if (isNaN(valor) || valor < 0) {
             return res.status(400).json({ error: "Comissão fixa global deve ser um número válido maior ou igual a zero" });
           }
-          updateData.comissaoFixaGlobal = valor.toString();
+          // Armazenar como número, não string
+          updateData.comissaoFixaGlobal = valor;
         }
       }
 
