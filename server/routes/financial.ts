@@ -347,13 +347,22 @@ router.delete("/expenses/:id", async (req, res) => {
 
 router.get("/metrics", async (req, res) => {
   const { empresaId } = getUserWithCompany(req);
-  const { mes, ano } = req.query;
+  const { mes, ano, startDate: startDateStr, endDate: endDateStr } = req.query;
 
-  const mesNum = mes ? parseInt(mes as string) : new Date().getMonth() + 1;
-  const anoNum = ano ? parseInt(ano as string) : new Date().getFullYear();
-  
-  const startDate = new Date(anoNum, mesNum - 1, 1);
-  const endDate = new Date(anoNum, mesNum, 0, 23, 59, 59);
+  let startDate: Date;
+  let endDate: Date;
+
+  if (startDateStr && endDateStr) {
+    // Use date range if provided
+    startDate = new Date(startDateStr as string);
+    endDate = new Date(endDateStr as string);
+  } else {
+    // Fall back to month/year
+    const mesNum = mes ? parseInt(mes as string) : new Date().getMonth() + 1;
+    const anoNum = ano ? parseInt(ano as string) : new Date().getFullYear();
+    startDate = new Date(anoNum, mesNum - 1, 1);
+    endDate = new Date(anoNum, mesNum, 0, 23, 59, 59);
+  }
 
   // Veículos vendidos no período
   const vendasResult = await db
@@ -481,13 +490,26 @@ router.get("/metrics", async (req, res) => {
 // Ranking de vendedores
 router.get("/sellers/ranking", async (req, res) => {
   const { empresaId } = getUserWithCompany(req);
-  const { mes, ano } = req.query;
+  const { mes, ano, startDate: startDateStr, endDate: endDateStr } = req.query;
 
-  const mesNum = mes ? parseInt(mes as string) : new Date().getMonth() + 1;
-  const anoNum = ano ? parseInt(ano as string) : new Date().getFullYear();
-  
-  const startDate = new Date(anoNum, mesNum - 1, 1);
-  const endDate = new Date(anoNum, mesNum, 0, 23, 59, 59);
+  let startDate: Date;
+  let endDate: Date;
+  let mesNum: number;
+  let anoNum: number;
+
+  if (startDateStr && endDateStr) {
+    // Use date range if provided
+    startDate = new Date(startDateStr as string);
+    endDate = new Date(endDateStr as string);
+    mesNum = startDate.getMonth() + 1;
+    anoNum = startDate.getFullYear();
+  } else {
+    // Fall back to month/year
+    mesNum = mes ? parseInt(mes as string) : new Date().getMonth() + 1;
+    anoNum = ano ? parseInt(ano as string) : new Date().getFullYear();
+    startDate = new Date(anoNum, mesNum - 1, 1);
+    endDate = new Date(anoNum, mesNum, 0, 23, 59, 59);
+  }
 
   const ranking = await db
     .select({

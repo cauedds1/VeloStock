@@ -54,15 +54,25 @@ export default function Reports() {
 
   const getPeriodFromFilter = () => {
     const now = new Date();
-    if (dateFilter === "current-month") return { mes: now.getMonth() + 1, ano: now.getFullYear() };
-    if (dateFilter === "last-month") {
-      const lastMonth = subMonths(now, 1);
-      return { mes: lastMonth.getMonth() + 1, ano: lastMonth.getFullYear() };
+    switch (dateFilter) {
+      case "current-month":
+        return { mes: now.getMonth() + 1, ano: now.getFullYear() };
+      case "last-month": {
+        const lastMonth = subMonths(now, 1);
+        return { mes: lastMonth.getMonth() + 1, ano: lastMonth.getFullYear() };
+      }
+      case "last-3-months":
+        return { startDate: subMonths(now, 3).toISOString(), endDate: now.toISOString() };
+      case "last-6-months":
+        return { startDate: subMonths(now, 6).toISOString(), endDate: now.toISOString() };
+      case "all":
+        return { startDate: new Date(2000, 0, 1).toISOString(), endDate: now.toISOString() };
+      default:
+        return { mes: now.getMonth() + 1, ano: now.getFullYear() };
     }
-    return { mes: now.getMonth() + 1, ano: now.getFullYear() };
   };
 
-  const { mes, ano } = getPeriodFromFilter();
+  const periodParams = getPeriodFromFilter();
 
   const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
@@ -77,12 +87,12 @@ export default function Reports() {
   });
 
   const { data: financialMetrics, isLoading: isLoadingMetrics } = useQuery<FinancialMetrics>({
-    queryKey: ["/api/financial/metrics", { mes, ano }],
+    queryKey: ["/api/financial/metrics", dateFilter, periodParams],
     enabled: isOwner,
   });
 
   const { data: sellersRanking = [], isLoading: isLoadingRanking } = useQuery<SellerRanking[]>({
-    queryKey: ["/api/financial/sellers/ranking", { mes, ano }],
+    queryKey: ["/api/financial/sellers/ranking", dateFilter, periodParams],
     enabled: isOwner,
   });
 
