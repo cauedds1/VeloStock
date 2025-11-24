@@ -86,13 +86,38 @@ export default function Reports() {
     queryKey: ["/api/store-observations"],
   });
 
+  // Construir query string manualmente para passar parâmetros corretamente
+  const buildMetricsUrl = () => {
+    const params = new URLSearchParams();
+    if ('mes' in periodParams) {
+      params.set('mes', String(periodParams.mes));
+      params.set('ano', String(periodParams.ano));
+    } else {
+      params.set('startDate', periodParams.startDate);
+      params.set('endDate', periodParams.endDate);
+    }
+    return `/api/financial/metrics?${params.toString()}`;
+  };
+
+  const buildRankingUrl = () => {
+    const params = new URLSearchParams();
+    if ('mes' in periodParams) {
+      params.set('mes', String(periodParams.mes));
+      params.set('ano', String(periodParams.ano));
+    } else {
+      params.set('startDate', periodParams.startDate);
+      params.set('endDate', periodParams.endDate);
+    }
+    return `/api/financial/sellers/ranking?${params.toString()}`;
+  };
+
   const { data: financialMetrics, isLoading: isLoadingMetrics } = useQuery<FinancialMetrics>({
-    queryKey: ["/api/financial/metrics", dateFilter, periodParams],
+    queryKey: [buildMetricsUrl()],
     enabled: isOwner,
   });
 
   const { data: sellersRanking = [], isLoading: isLoadingRanking } = useQuery<SellerRanking[]>({
-    queryKey: ["/api/financial/sellers/ranking", dateFilter, periodParams],
+    queryKey: [buildRankingUrl()],
     enabled: isOwner,
   });
 
