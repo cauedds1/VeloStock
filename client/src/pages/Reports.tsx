@@ -12,6 +12,7 @@ import { subMonths, startOfMonth } from "date-fns";
 import { checklistItems, getChecklistStats, normalizeChecklistData, hasChecklistStarted } from "@shared/checklistUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
+import { CommissionDetailsDialog } from "@/components/CommissionDetailsDialog";
 
 const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
 
@@ -832,11 +833,14 @@ export default function Reports() {
                     transition={{ delay: 0.4, duration: 0.4 }}
                   >
                     <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-comissoes-pagar">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500/10 transition-colors">
-                          <DollarSign className="h-5 w-5 text-orange-600" />
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500/10 transition-colors">
+                            <DollarSign className="h-5 w-5 text-orange-600" />
+                          </div>
+                          <p className="text-sm font-medium text-muted-foreground">Comissões a Pagar</p>
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Comissões a Pagar</p>
+                        <CommissionDetailsDialog />
                       </div>
                       <p className="text-2xl font-bold text-orange-600 transition-all">
                         R$ {financialMetrics?.comissoes.aPagar.toLocaleString('pt-BR')}

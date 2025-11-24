@@ -374,6 +374,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Se veículo foi marcado como Vendido, criar comissão automática
       if (statusChanged && updates.status === "Vendido" && updates.vendedorId) {
+        console.log("[COMISSÃO] Iniciando criação de comissão automática...");
+        console.log("[COMISSÃO] VendedorId:", updates.vendedorId);
+        console.log("[COMISSÃO] EmpresaId:", empresaId);
+        
         try {
           // Buscar informações do vendedor e da empresa
           const [vendedor] = await db
@@ -386,6 +390,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(users.id, updates.vendedorId))
             .limit(1);
 
+          console.log("[COMISSÃO] Vendedor encontrado:", vendedor);
+
           const [empresa] = await db
             .select({
               comissaoFixaGlobal: companies.comissaoFixaGlobal,
@@ -394,33 +400,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(companies.id, empresaId))
             .limit(1);
 
+          console.log("[COMISSÃO] Empresa encontrada - comissaoFixaGlobal:", empresa?.comissaoFixaGlobal);
+
           // Determinar valor base da comissão com fallbacks robustos
           const valorVendaFinal = updates.valorVenda 
             || updates.salePrice 
             || existingVehicle.valorVenda 
             || existingVehicle.salePrice;
           
+          console.log("[COMISSÃO] Valor de venda final:", valorVendaFinal);
+          
           if (vendedor && valorVendaFinal) {
             let valorComissao: number | null = null;
 
             // Verificar se usa comissão global ou individual
+            console.log("[COMISSÃO] usarComissaoFixaGlobal:", vendedor.usarComissaoFixaGlobal);
+            
             if (vendedor.usarComissaoFixaGlobal === "true" || vendedor.usarComissaoFixaGlobal === null) {
+              console.log("[COMISSÃO] Usando comissão GLOBAL da empresa");
               // Usar comissão global da empresa
               if (empresa?.comissaoFixaGlobal) {
                 // Validação robusta: rejeita NaN, Infinity, -Infinity
                 const parsed = Number(empresa.comissaoFixaGlobal);
+                console.log("[COMISSÃO] Comissão global parsed:", parsed);
                 if (Number.isFinite(parsed) && parsed > 0) {
                   valorComissao = parsed;
+                  console.log("[COMISSÃO] ✓ Comissão global definida:", valorComissao);
+                } else {
+                  console.log("[COMISSÃO] ✗ Comissão global inválida (NaN ou ≤ 0)");
                 }
+              } else {
+                console.log("[COMISSÃO] ✗ Empresa sem comissão global configurada");
               }
             } else {
+              console.log("[COMISSÃO] Usando comissão INDIVIDUAL do vendedor");
               // Usar comissão individual do vendedor
               if (vendedor.comissaoFixa) {
                 // Validação robusta: rejeita NaN, Infinity, -Infinity
                 const parsed = Number(vendedor.comissaoFixa);
+                console.log("[COMISSÃO] Comissão individual parsed:", parsed);
                 if (Number.isFinite(parsed) && parsed > 0) {
                   valorComissao = parsed;
+                  console.log("[COMISSÃO] ✓ Comissão individual definida:", valorComissao);
+                } else {
+                  console.log("[COMISSÃO] ✗ Comissão individual inválida (NaN ou ≤ 0)");
                 }
+              } else {
+                console.log("[COMISSÃO] ✗ Vendedor sem comissão individual configurada");
               }
             }
 
@@ -1647,7 +1673,7 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         return res.status(400).json({ error: "Você não pode desativar sua própria conta" });
       }
 
-      const { firstName, lastName, role, isActive } = req.body;
+      const { firstName, lastName, role, isActive, comissaoFixa, usarComissaoFixaGlobal } = req.body;
       const updates: any = {};
 
       if (firstName !== undefined) updates.firstName = firstName;
@@ -1660,6 +1686,23 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         updates.role = role;
       }
       if (isActive !== undefined) updates.isActive = isActive;
+      
+      // Atualizar configurações de comissão
+      if (usarComissaoFixaGlobal !== undefined) {
+        updates.usarComissaoFixaGlobal = usarComissaoFixaGlobal;
+      }
+      if (comissaoFixa !== undefined) {
+        // Validar comissão individual
+        if (comissaoFixa === null || comissaoFixa === '') {
+          updates.comissaoFixa = null;
+        } else {
+          const valor = Number(comissaoFixa);
+          if (!Number.isFinite(valor) || valor < 0 || valor > 999999.99) {
+            return res.status(400).json({ error: "Comissão fixa deve ser um número válido entre 0 e R$ 999.999,99" });
+          }
+          updates.comissaoFixa = valor;
+        }
+      }
 
       const updatedUser = await storage.updateUser(req.params.id, updates);
       if (!updatedUser) {
