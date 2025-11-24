@@ -11,6 +11,7 @@ import { TrendingUp, Clock, DollarSign, Package, CheckCircle2, AlertCircle, Tren
 import { subMonths, startOfMonth } from "date-fns";
 import { checklistItems, getChecklistStats, normalizeChecklistData, hasChecklistStarted } from "@shared/checklistUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
 
 const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
 
@@ -726,62 +727,91 @@ export default function Reports() {
               </div>
             ) : (
               <div className="space-y-6 overflow-y-auto pb-8">
-                <div className="grid gap-6 md:grid-cols-4">
-                  <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-receita-total">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 transition-colors">
-                        <TrendingUp className="h-5 w-5 text-green-600" />
+                <motion.div 
+                  className="grid gap-6 md:grid-cols-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, staggerChildren: 0.1 }}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1, duration: 0.4 }}
+                  >
+                    <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-receita-total">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 transition-colors">
+                          <TrendingUp className="h-5 w-5 text-green-600" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Receita Total</p>
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">Receita Total</p>
-                    </div>
-                    <p className="text-2xl font-bold text-green-600 transition-all">
-                      R$ {financialMetrics?.vendas.receita.toLocaleString('pt-BR')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                      <Package className="h-3 w-3" />
-                      {financialMetrics?.vendas.quantidade} vendas
-                    </p>
-                  </Card>
+                      <p className="text-2xl font-bold text-green-600 transition-all">
+                        R$ {financialMetrics?.vendas.receita.toLocaleString('pt-BR')}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                        <Package className="h-3 w-3" />
+                        {financialMetrics?.vendas.quantidade} vendas
+                      </p>
+                    </Card>
+                  </motion.div>
                   
-                  <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-lucro-liquido">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/10 transition-colors">
-                        <DollarSign className="h-5 w-5 text-blue-600" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
+                  >
+                    <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-lucro-liquido">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/10 transition-colors">
+                          <DollarSign className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Lucro Líquido</p>
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">Lucro Líquido</p>
-                    </div>
-                    <p className={`text-2xl font-bold transition-all ${(financialMetrics?.resultados.lucroLiquido ?? 0) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      R$ {financialMetrics?.resultados.lucroLiquido.toLocaleString('pt-BR')}
-                    </p>
-                  </Card>
+                      <p className={`text-2xl font-bold transition-all ${(financialMetrics?.resultados.lucroLiquido ?? 0) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                        R$ {financialMetrics?.resultados.lucroLiquido.toLocaleString('pt-BR')}
+                      </p>
+                    </Card>
+                  </motion.div>
                   
-                  <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-margem-lucro">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-purple-500/10 transition-colors">
-                        <TrendingUp className="h-5 w-5 text-purple-600" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                  >
+                    <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-margem-lucro">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-purple-500/10 transition-colors">
+                          <TrendingUp className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Margem de Lucro</p>
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">Margem de Lucro</p>
-                    </div>
-                    <p className={`text-2xl font-bold transition-all ${(financialMetrics?.resultados.margemLucro ?? 0) >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
-                      {financialMetrics?.resultados.margemLucro.toFixed(1)}%
-                    </p>
-                  </Card>
+                      <p className={`text-2xl font-bold transition-all ${(financialMetrics?.resultados.margemLucro ?? 0) >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                        {financialMetrics?.resultados.margemLucro.toFixed(1)}%
+                      </p>
+                    </Card>
+                  </motion.div>
                   
-                  <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-comissoes-pagar">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500/10 transition-colors">
-                        <DollarSign className="h-5 w-5 text-orange-600" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4, duration: 0.4 }}
+                  >
+                    <Card className="p-6 hover-elevate transition-all duration-300 cursor-default" data-testid="card-comissoes-pagar">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500/10 transition-colors">
+                          <DollarSign className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Comissões a Pagar</p>
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">Comissões a Pagar</p>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-600 transition-all">
-                      R$ {financialMetrics?.comissoes.aPagar.toLocaleString('pt-BR')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Total: R$ {financialMetrics?.comissoes.total.toLocaleString('pt-BR')}
-                    </p>
-                  </Card>
-                </div>
+                      <p className="text-2xl font-bold text-orange-600 transition-all">
+                        R$ {financialMetrics?.comissoes.aPagar.toLocaleString('pt-BR')}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Total: R$ {financialMetrics?.comissoes.total.toLocaleString('pt-BR')}
+                      </p>
+                    </Card>
+                  </motion.div>
+                </motion.div>
                 
                 {/* Resumo de Contas a Pagar/Receber */}
                 {billsDashboard && (
