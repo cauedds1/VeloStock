@@ -106,6 +106,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
   const [coverImageIndex, setCoverImageIndex] = useState(0);
   const [fipeVersions, setFipeVersions] = useState<FipeVersion[]>([]);
   const [fipeMetadata, setFipeMetadata] = useState<{brandId: string} | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const form = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleFormSchema),
@@ -187,6 +188,60 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
         description: "Não foi possível remover a imagem.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (dropIndex: number) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    const newImages = [...existingImages];
+    const draggedImage = newImages[draggedIndex];
+    newImages.splice(draggedIndex, 1);
+    newImages.splice(dropIndex, 0, draggedImage);
+
+    setExistingImages(newImages);
+    setDraggedIndex(null);
+
+    // Salvar nova ordem no backend
+    try {
+      const imageOrder = newImages.map((img, idx) => ({
+        imageId: img.id,
+        order: idx,
+      }));
+
+      const response = await fetch(`/api/vehicles/${vehicleId}/images/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageOrder }),
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar ordem");
+
+      toast({
+        title: "Ordem atualizada!",
+        description: "A sequência das fotos foi alterada com sucesso.",
+      });
+
+      await queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar ordem",
+        description: "Não foi possível salvar a nova sequência.",
+        variant: "destructive",
+      });
+      // Reverter ao estado anterior em caso de erro
+      setExistingImages(vehicle.images || []);
     }
   };
 
@@ -674,17 +729,31 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
           <TabsContent value="images" className="space-y-4">
             <div>
               <h4 className="text-sm font-medium mb-3">Fotos Atuais</h4>
+              <p className="text-xs text-muted-foreground mb-3">Arraste as fotos para reordenar • A primeira será a capa</p>
               {existingImages.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">
                   {existingImages.map((img, idx) => (
-                    <div key={img.id} className="relative group">
+                    <div
+                      key={img.id}
+                      draggable
+                      onDragStart={() => handleDragStart(idx)}
+                      onDragOver={handleDragOver}
+                      onDrop={() => handleDrop(idx)}
+                      className={`relative group cursor-move transition-all ${
+                        draggedIndex === idx ? "opacity-50" : ""
+                      }`}
+                    >
                       <img
                         src={img.imageUrl}
                         alt={`Foto ${idx + 1}`}
-                        className="w-full h-32 object-cover rounded border"
+                        className={`w-full h-32 object-cover rounded border-2 ${
+                          idx === 0
+                            ? "border-yellow-500 shadow-lg"
+                            : "border-gray-200 dark:border-gray-700 hover:border-blue-400"
+                        }`}
                       />
                       {idx === 0 && (
-                        <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 font-medium">
                           <Star className="h-3 w-3 fill-current" />
                           Capa
                         </div>
@@ -695,6 +764,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
                         size="sm"
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => removeExistingImage(img.id)}
+                        data-testid={`button-delete-image-${img.id}`}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

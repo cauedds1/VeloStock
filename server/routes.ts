@@ -860,6 +860,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH /api/vehicles/:id/images/reorder - Reordenar imagens (primeira vira capa automaticamente)
+  app.patch("/api/vehicles/:id/images/reorder", isAuthenticated, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      // Validar que o veículo pertence à empresa
+      const vehicle = await storage.getVehicle(req.params.id, userCompany.empresaId);
+      if (!vehicle) {
+        return res.status(404).json({ error: "Veículo não encontrado ou não pertence a esta empresa" });
+      }
+
+      const { imageOrder } = req.body;
+      if (!Array.isArray(imageOrder) || imageOrder.length === 0) {
+        return res.status(400).json({ error: "imageOrder inválido" });
+      }
+
+      // Validar que todos os IDs de imagem pertencem ao veículo
+      const vehicleImages = await storage.getVehicleImages(req.params.id);
+      const vehicleImageIds = new Set(vehicleImages.map(img => img.id));
+      
+      for (const item of imageOrder) {
+        if (!vehicleImageIds.has(item.imageId)) {
+          return res.status(400).json({ error: "Uma ou mais imagens não pertencem a este veículo" });
+        }
+      }
+
+      // Atualizar ordem de cada imagem
+      for (const item of imageOrder) {
+        await storage.updateVehicleImage(item.imageId, { order: item.order });
+      }
+
+      // Atualizar mainImageUrl para a primeira imagem (capa)
+      const reorderedImages = await storage.getVehicleImages(req.params.id);
+      if (reorderedImages.length > 0) {
+        const coverImage = reorderedImages.find(img => img.order === 0);
+        if (coverImage) {
+          await storage.updateVehicle(req.params.id, { mainImageUrl: coverImage.imageUrl });
+        }
+      }
+
+      io.emit("vehicle:images:updated", req.params.id);
+
+      res.json({ success: true, images: await storage.getVehicleImages(req.params.id) });
+    } catch (error) {
+      console.error("Erro ao reordenar imagens:", error);
+      res.status(500).json({ error: "Erro ao reordenar imagens" });
+    }
+  });
+
   // GET /api/metrics - Métricas do dashboard (FILTRADO POR EMPRESA)
   app.get("/api/metrics", isAuthenticated, async (req: any, res) => {
     try {
