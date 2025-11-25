@@ -162,9 +162,36 @@ router.get("/commissions/payments", async (req, res) => {
     const { empresaId } = getUserWithCompany(req);
     const { vendedorId, status, mesReferencia, anoReferencia } = req.query;
 
+    console.log("[COMMISSION ENDPOINT] ========================================");
     console.log("[COMMISSION ENDPOINT] Buscando comissões para empresaId:", empresaId);
+    console.log("[COMMISSION ENDPOINT] Filtros:", { vendedorId, status, mesReferencia, anoReferencia });
 
-    let query = db
+    // Construir array de condições
+    const conditions: any[] = [eq(commissionPayments.empresaId, empresaId)];
+
+    if (vendedorId) {
+      console.log("[COMMISSION ENDPOINT] Aplicando filtro vendedorId:", vendedorId);
+      conditions.push(eq(commissionPayments.vendedorId, vendedorId as string));
+    }
+
+    if (status) {
+      console.log("[COMMISSION ENDPOINT] Aplicando filtro status:", status);
+      conditions.push(eq(commissionPayments.status, status as any));
+    }
+
+    // Filtro de mês/ano por data de criação
+    if (mesReferencia && anoReferencia) {
+      const mes = parseInt(mesReferencia as string);
+      const ano = parseInt(anoReferencia as string);
+      const startDate = new Date(ano, mes - 1, 1);
+      const endDate = new Date(ano, mes, 0, 23, 59, 59);
+      console.log("[COMMISSION ENDPOINT] Aplicando filtro de data:", { mes, ano, startDate, endDate });
+      
+      conditions.push(gte(commissionPayments.createdAt, startDate));
+      conditions.push(lte(commissionPayments.createdAt, endDate));
+    }
+
+    const payments = await db
       .select({
         id: commissionPayments.id,
         vendedorId: commissionPayments.vendedorId,
@@ -190,34 +217,12 @@ router.get("/commissions/payments", async (req, res) => {
       .from(commissionPayments)
       .leftJoin(users, eq(commissionPayments.vendedorId, users.id))
       .leftJoin(vehicles, eq(commissionPayments.veiculoId, vehicles.id))
-      .where(eq(commissionPayments.empresaId, empresaId))
-      .$dynamic();
+      .where(and(...conditions))
+      .orderBy(desc(commissionPayments.createdAt));
 
-    if (vendedorId) {
-      query = query.where(eq(commissionPayments.vendedorId, vendedorId as string));
-    }
-
-    if (status) {
-      query = query.where(eq(commissionPayments.status, status as any));
-    }
-
-    // Filtro de mês/ano por data de criação
-    if (mesReferencia && anoReferencia) {
-      const mes = parseInt(mesReferencia as string);
-      const ano = parseInt(anoReferencia as string);
-      const startDate = new Date(ano, mes - 1, 1);
-      const endDate = new Date(ano, mes, 0, 23, 59, 59);
-      
-      query = query.where(
-        and(
-          gte(commissionPayments.createdAt, startDate),
-          lte(commissionPayments.createdAt, endDate)
-        )
-      );
-    }
-
-    const payments = await query.orderBy(desc(commissionPayments.createdAt));
     console.log("[COMMISSION ENDPOINT] Encontradas", payments.length, "comissões");
+    console.log("[COMMISSION ENDPOINT] Dados:", JSON.stringify(payments, null, 2));
+    console.log("[COMMISSION ENDPOINT] ========================================");
 
     res.json(payments);
   } catch (error) {
