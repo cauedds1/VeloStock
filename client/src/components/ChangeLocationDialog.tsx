@@ -102,7 +102,7 @@ export function ChangeLocationDialog({
   useEffect(() => {
     if (open && vehicleData) {
       // Verificar se a localização atual é uma das opções pré-definidas
-      const predefinedOptions = ["Casa", "Loja", "Pátio da Loja", "Oficina", "Higienização", "Outra Loja"];
+      const predefinedOptions = ["Loja", "Pátio da Loja", "Oficina", "Higienização", "Outra Loja"];
       const isCustomLocation = currentPhysicalLocation && !predefinedOptions.includes(currentPhysicalLocation);
       
       setFormData({
@@ -138,7 +138,6 @@ export function ChangeLocationDialog({
   // Opções fixas de localização (inspirado no usuário)
   const physicalLocationOptions = [
     { value: "__none__", label: "Não especificado" },
-    { value: "Casa", label: "Casa" },
     { value: "Loja", label: "Loja" },
     { value: "Pátio da Loja", label: "Pátio da Loja" },
     { value: "Oficina", label: "Oficina" },
