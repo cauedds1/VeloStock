@@ -153,14 +153,14 @@ export function CommissionDetailsDialog({ open, setOpen }: CommissionDetailsDial
         ) : (
           <div className="flex-1 overflow-auto space-y-4">
             {vendedoresData.map((vendedorData) => (
-              <Card key={vendedorData.vendedorId} className="p-4" data-testid={`card-vendedor-${vendedorData.vendedorId}`}>
-                <div className="flex items-center justify-between mb-3 pb-3 border-b">
+              <Card key={vendedorData.vendedorId} className="p-4 transition-all duration-300 hover:shadow-lg border-muted/40" data-testid={`card-vendedor-${vendedorData.vendedorId}`}>
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-border/60">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
                       <User className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{vendedorData.vendedorName}</h3>
+                      <h3 className="font-semibold text-foreground">{vendedorData.vendedorName}</h3>
                       <p className="text-xs text-muted-foreground">
                         {vendedorData.count} {vendedorData.count === 1 ? 'comissão' : 'comissões'}
                       </p>
@@ -169,13 +169,13 @@ export function CommissionDetailsDialog({ open, setOpen }: CommissionDetailsDial
                   <div className="text-right space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">A Pagar:</span>
-                      <span className="text-lg font-bold text-orange-600">
+                      <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
                         R$ {vendedorData.totalAPagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">Pagas:</span>
-                      <span className="text-sm font-medium text-green-600">
+                      <span className="text-sm font-medium text-green-600 dark:text-green-400">
                         R$ {vendedorData.totalPagas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>

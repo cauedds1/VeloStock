@@ -17,10 +17,9 @@ import {
 } from "@/components/ui/select";
 
 const ALL_STATUS = [
+  "Todos os Status",
   "Pronto para Venda",
   "Em Higienização",
-  "Em Documentação",
-  "Aguardando Peças",
   "Em Reparos",
   "Entrada",
   "Vendido",
@@ -30,12 +29,10 @@ const ALL_STATUS = [
 const STATUS_ORDER = {
   "Pronto para Venda": 1,
   "Em Higienização": 2,
-  "Em Documentação": 3,
-  "Aguardando Peças": 4,
-  "Em Reparos": 5,
-  "Entrada": 6,
-  "Vendido": 7,
-  "Arquivado": 8,
+  "Em Reparos": 3,
+  "Entrada": 4,
+  "Vendido": 5,
+  "Arquivado": 6,
 };
 
 const LOCATION_PRIORITY = {
@@ -156,7 +153,7 @@ export default function Vehicles() {
       }
 
       // Filtrar por status
-      if (sortBy === "status") {
+      if (sortBy === "status" && selectedStatus !== "Todos os Status") {
         if (vehicle.status !== selectedStatus) return false;
       }
 
@@ -302,40 +299,51 @@ export default function Vehicles() {
         ) : (
           filteredVehicles.map((vehicle: any) => (
             <Link key={vehicle.id} href={`/veiculo/${vehicle.id}`}>
-              <Card className="cursor-pointer transition-shadow hover:shadow-lg">
+              <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-muted/40">
                 <CardHeader className="p-0">
-                  <div className="aspect-video relative overflow-hidden rounded-t-lg bg-muted">
+                  <div className="aspect-video relative overflow-hidden rounded-t-lg bg-gradient-to-br from-muted/50 to-muted">
                     <img
                       src={vehicle.image || "/car-placeholder.png"}
                       alt={`${vehicle.brand} ${vehicle.model}`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4">
-                  <CardTitle className="mb-2 text-lg">
+                <CardContent className="p-4 space-y-2">
+                  <CardTitle className="text-lg font-bold transition-colors duration-300 group-hover:text-primary">
                     {vehicle.brand} {vehicle.model}
                   </CardTitle>
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <p>Ano: {vehicle.year}</p>
-                    <p>Placa: {vehicle.plate}</p>
-                    <p className="font-medium text-foreground">
-                      {vehicle.status}
+                  <div className="space-y-1.5 text-sm">
+                    <p className="text-muted-foreground">
+                      <span className="font-medium">Ano:</span> {vehicle.year}
                     </p>
+                    <p className="text-muted-foreground font-mono">
+                      <span className="font-medium font-sans">Placa:</span> {vehicle.plate}
+                    </p>
+                    <div className="pt-1">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        {vehicle.status}
+                      </span>
+                    </div>
                     {vehicle.physicalLocation && (
-                      <p className="flex items-center gap-1 text-xs">
-                        <span>📍</span>
-                        {vehicle.physicalLocation}
-                        {vehicle.physicalLocationDetail && ` - ${vehicle.physicalLocationDetail}`}
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                        <span className="text-base">📍</span>
+                        <span className="font-medium">
+                          {vehicle.physicalLocation}
+                          {vehicle.physicalLocationDetail && ` - ${vehicle.physicalLocationDetail}`}
+                        </span>
                       </p>
                     )}
                     {vehicle.salePrice && (
-                      <p className="text-base font-bold text-primary mt-2">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(Number(vehicle.salePrice))}
-                      </p>
+                      <div className="pt-2 mt-2 border-t border-border/40">
+                        <p className="text-lg font-bold text-primary">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(Number(vehicle.salePrice))}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </CardContent>

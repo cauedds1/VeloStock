@@ -377,9 +377,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedVehicle = await storage.updateVehicle(req.params.id, updates);
 
       // Se veículo foi marcado como Vendido, criar comissão automática
-      if (statusChanged && updates.status === "Vendido" && updates.vendedorId) {
+      const vendedorIdFinal = updates.vendedorId || existingVehicle.vendedorId;
+      if (statusChanged && updates.status === "Vendido" && vendedorIdFinal) {
         console.log("[COMISSÃO] Iniciando criação de comissão automática...");
-        console.log("[COMISSÃO] VendedorId:", updates.vendedorId);
+        console.log("[COMISSÃO] VendedorId:", vendedorIdFinal);
         console.log("[COMISSÃO] EmpresaId:", empresaId);
         
         try {
@@ -391,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               usarComissaoFixaGlobal: users.usarComissaoFixaGlobal,
             })
             .from(users)
-            .where(eq(users.id, updates.vendedorId))
+            .where(eq(users.id, vendedorIdFinal))
             .limit(1);
 
           console.log("[COMISSÃO] Vendedor encontrado:", vendedor);
@@ -459,20 +460,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (valorComissao !== null && valorComissao > 0) {
               const commissionData = insertCommissionPaymentSchema.parse({
                 empresaId,
-                vendedorId: updates.vendedorId,
+                vendedorId: vendedorIdFinal,
                 veiculoId: req.params.id,
-                percentualAplicado: 0,
-                valorBase: valorVendaFinal,
-                valorComissao: valorComissao,
+                percentualAplicado: "0",
+                valorBase: String(valorVendaFinal),
+                valorComissao: String(valorComissao),
                 status: "A Pagar",
                 criadoPor: userId,
               });
 
-              await db.insert(commissionPayments).values(commissionData);
+              // Converter números de volta para strings para o Drizzle
+              const dbData = {
+                ...commissionData,
+                percentualAplicado: String(commissionData.percentualAplicado),
+                valorBase: String(commissionData.valorBase),
+                valorComissao: String(commissionData.valorComissao),
+              };
 
-              console.log(`[COMISSÃO] Criada comissão fixa de R$ ${valorComissao.toFixed(2)} para vendedor ${updates.vendedorId} (valor base: R$ ${valorVendaFinal})`);
+              await db.insert(commissionPayments).values([dbData]);
+
+              console.log(`[COMISSÃO] Criada comissão fixa de R$ ${valorComissao.toFixed(2)} para vendedor ${vendedorIdFinal} (valor base: R$ ${valorVendaFinal})`);
             } else {
-              console.log(`[COMISSÃO] Nenhuma comissão configurada para o vendedor ${updates.vendedorId}`);
+              console.log(`[COMISSÃO] Nenhuma comissão configurada para o vendedor ${vendedorIdFinal}`);
             }
           }
         } catch (error) {

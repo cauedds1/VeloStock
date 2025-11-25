@@ -255,52 +255,52 @@ export default function Reports() {
       ) : (
         <div className="space-y-6 overflow-y-auto pb-8">
           <div className="grid gap-6 md:grid-cols-4">
-            <Card className="p-6">
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-muted/40">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
-                  <Package className="h-6 w-6 text-blue-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-500/10 border border-blue-500/20 transition-transform duration-300 hover:scale-110">
+                  <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Veículos</p>
-                  <p className="text-2xl font-bold">{filteredVehicles.length}</p>
+                  <p className="text-sm text-muted-foreground font-medium">Veículos</p>
+                  <p className="text-2xl font-bold text-foreground">{filteredVehicles.length}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6">
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-muted/40">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/20 transition-transform duration-300 hover:scale-110">
+                  <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Prontos p/ Venda</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-sm text-muted-foreground font-medium">Prontos p/ Venda</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {filteredVehicles.filter(v => v.status === "Pronto para Venda").length}
                   </p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6">
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-muted/40">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10">
-                  <DollarSign className="h-6 w-6 text-amber-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/10 border border-amber-500/20 transition-transform duration-300 hover:scale-110">
+                  <DollarSign className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Custos Totais</p>
-                  <p className="text-2xl font-bold">R$ {totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-sm text-muted-foreground font-medium">Custos Totais</p>
+                  <p className="text-2xl font-bold text-foreground">R$ {totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6">
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-muted/40">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10">
-                  <Clock className="h-6 w-6 text-purple-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/20 transition-transform duration-300 hover:scale-110">
+                  <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Média de Dias</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-sm text-muted-foreground font-medium">Média de Dias</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {avgTimePerStage.length > 0
                       ? Math.round(avgTimePerStage.reduce((sum, s) => sum + s.dias, 0) / avgTimePerStage.length)
                       : 0}
@@ -310,9 +310,9 @@ export default function Reports() {
             </Card>
           </div>
 
-          <Card className="p-6">
-            <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
-              <BarChart className="h-5 w-5" />
+          <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
+            <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
+              <BarChart className="h-5 w-5 text-primary" />
               Movimentação de Veículos por Status
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -328,9 +328,9 @@ export default function Reports() {
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <Card className="p-6">
-              <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
+              <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
+                <Clock className="h-5 w-5 text-primary" />
                 Tempo Médio por Etapa
               </h3>
               {avgTimePerStage.length > 0 ? (
@@ -351,9 +351,9 @@ export default function Reports() {
               )}
             </Card>
 
-            <Card className="p-6">
-              <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
+              <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
+                <DollarSign className="h-5 w-5 text-primary" />
                 Análise de Custos por Categoria
               </h3>
               {costsByCategory.length > 0 ? (
@@ -384,9 +384,9 @@ export default function Reports() {
             </Card>
           </div>
 
-          <Card className="p-6">
-            <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+          <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
+            <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
+              <Clock className="h-5 w-5 text-primary" />
               Veículos com Maior Tempo em Status Atual
             </h3>
             {vehiclesWithLongestTime.length > 0 ? (
@@ -402,11 +402,15 @@ export default function Reports() {
                   </thead>
                   <tbody>
                     {vehiclesWithLongestTime.map((vehicle) => (
-                      <tr key={vehicle.id} className="border-b hover:bg-muted/50">
-                        <td className="p-3 text-sm">{vehicle.name}</td>
-                        <td className="p-3 text-sm font-mono">{vehicle.plate}</td>
-                        <td className="p-3 text-sm">{vehicle.status}</td>
-                        <td className="p-3 text-sm text-right font-bold">
+                      <tr key={vehicle.id} className="border-b border-border/40 hover:bg-muted/50 transition-colors duration-200">
+                        <td className="p-3 text-sm font-medium text-foreground">{vehicle.name}</td>
+                        <td className="p-3 text-sm font-mono text-muted-foreground">{vehicle.plate}</td>
+                        <td className="p-3 text-sm">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                            {vehicle.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-sm text-right font-bold text-foreground">
                           {vehicle.days} {vehicle.days === 1 ? 'dia' : 'dias'}
                         </td>
                       </tr>
@@ -422,9 +426,9 @@ export default function Reports() {
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <Card className="p-6">
-              <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
-                <Package className="h-5 w-5" />
+            <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
+              <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
+                <Package className="h-5 w-5 text-primary" />
                 Status do Checklist dos Veículos
               </h3>
               <div className="space-y-4">

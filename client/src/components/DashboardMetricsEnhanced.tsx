@@ -44,9 +44,11 @@ export function DashboardMetricsEnhanced() {
 
   vehicles.forEach(v => {
     if (v.status === "Vendido" && v.salePrice) {
-      const costs = v.totalCost || 0;
-      const margin = v.salePrice - costs;
-      if (margin > 0) {
+      const purchasePrice = Number(v.purchasePrice) || 0;
+      const operationalCosts = Number(v.totalCost) || 0;
+      const totalCost = purchasePrice + operationalCosts;
+      const margin = v.salePrice - totalCost;
+      if (v.salePrice > 0) {
         totalMargin += (margin / v.salePrice) * 100;
         countWithMargin++;
       }

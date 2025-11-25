@@ -96,21 +96,27 @@ router.post("/commissions/config", async (req, res) => {
 
     if (existing.length > 0) {
       // Atualizar existente
+      const dbData = {
+        ...validatedData,
+        percentualComissao: String(validatedData.percentualComissao),
+        updatedAt: new Date()
+      };
       const [updated] = await db
         .update(commissionsConfig)
-        .set({ 
-          ...validatedData,
-          updatedAt: new Date() 
-        })
+        .set(dbData)
         .where(eq(commissionsConfig.id, existing[0].id))
         .returning();
       
       res.json(updated);
     } else {
       // Criar novo
+      const dbData = {
+        ...validatedData,
+        percentualComissao: String(validatedData.percentualComissao),
+      };
       const [created] = await db
         .insert(commissionsConfig)
-        .values(validatedData)
+        .values([dbData])
         .returning();
       
       res.json(created);
@@ -317,9 +323,13 @@ router.post("/expenses", async (req, res) => {
       dataVencimento: req.body.dataVencimento ? new Date(req.body.dataVencimento) : null,
     });
 
+    const dbData = {
+      ...validatedData,
+      valor: String(validatedData.valor),
+    };
     const [expense] = await db
       .insert(operationalExpenses)
-      .values(validatedData)
+      .values([dbData])
       .returning();
 
     res.json(expense);
