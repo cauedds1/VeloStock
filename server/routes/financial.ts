@@ -659,14 +659,17 @@ router.get("/sellers/ranking", async (req, res) => {
       vendedorId: vehicles.vendedorId,
       vendedorNome: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
       vendedorEmail: users.email,
-      quantidadeVendas: sql<number>`COUNT(*)::int`,
-      receitaTotal: sql<string>`COALESCE(SUM(${vehicles.valorVenda}), 0)`,
-      ticketMedio: sql<string>`COALESCE(AVG(${vehicles.valorVenda}), 0)`,
+      quantidadeVendas: sql<number>`COUNT(DISTINCT ${vehicles.id})::int`,
+      receitaTotal: sql<string>`COALESCE(SUM(DISTINCT ${vehicles.valorVenda}), 0)`,
+      ticketMedio: sql<string>`COALESCE(AVG(DISTINCT ${vehicles.valorVenda}), 0)`,
       comissaoTotal: sql<string>`COALESCE(SUM(${commissionPayments.valorComissao}), 0)`,
     })
     .from(vehicles)
     .leftJoin(users, eq(vehicles.vendedorId, users.id))
-    .leftJoin(commissionPayments, eq(commissionPayments.veiculoId, vehicles.id))
+    .leftJoin(commissionPayments, and(
+      eq(commissionPayments.veiculoId, vehicles.id),
+      eq(commissionPayments.empresaId, empresaId)
+    ))
     .where(
       and(
         eq(vehicles.empresaId, empresaId),
@@ -676,7 +679,7 @@ router.get("/sellers/ranking", async (req, res) => {
       )
     )
     .groupBy(vehicles.vendedorId, users.firstName, users.lastName, users.email)
-    .orderBy(desc(sql`SUM(${vehicles.valorVenda})`));
+    .orderBy(desc(sql`SUM(DISTINCT ${vehicles.valorVenda})`));
 
   // Converter strings para números com validação robusta (validar ANTES do fallback)
   const rankingComValoresNumericos = ranking.map(vendedor => {
