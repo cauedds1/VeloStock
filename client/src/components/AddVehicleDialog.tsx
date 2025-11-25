@@ -96,12 +96,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
     "Moto": "motos"
   };
   
-  const versionsMutation = useFipeVehicleVersions(
-    form.watch("brand"),
-    form.watch("model"),
-    form.watch("year"),
-    vehicleTypeMap[vehicleType] || "carros"
-  );
+  const versionsMutation = useFipeVehicleVersions();
   
   const priceMutation = useFipePriceByVersion();
 
@@ -110,18 +105,19 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   const watchedModel = form.watch("model");
   const watchedYear = form.watch("year");
 
-  // Limpar cache de versões quando marca, modelo ou ano mudam
+  // Limpar cache de versões quando marca, modelo, ano ou tipo de veículo mudam
   useEffect(() => {
     setFipeVersions([]);
     setFipeMetadata(null);
     form.setValue("version", "");
-  }, [watchedBrand, watchedModel, watchedYear]);
+  }, [watchedBrand, watchedModel, watchedYear, vehicleType]);
 
   // Carregar versões automaticamente quando usuário abre o dropdown "Versão"
   const handleLoadVersions = async () => {
     const brand = form.getValues("brand");
     const model = form.getValues("model");
     const year = form.getValues("year");
+    const currentVehicleType = form.getValues("vehicleType");
 
     if (!brand || !model || !year) {
       toast({
@@ -138,7 +134,13 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
     }
 
     try {
-      const result = await versionsMutation.mutateAsync();
+      const fipeVehicleType = vehicleTypeMap[currentVehicleType] || "carros";
+      const result = await versionsMutation.mutateAsync({ 
+        brand, 
+        model, 
+        year,
+        vehicleType: fipeVehicleType
+      });
       setFipeVersions(result.versions);
       setFipeMetadata({ brandId: result.brandId });
       

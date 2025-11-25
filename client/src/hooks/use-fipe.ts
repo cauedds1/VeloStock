@@ -120,9 +120,9 @@ export interface FipeVersion {
 
 // Hook para buscar TODAS as VERSÕES disponíveis baseado em marca/modelo/ano (texto)
 // Retorna lista completa de versões para o usuário selecionar a correta
-export function useFipeVehicleVersions(brand?: string, model?: string, year?: number, vehicleType: string = "carros") {
+export function useFipeVehicleVersions() {
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ brand, model, year, vehicleType = "carros" }: { brand: string; model: string; year: number; vehicleType?: string }) => {
       if (!brand || !model || !year) {
         throw new Error("Marca, modelo ou ano não fornecidos");
       }
@@ -261,6 +261,6 @@ export function useFipePriceByVersion() {
 }
 
 // DEPRECATED: Hook legado - use useFipeVehicleVersions + useFipePriceByVersion
-export function useFipePriceByVehicle(brand?: string, model?: string, year?: number) {
-  return useFipeVehicleVersions(brand, model, year);
+export function useFipePriceByVehicle() {
+  return useFipeVehicleVersions();
 }
