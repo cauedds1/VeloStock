@@ -175,7 +175,7 @@ export function PriceSuggestion({ vehicleId, vehicleData }: PriceSuggestionProps
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {fipeMutation.isPending ? "Consultando FIPE..." : "Gerando sugestão..."}
+              {versionsMutation.isPending || priceMutation.isPending ? "Consultando FIPE..." : "Gerando sugestão..."}
             </>
           ) : (
             <>
