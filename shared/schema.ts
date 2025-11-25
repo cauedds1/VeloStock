@@ -504,6 +504,16 @@ export const insertOperationalExpenseSchema = createInsertSchema(operationalExpe
     }
     return num;
   }),
+  dataPagamento: z.union([z.date(), z.string()]).optional().transform(val => {
+    if (!val) return undefined;
+    if (val instanceof Date) return val;
+    return new Date(val);
+  }),
+  dataVencimento: z.union([z.date(), z.string()]).optional().transform(val => {
+    if (!val) return undefined;
+    if (val instanceof Date) return val;
+    return new Date(val);
+  }),
 }).omit({
   id: true,
   createdAt: true,
