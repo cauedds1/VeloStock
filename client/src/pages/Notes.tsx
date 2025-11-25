@@ -155,7 +155,7 @@ export default function Notes() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       {obs.status === "Pendente" ? (
                         <AlertCircle className="h-5 w-5 text-yellow-500" />
                       ) : (
@@ -170,6 +170,11 @@ export default function Notes() {
                       >
                         {obs.status}
                       </Badge>
+                      {obs.expenseCost && (
+                        <Badge variant="secondary">
+                          R$ {parseFloat(obs.expenseCost as any).toFixed(2)}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Criado em {format(new Date(obs.createdAt), "dd/MM/yyyy 'às' HH:mm")}

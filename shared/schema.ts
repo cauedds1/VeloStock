@@ -342,6 +342,7 @@ export const storeObservations = pgTable("store_observations", {
   description: text("description").notNull(),
   category: text("category"),
   status: storeObservationStatusEnum("status").notNull().default("Pendente"),
+  expenseCost: numeric("expense_cost", { precision: 10, scale: 2 }), // Custo associado se registrado
   createdAt: timestamp("created_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

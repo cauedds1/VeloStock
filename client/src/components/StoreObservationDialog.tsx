@@ -302,8 +302,10 @@ export function StoreObservationDialog({
 
     // Adicionar dados de gasto se habilitado
     if (status === "Resolvido" && registerExpense) {
+      const expenseValueNum = parseFloat(expenseValue);
+      data.expenseCost = expenseValueNum; // Adicionar custo à observação
       data.expense = {
-        value: parseFloat(expenseValue),
+        value: expenseValueNum,
         description: expenseDescription.trim(),
         paymentMethod: expensePaymentMethod,
         paidBy: finalPaidBy,
