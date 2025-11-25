@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import multer from "multer";
 import { z } from "zod";
-import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema, insertCommissionPaymentSchema, commissionsConfig, commissionPayments, users, companies } from "@shared/schema";
+import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema, insertCommissionPaymentSchema, commissionsConfig, commissionPayments, users, companies, storeObservations, operationalExpenses } from "@shared/schema";
+import { isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import path from "path";
 import fs from "fs/promises";
@@ -665,18 +666,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Buscar custos de veículos com informações do veículo
-      const vehicleCosts = await storage.getAllCostsWithVehicleInfo(userCompany.empresaId);
+      const vehicleCostsData = await storage.getAllCostsWithVehicleInfo(userCompany.empresaId);
       
-      // Buscar despesas operacionais (custos de observações)
+      // Buscar despesas operacionais
       const operExpenses = await db.select().from(operationalExpenses)
         .where(eq(operationalExpenses.empresaId, userCompany.empresaId));
       
-      // Combinar os dois tipos de custos
+      // Buscar observações gerais que têm custo registrado
+      const observationsWithCosts = await db.select().from(storeObservations)
+        .where(
+          and(
+            eq(storeObservations.empresaId, userCompany.empresaId),
+            isNotNull(storeObservations.expenseCost)
+          )
+        );
+      
+      // Combinar os três tipos de custos
       const allCosts = [
-        ...vehicleCosts.map(cost => ({
+        // Custos de veículos (Custos de Preparação)
+        ...vehicleCostsData.map(cost => ({
           ...cost,
           source: 'vehicle'
         })),
+        // Despesas operacionais
         ...operExpenses.map((expense: any) => ({
           id: expense.id,
           vehicleId: null,
@@ -690,6 +702,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           vehicleModel: null,
           vehiclePlate: null,
           source: 'operational'
+        })),
+        // Observações gerais com custos
+        ...observationsWithCosts.map((obs: any) => ({
+          id: obs.id,
+          vehicleId: null,
+          category: obs.category || 'Observação Geral',
+          description: obs.description,
+          value: parseFloat(obs.expenseCost),
+          date: obs.resolvedAt || obs.createdAt,
+          paymentMethod: 'N/A',
+          paidBy: null,
+          vehicleBrand: null,
+          vehicleModel: null,
+          vehiclePlate: null,
+          source: 'observation'
         }))
       ];
       
