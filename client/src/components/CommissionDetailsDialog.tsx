@@ -54,9 +54,9 @@ export function CommissionDetailsDialog({ open, setOpen }: CommissionDetailsDial
   const [selectedVendedor, setSelectedVendedor] = useState<string>("all");
 
   const { data: commissions = [], isLoading, refetch } = useQuery<CommissionPayment[]>({
-    queryKey: ["/api/commissions/payments"],
+    queryKey: ["/api/financial/commissions/payments"],
     queryFn: async () => {
-      const response = await fetch("/api/commissions/payments");
+      const response = await fetch("/api/financial/commissions/payments");
       if (!response.ok) throw new Error("Erro ao buscar comissões");
       return response.json();
     },
