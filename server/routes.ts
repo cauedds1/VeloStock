@@ -1791,10 +1791,19 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
   // FIPE API Routes
   const FIPE_BASE_URL = "https://parallelum.com.br/fipe/api/v1";
 
+  // Helper para normalizar tipo de veículo
+  const normalizeVehicleType = (type?: string): string => {
+    const normalized = (type || "carros").toLowerCase();
+    if (normalized === "motos" || normalized === "moto") return "motos";
+    if (normalized === "caminhoes" || normalized === "caminhao") return "caminhoes";
+    return "carros"; // Default
+  };
+
   // GET /api/fipe/brands - Listar marcas
   app.get("/api/fipe/brands", async (req, res) => {
     try {
-      const response = await fetch(`${FIPE_BASE_URL}/carros/marcas`);
+      const vehicleType = normalizeVehicleType(req.query.type as string);
+      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
@@ -1807,7 +1816,8 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
   app.get("/api/fipe/brands/:brandId/models", async (req, res) => {
     try {
       const { brandId } = req.params;
-      const response = await fetch(`${FIPE_BASE_URL}/carros/marcas/${brandId}/modelos`);
+      const vehicleType = normalizeVehicleType(req.query.type as string);
+      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas/${brandId}/modelos`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
@@ -1820,7 +1830,8 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
   app.get("/api/fipe/brands/:brandId/models/:modelId/years", async (req, res) => {
     try {
       const { brandId, modelId } = req.params;
-      const response = await fetch(`${FIPE_BASE_URL}/carros/marcas/${brandId}/modelos/${modelId}/anos`);
+      const vehicleType = normalizeVehicleType(req.query.type as string);
+      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas/${brandId}/modelos/${modelId}/anos`);
       const data = await response.json();
       res.json(data);
     } catch (error) {
@@ -1833,7 +1844,8 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
   app.get("/api/fipe/brands/:brandId/models/:modelId/years/:year/price", async (req, res) => {
     try {
       const { brandId, modelId, year } = req.params;
-      const response = await fetch(`${FIPE_BASE_URL}/carros/marcas/${brandId}/modelos/${modelId}/anos/${year}`);
+      const vehicleType = normalizeVehicleType(req.query.type as string);
+      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas/${brandId}/modelos/${modelId}/anos/${year}`);
       const data = await response.json();
       res.json(data);
     } catch (error) {

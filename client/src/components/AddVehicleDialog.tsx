@@ -90,10 +90,17 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
     },
   });
 
+  const vehicleType = form.watch("vehicleType");
+  const vehicleTypeMap: Record<string, string> = {
+    "Carro": "carros",
+    "Moto": "motos"
+  };
+  
   const versionsMutation = useFipeVehicleVersions(
     form.watch("brand"),
     form.watch("model"),
-    form.watch("year")
+    form.watch("year"),
+    vehicleTypeMap[vehicleType] || "carros"
   );
   
   const priceMutation = useFipePriceByVersion();

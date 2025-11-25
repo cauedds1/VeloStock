@@ -60,12 +60,22 @@ export function FipeSearchDialog() {
   // Query para buscar marcas
   const { data: brands = [], isLoading: loadingBrands } = useQuery<Brand[]>({
     queryKey: ["/api/fipe/brands", vehicleType],
+    queryFn: async () => {
+      const response = await fetch(`/api/fipe/brands?type=${encodeURIComponent(vehicleType)}`);
+      if (!response.ok) throw new Error("Erro ao buscar marcas");
+      return response.json();
+    },
     enabled: open,
   });
 
   // Query para buscar modelos
   const { data: modelsData, isLoading: loadingModels } = useQuery<{ modelos: Model[] }>({
-    queryKey: ["/api/fipe/models", { type: vehicleType, brandCode: selectedBrand }],
+    queryKey: ["/api/fipe/models", vehicleType, selectedBrand],
+    queryFn: async () => {
+      const response = await fetch(`/api/fipe/brands/${selectedBrand}/models?type=${encodeURIComponent(vehicleType)}`);
+      if (!response.ok) throw new Error("Erro ao buscar modelos");
+      return response.json();
+    },
     enabled: open && !!selectedBrand,
   });
 
@@ -73,10 +83,12 @@ export function FipeSearchDialog() {
 
   // Query para buscar anos
   const { data: years = [], isLoading: loadingYears } = useQuery<Year[]>({
-    queryKey: [
-      "/api/fipe/years",
-      { type: vehicleType, brandCode: selectedBrand, modelCode: selectedModel },
-    ],
+    queryKey: ["/api/fipe/years", vehicleType, selectedBrand, selectedModel],
+    queryFn: async () => {
+      const response = await fetch(`/api/fipe/brands/${selectedBrand}/models/${selectedModel}/years?type=${encodeURIComponent(vehicleType)}`);
+      if (!response.ok) throw new Error("Erro ao buscar anos");
+      return response.json();
+    },
     enabled: open && !!selectedBrand && !!selectedModel,
   });
 
@@ -87,15 +99,12 @@ export function FipeSearchDialog() {
     refetch: fetchValue,
     isError,
   } = useQuery<FipeValue>({
-    queryKey: [
-      "/api/fipe/value",
-      {
-        type: vehicleType,
-        brandCode: selectedBrand,
-        modelCode: selectedModel,
-        yearCode: selectedYear,
-      },
-    ],
+    queryKey: ["/api/fipe/value", vehicleType, selectedBrand, selectedModel, selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/fipe/brands/${selectedBrand}/models/${selectedModel}/years/${selectedYear}/price?type=${encodeURIComponent(vehicleType)}`);
+      if (!response.ok) throw new Error("Erro ao buscar valor FIPE");
+      return response.json();
+    },
     enabled: false, // Só busca quando clicar no botão
   });
 
