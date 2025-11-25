@@ -245,7 +245,8 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao cadastrar veículo");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao cadastrar veículo");
       }
 
       toast({
@@ -260,10 +261,10 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
       form.reset();
       setImages([]);
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro ao adicionar veículo",
-        description: "Ocorreu um erro ao cadastrar o veículo. Tente novamente.",
+        description: error.message || "Ocorreu um erro ao cadastrar o veículo. Tente novamente.",
         variant: "destructive",
       });
     }
