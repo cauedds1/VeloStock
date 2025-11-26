@@ -319,7 +319,12 @@ export function StoreObservationDialog({
       if (expensePaymentMethod === "Outro" && expensePaymentMethodCustom.trim()) {
         finalPaymentMethod = expensePaymentMethodCustom.trim();
       }
-      data.expenseCost = expenseValueNum; // Adicionar custo à observação
+      // Salvar campos de gasto diretamente na observação
+      data.expenseCost = expenseValueNum;
+      data.expenseDescription = expenseDescription.trim();
+      data.expensePaymentMethod = finalPaymentMethod;
+      data.expensePaidBy = finalPaidBy;
+      // Manter objeto expense para criar despesa operacional
       data.expense = {
         value: expenseValueNum,
         description: expenseDescription.trim(),
