@@ -135,27 +135,6 @@ export function StoreObservationDialog({
     },
   });
 
-  // Mutation para criar despesa operacional
-  const createExpenseMutation = useMutation({
-    mutationFn: async (expenseData: {
-      categoria: string;
-      descricao: string;
-      valor: number;
-      formaPagamento: string;
-      pago: string;
-      dataPagamento: string;
-      observacoes?: string;
-    }) => {
-      const res = await fetch("/api/financial/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(expenseData),
-      });
-      if (!res.ok) throw new Error("Falha ao criar despesa");
-      return res.json();
-    },
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateMutation = useMutation({
@@ -175,51 +154,14 @@ export function StoreObservationDialog({
     setIsSubmitting(true);
     
     try {
-      // Primeiro, atualizar a observação
+      // Atualizar a observação (os dados de gasto são salvos diretamente na observação)
       await updateMutation.mutateAsync(data);
       
-      // Se registrar gasto estiver habilitado, criar a despesa
       if (data.expense) {
-        try {
-          // Mapear categoria da observação para categoria de despesa
-          const obsCategory = category === "Outro" ? customCategory.trim() : category;
-          let expenseCategory = "Outros"; // Default
-          
-          // Mapear categorias conhecidas
-          if (obsCategory === "Manutenção") {
-            expenseCategory = "Manutenção";
-          } else if (obsCategory === "Estoque") {
-            expenseCategory = "Outros"; // Estoque vai para Outros pois não existe no enum de despesas
-          }
-          
-          await createExpenseMutation.mutateAsync({
-            categoria: expenseCategory,
-            descricao: `[Obs. Loja] ${data.expense.description}`,
-            valor: data.expense.value,
-            formaPagamento: data.expense.paymentMethod,
-            pago: "true",
-            dataPagamento: new Date().toISOString(),
-            observacoes: data.expense.paidBy 
-              ? `Quem pagou: ${data.expense.paidBy}\nObservação original: ${description.substring(0, 200)}`
-              : `Observação original: ${description.substring(0, 200)}`,
-          });
-          
-          toast({
-            title: "Observação resolvida com gasto registrado",
-            description: `Despesa de R$ ${data.expense.value.toFixed(2)} registrada com sucesso.`,
-          });
-        } catch (expenseError) {
-          // Observação foi atualizada mas gasto falhou - informar usuário
-          toast({
-            variant: "destructive",
-            title: "Erro ao registrar gasto",
-            description: "A observação foi atualizada, mas não foi possível registrar o gasto. Por favor, registre manualmente na área financeira.",
-          });
-          // Não fechar dialog para que usuário possa ver o erro
-          setIsSubmitting(false);
-          queryClient.invalidateQueries({ queryKey: ["/api/store-observations"] });
-          return;
-        }
+        toast({
+          title: "Observação resolvida com gasto registrado",
+          description: `Despesa de R$ ${data.expense.value.toFixed(2)} registrada com sucesso.`,
+        });
       } else {
         toast({
           title: "Observação atualizada",
@@ -228,7 +170,7 @@ export function StoreObservationDialog({
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/store-observations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/financial/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/costs/all"] });
       onOpenChange(false);
     } catch {
       toast({
