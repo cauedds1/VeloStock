@@ -25,14 +25,16 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         .page {
           width: 210mm;
           height: 297mm;
-          padding: 10mm;
+          padding: 8mm;
           margin: 0 auto;
+          display: flex;
+          flex-direction: column;
         }
         .header {
           display: flex;
           align-items: center;
           gap: 8px;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
           padding-bottom: 6px;
           border-bottom: 2px solid #000;
         }
@@ -49,13 +51,13 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         .vehicle-info-box {
           border: 2px solid #000;
           padding: 0;
-          margin-bottom: 10px;
+          margin-bottom: 6px;
         }
         .vehicle-info-label {
           font-weight: bold;
           font-size: 11px;
           background: #f5f5f5;
-          padding: 4px 6px;
+          padding: 3px 6px;
           border-bottom: 1px solid #000;
         }
         .vehicle-info-grid {
@@ -66,8 +68,8 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         .vehicle-field {
           border-right: 1px solid #000;
           border-bottom: 1px solid #000;
-          padding: 6px;
-          min-height: 30px;
+          padding: 4px 6px;
+          min-height: 26px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -78,28 +80,30 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         .vehicle-field-label {
           font-weight: bold;
           font-size: 10px;
-          margin-bottom: 3px;
+          margin-bottom: 2px;
         }
         .vehicle-field-value {
           font-size: 11px;
           border-bottom: 1px solid #000;
-          padding-bottom: 2px;
-          min-height: 14px;
+          padding-bottom: 1px;
+          min-height: 12px;
         }
         
         /* Checklist Section */
         .section-title {
           font-weight: bold;
           font-size: 11px;
-          margin: 8px 0 6px 0;
+          margin: 4px 0 4px 0;
           padding-bottom: 2px;
           border-bottom: 2px solid #000;
         }
         .checklist-grid {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 8px;
-          margin-bottom: 8px;
+          gap: 6px;
+          margin-bottom: 6px;
+          max-height: 110px;
+          overflow: hidden;
         }
         .checklist-column {
           font-size: 10px;
@@ -107,19 +111,19 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         .category-header {
           font-weight: bold;
           font-size: 10px;
-          margin-bottom: 4px;
-          padding-bottom: 2px;
+          margin-bottom: 3px;
+          padding-bottom: 1px;
           border-bottom: 1px solid #000;
         }
         .checkbox-item {
           display: flex;
           align-items: flex-start;
-          margin-bottom: 3px;
-          gap: 4px;
+          margin-bottom: 2px;
+          gap: 3px;
         }
         .checkbox {
-          width: 12px;
-          height: 12px;
+          width: 11px;
+          height: 11px;
           border: 1px solid #000;
           flex-shrink: 0;
           margin-top: 1px;
@@ -131,46 +135,48 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         .item-line {
           border-bottom: 1px solid #999;
           flex: 1;
-          margin-top: 6px;
+          margin-top: 5px;
         }
         
         /* Table */
         .service-table {
           width: 100%;
           border-collapse: collapse;
-          margin: 6px 0 8px 0;
+          margin: 4px 0 6px 0;
           font-size: 9px;
+          height: 50px;
         }
         .service-table th,
         .service-table td {
           border: 1px solid #000;
-          padding: 4px 3px;
+          padding: 2px 3px;
           text-align: left;
         }
         .service-table th {
           background: #f5f5f5;
           font-weight: bold;
-          height: 20px;
+          height: 16px;
         }
         .service-table td {
-          height: 18px;
+          height: 17px;
         }
         
         /* Observations */
         .obs-box {
           border: 2px solid #000;
           padding: 6px;
-          min-height: 50px;
-          margin-bottom: 8px;
+          flex-grow: 1;
+          margin-bottom: 6px;
+          min-height: 80px;
         }
         
         /* Footer */
         .footer {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 15px;
+          gap: 12px;
           font-size: 10px;
-          margin-top: 10px;
+          margin-top: 2px;
         }
         .footer-field {
           display: flex;
@@ -178,16 +184,16 @@ export function generateChecklistPDF(vehicle: any, checklist: ChecklistData) {
         }
         .footer-label {
           font-size: 9px;
-          margin-bottom: 2px;
+          margin-bottom: 1px;
         }
         .footer-line {
           border-bottom: 1px solid #000;
-          height: 20px;
+          height: 18px;
         }
         
         @media print {
           body { margin: 0; padding: 0; }
-          .page { margin: 0; padding: 10mm; }
+          .page { margin: 0; padding: 8mm; }
         }
       </style>
     </head>
