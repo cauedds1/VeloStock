@@ -86,6 +86,19 @@ export function ChangeLocationDialog({
     enabled: open && formData.status === "Vendido",
   });
 
+  // Buscar localizações das configurações avançadas
+  const { data: advancedSettings } = useQuery({
+    queryKey: ["/api/settings/advanced"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/advanced");
+      if (!response.ok) {
+        throw new Error("Erro ao buscar configurações");
+      }
+      return response.json();
+    },
+    enabled: open,
+  });
+
   // Buscar dados do veículo para pre-popular campos de venda
   const { data: vehicleData } = useQuery({
     queryKey: [`/api/vehicles/${vehicleId}`],
@@ -101,9 +114,9 @@ export function ChangeLocationDialog({
 
   useEffect(() => {
     if (open && vehicleData) {
-      // Verificar se a localização atual é uma das opções pré-definidas
-      const predefinedOptions = ["Loja", "Pátio da Loja", "Oficina", "Higienização", "Outra Loja"];
-      const isCustomLocation = currentPhysicalLocation && !predefinedOptions.includes(currentPhysicalLocation);
+      // Usar localizações das configurações avançadas, com fallback
+      const configLocations = advancedSettings?.localizacoes || ["Matriz", "Filial", "Pátio Externo", "Oficina"];
+      const isCustomLocation = currentPhysicalLocation && !configLocations.includes(currentPhysicalLocation);
       
       setFormData({
         status: currentStatus,
@@ -119,7 +132,7 @@ export function ChangeLocationDialog({
         salePrice: vehicleData.salePrice ? String(vehicleData.salePrice) : "",
       });
     }
-  }, [open, currentStatus, currentPhysicalLocation, currentPhysicalLocationDetail, vehicleData]);
+  }, [open, currentStatus, currentPhysicalLocation, currentPhysicalLocationDetail, vehicleData, advancedSettings]);
 
   // Status disponíveis - motorista não pode marcar como "Vendido"
   const allStatusOptions = [
