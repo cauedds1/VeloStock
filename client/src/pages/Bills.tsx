@@ -170,12 +170,12 @@ export default function Bills() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pendente: "bg-yellow-500",
-      pago: "bg-green-500",
-      vencido: "bg-red-500",
-      parcial: "bg-orange-500",
+      pendente: "hsl(var(--badge-color-3))",
+      pago: "hsl(var(--badge-color-1))",
+      vencido: "hsl(var(--destructive))",
+      parcial: "hsl(var(--badge-color-5))",
     };
-    return colors[status] || "bg-gray-500";
+    return colors[status] || "hsl(var(--muted))";
   };
 
   const filteredBills = bills.filter(bill => {
@@ -299,8 +299,8 @@ export default function Bills() {
         <div className="grid grid-cols-3 gap-4">
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <TrendingDown className="h-6 w-6 text-red-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--destructive) / 0.1)" }}>
+                <TrendingDown className="h-6 w-6" style={{ color: "hsl(var(--destructive))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total a Pagar</p>
@@ -312,8 +312,8 @@ export default function Bills() {
 
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-green-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-1) / 0.1)" }}>
+                <TrendingUp className="h-6 w-6" style={{ color: "hsl(var(--badge-color-1))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total a Receber</p>
@@ -325,12 +325,12 @@ export default function Bills() {
 
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <DollarSign className="h-6 w-6 text-blue-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-2) / 0.1)" }}>
+                <DollarSign className="h-6 w-6" style={{ color: "hsl(var(--badge-color-2))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Saldo Previsto</p>
-                <p className={`text-2xl font-bold ${parseFloat(dashboard.saldoPrevisto) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.saldoPrevisto) >= 0 ? "hsl(var(--badge-color-1))" : "hsl(var(--destructive))" }}>
                   R$ {parseFloat(dashboard.saldoPrevisto).toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -339,12 +339,12 @@ export default function Bills() {
 
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-orange-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-5) / 0.1)" }}>
+                <AlertCircle className="h-6 w-6" style={{ color: "hsl(var(--badge-color-5))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Contas Vencidas</p>
-                <p className="text-2xl font-bold text-orange-600">{dashboard.vencidas.quantidade}</p>
+                <p className="text-2xl font-bold" style={{ color: "hsl(var(--badge-color-5))" }}>{dashboard.vencidas.quantidade}</p>
                 <p className="text-xs text-muted-foreground">R$ {parseFloat(dashboard.vencidas.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
@@ -352,12 +352,12 @@ export default function Bills() {
 
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Calendar className="h-6 w-6 text-purple-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-4) / 0.1)" }}>
+                <Calendar className="h-6 w-6" style={{ color: "hsl(var(--badge-color-4))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Próximos 7 Dias</p>
-                <p className="text-2xl font-bold">{dashboard.proximosVencimentos.quantidade}</p>
+                <p className="text-2xl font-bold" style={{ color: "hsl(var(--badge-color-4))" }}>{dashboard.proximosVencimentos.quantidade}</p>
                 <p className="text-xs text-muted-foreground">R$ {parseFloat(dashboard.proximosVencimentos.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
@@ -365,13 +365,13 @@ export default function Bills() {
 
           <Card className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-1) / 0.1)" }}>
+                <CheckCircle className="h-6 w-6" style={{ color: "hsl(var(--badge-color-1))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Pago este Mês</p>
-                <p className="text-xl font-bold text-red-600">- R$ {parseFloat(dashboard.pagosMes.totalPago).toLocaleString("pt-BR")}</p>
-                <p className="text-xl font-bold text-green-600">+ R$ {parseFloat(dashboard.pagosMes.totalRecebido).toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-bold" style={{ color: "hsl(var(--destructive))" }}>- R$ {parseFloat(dashboard.pagosMes.totalPago).toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-bold" style={{ color: "hsl(var(--badge-color-1))" }}>+ R$ {parseFloat(dashboard.pagosMes.totalRecebido).toLocaleString("pt-BR")}</p>
               </div>
             </div>
           </Card>
@@ -442,7 +442,7 @@ export default function Bills() {
                     <td className="p-3 text-right font-medium">R$ {parseFloat(bill.valor).toLocaleString("pt-BR")}</td>
                     <td className="p-3">{format(new Date(bill.dataVencimento), "dd/MM/yyyy", { locale: ptBR })}</td>
                     <td className="p-3">
-                      <Badge className={getStatusColor(bill.status)}>
+                      <Badge style={{ backgroundColor: getStatusColor(bill.status), color: "white" }}>
                         {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                       </Badge>
                     </td>

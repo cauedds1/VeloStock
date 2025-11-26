@@ -38,12 +38,12 @@ export function VehicleCard({
     setLocation(`/vehicles/${id}`);
   };
   const locationColors: Record<string, string> = {
-    "Entrada": "bg-blue-600",
-    "Lavagem": "bg-cyan-600",
-    "Mecânica": "bg-amber-600",
-    "Funilaria": "bg-orange-600",
-    "Documentação": "bg-purple-600",
-    "Pronto para Venda": "bg-green-600",
+    "Entrada": "hsl(var(--badge-color-1))",
+    "Lavagem": "hsl(var(--badge-color-2))",
+    "Mecânica": "hsl(var(--badge-color-3))",
+    "Funilaria": "hsl(var(--badge-color-4))",
+    "Documentação": "hsl(var(--badge-color-5))",
+    "Pronto para Venda": "hsl(var(--badge-color-6))",
   };
 
   return (
@@ -60,7 +60,8 @@ export function VehicleCard({
         />
         {status !== "Vendido" && status !== "Arquivado" && (
           <Badge
-            className={`absolute left-2 top-2 ${locationColors[location] || "bg-gray-600"} text-white border-0`}
+            className="absolute left-2 top-2 text-white border-0"
+            style={{ backgroundColor: locationColors[location] || "hsl(var(--muted))" }}
           >
             {location}
           </Badge>
@@ -94,7 +95,7 @@ export function VehicleCard({
         {salePrice && salePrice > 0 && (
           <div className="mt-2 text-sm">
             <span className="text-muted-foreground">Preço:</span>
-            <span className="ml-1 text-card-foreground font-bold text-green-600">
+            <span className="ml-1 text-card-foreground font-bold" style={{ color: "hsl(var(--badge-color-6))" }}>
               R$ {Number(salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>

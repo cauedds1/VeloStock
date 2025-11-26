@@ -74,9 +74,8 @@ export function DashboardMetricsEnhanced() {
       value: readyForSale,
       icon: CheckCircle,
       description: "Veículos disponíveis",
-      gradient: "from-green-500 to-emerald-600",
-      bgGradient: "from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20",
-      iconColor: "text-green-600 dark:text-green-400",
+      gradientBg: "hsl(var(--badge-color-1))",
+      iconBg: "hsl(var(--badge-color-1) / 0.1)",
       trend: readyForSale > 5 ? "up" : null,
     },
     {
@@ -84,9 +83,8 @@ export function DashboardMetricsEnhanced() {
       value: inProcess,
       icon: Wrench,
       description: "Sendo preparados",
-      gradient: "from-blue-500 to-cyan-600",
-      bgGradient: "from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20",
-      iconColor: "text-blue-600 dark:text-blue-400",
+      gradientBg: "hsl(var(--badge-color-2))",
+      iconBg: "hsl(var(--badge-color-2) / 0.1)",
       trend: null,
     },
     {
@@ -94,9 +92,8 @@ export function DashboardMetricsEnhanced() {
       value: soldThisMonth,
       icon: TrendingUp,
       description: new Date().toLocaleDateString('pt-BR', { month: 'long' }),
-      gradient: "from-purple-500 to-pink-600",
-      bgGradient: "from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20",
-      iconColor: "text-purple-600 dark:text-purple-400",
+      gradientBg: "hsl(var(--badge-color-3))",
+      iconBg: "hsl(var(--badge-color-3) / 0.1)",
       trend: soldThisMonth > 0 ? "up" : null,
     },
     {
@@ -104,9 +101,8 @@ export function DashboardMetricsEnhanced() {
       value: `${avgMargin}%`,
       icon: DollarSign,
       description: "Lucro sobre venda",
-      gradient: "from-emerald-500 to-green-600",
-      bgGradient: "from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
+      gradientBg: "hsl(var(--badge-color-4))",
+      iconBg: "hsl(var(--badge-color-4) / 0.1)",
       trend: parseFloat(avgMargin) > 15 ? "up" : parseFloat(avgMargin) > 0 ? null : "down",
     },
     {
@@ -114,9 +110,8 @@ export function DashboardMetricsEnhanced() {
       value: avgDays,
       icon: Clock,
       description: "Tempo em estoque",
-      gradient: "from-orange-500 to-amber-600",
-      bgGradient: "from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20",
-      iconColor: "text-orange-600 dark:text-orange-400",
+      gradientBg: "hsl(var(--badge-color-5))",
+      iconBg: "hsl(var(--badge-color-5) / 0.1)",
       trend: avgDays < 30 ? "up" : avgDays > 60 ? "down" : null,
     },
     {
@@ -124,9 +119,8 @@ export function DashboardMetricsEnhanced() {
       value: metrics?.totalVehicles || 0,
       icon: Car,
       description: "Todos os veículos",
-      gradient: "from-slate-500 to-gray-600",
-      bgGradient: "from-slate-50 to-gray-50 dark:from-slate-950/20 dark:to-gray-950/20",
-      iconColor: "text-slate-600 dark:text-slate-400",
+      gradientBg: "hsl(var(--badge-color-6))",
+      iconBg: "hsl(var(--badge-color-6) / 0.1)",
       trend: null,
     },
   ];
@@ -138,20 +132,20 @@ export function DashboardMetricsEnhanced() {
           key={index} 
           className="group relative overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
         >
-          <div className={`absolute inset-0 bg-gradient-to-br ${metric.bgGradient} opacity-50`}></div>
+          <div className="absolute inset-0 opacity-10" style={{ backgroundColor: metric.gradientBg }}></div>
           
           <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-semibold text-foreground/80">
               {metric.title}
             </CardTitle>
-            <div className={`p-3 rounded-xl bg-gradient-to-br ${metric.gradient} shadow-md group-hover:scale-110 transition-transform duration-300`}>
-              <metric.icon className="h-5 w-5 text-white" />
+            <div className="p-3 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: metric.iconBg }}>
+              <metric.icon className="h-5 w-5 text-white" style={{ color: metric.gradientBg }} />
             </div>
           </CardHeader>
           
           <CardContent className="relative">
             <div className="flex items-baseline gap-2">
-              <div className={`text-4xl font-bold bg-gradient-to-br ${metric.gradient} bg-clip-text text-transparent`}>
+              <div className="text-4xl font-bold" style={{ color: metric.gradientBg }}>
                 {metric.value}
               </div>
               {metric.trend && (
