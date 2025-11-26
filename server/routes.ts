@@ -1343,6 +1343,13 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       res.json(settings || {
         categoriasCustos: ["Mecânica", "Estética", "Documentação", "Outros"],
         origensLeads: ["WhatsApp", "Site", "Indicação", "Loja Física", "Redes Sociais", "Telefone"],
+        localizacoes: ["Matriz", "Filial", "Pátio Externo", "Oficina"],
+        prazoPreparacaoVeiculo: 7,
+        prazoValidadeOrcamento: 30,
+        prazoAlertaVeiculoParado: 7,
+        notificacoesVeiculosParados: 1,
+        notificacoesPrazos: 1,
+        avisosCustosAltos: 1,
       });
     } catch (error) {
       console.error("Erro ao buscar configurações avançadas:", error);
