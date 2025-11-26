@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -56,6 +56,18 @@ export default function Leads() {
   // Estatísticas
   const { data: stats } = useQuery<LeadStats>({
     queryKey: ["/api/leads/stats/me"],
+  });
+
+  // Buscar origens de leads das configurações avançadas
+  const { data: advancedSettings } = useQuery({
+    queryKey: ["/api/settings/advanced"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/advanced");
+      if (!response.ok) {
+        throw new Error("Erro ao buscar configurações");
+      }
+      return response.json();
+    },
   });
 
   const createMutation = useMutation({
@@ -226,11 +238,11 @@ export default function Leads() {
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                      <SelectItem value="Telefone">Telefone</SelectItem>
-                      <SelectItem value="Presencial">Presencial</SelectItem>
-                      <SelectItem value="Site">Site</SelectItem>
-                      <SelectItem value="Indicação">Indicação</SelectItem>
+                      {(advancedSettings?.origensLeads || ["WhatsApp", "Telefone", "Presencial", "Site", "Indicação"]).map((origem: string) => (
+                        <SelectItem key={origem} value={origem}>
+                          {origem}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -148,14 +148,13 @@ export function ChangeLocationDialog({
     ? allStatusOptions 
     : allStatusOptions.filter(status => status !== "Vendido");
 
-  // Opções fixas de localização (inspirado no usuário)
+  // Construir opções de localização dinamicamente a partir das configurações
   const physicalLocationOptions = [
     { value: "__none__", label: "Não especificado" },
-    { value: "Loja", label: "Loja" },
-    { value: "Pátio da Loja", label: "Pátio da Loja" },
-    { value: "Oficina", label: "Oficina" },
-    { value: "Higienização", label: "Higienização" },
-    { value: "Outra Loja", label: "Outra Loja" },
+    ...(advancedSettings?.localizacoes || ["Matriz", "Filial", "Pátio Externo", "Oficina"]).map((loc: string) => ({
+      value: loc,
+      label: loc,
+    })),
     { value: "__custom__", label: "Outro (especificar)" },
   ];
   
