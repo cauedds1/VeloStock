@@ -631,6 +631,7 @@ export default function Settings() {
                     onChange={(e) => setNewCategory(e.target.value)}
                     placeholder="Nova categoria..."
                     className="text-sm"
+                    data-testid="input-new-category"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -644,6 +645,7 @@ export default function Settings() {
                   <Button
                     type="button"
                     size="sm"
+                    data-testid="button-add-category"
                     onClick={() => {
                       if (newCategory.trim() && !customCategories.includes(newCategory.trim())) {
                         setCustomCategories([...customCategories, newCategory.trim()]);
@@ -661,6 +663,7 @@ export default function Settings() {
                       <span>{cat}</span>
                       <button
                         type="button"
+                        data-testid={`button-remove-category-${cat}`}
                         onClick={() => setCustomCategories(customCategories.filter((c) => c !== cat))}
                         className="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
                       >
@@ -695,6 +698,7 @@ export default function Settings() {
                     onChange={(e) => setNewOrigin(e.target.value)}
                     placeholder="Nova origem..."
                     className="text-sm"
+                    data-testid="input-new-origin"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -708,6 +712,7 @@ export default function Settings() {
                   <Button
                     type="button"
                     size="sm"
+                    data-testid="button-add-origin"
                     onClick={() => {
                       if (newOrigin.trim() && !customOrigins.includes(newOrigin.trim())) {
                         setCustomOrigins([...customOrigins, newOrigin.trim()]);
@@ -725,6 +730,7 @@ export default function Settings() {
                       <span>{origin}</span>
                       <button
                         type="button"
+                        data-testid={`button-remove-origin-${origin}`}
                         onClick={() => setCustomOrigins(customOrigins.filter((o) => o !== origin))}
                         className="ml-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
                       >
