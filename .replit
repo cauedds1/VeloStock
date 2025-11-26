@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "bash", "web", "postgresql-16"]
+modules = ["nodejs-20", "bash", "web"]
 [agent]
 expertMode = true
 integrations = ["javascript_log_in_with_replit:1.0.0"]
@@ -74,6 +74,10 @@ externalPort = 5000
 [[ports]]
 localPort = 42607
 externalPort = 3002
+
+[[ports]]
+localPort = 43205
+externalPort = 9000
 
 [[ports]]
 localPort = 44801
