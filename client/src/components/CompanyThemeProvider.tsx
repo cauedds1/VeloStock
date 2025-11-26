@@ -58,32 +58,46 @@ export function CompanyThemeProvider({ children }: CompanyThemeProviderProps) {
         
         // Cor primária principal
         document.documentElement.style.setProperty("--primary", primaryHSL);
+        document.documentElement.style.setProperty("--primary-foreground", "0 0% 98%");
         document.documentElement.style.setProperty("--sidebar-primary", primaryHSL);
+        document.documentElement.style.setProperty("--sidebar-primary-foreground", "0 0% 98%");
         document.documentElement.style.setProperty("--ring", primaryHSL);
         document.documentElement.style.setProperty("--sidebar-ring", primaryHSL);
         
-        // Cores de destaque derivadas (mais claras/escuras)
-        const lighterL = Math.min(l + 20, 95);
-        const darkerL = Math.max(l - 15, 20);
+        // Accent baseado na primária
+        document.documentElement.style.setProperty("--accent", primaryHSL);
+        document.documentElement.style.setProperty("--accent-foreground", "0 0% 98%");
         
-        // Chart colors baseadas na primária
+        // Destructive usa a mesma matiz da primária mas mantém vermelho-ish
+        document.documentElement.style.setProperty("--destructive", `${h} ${Math.min(s + 10, 100)}% ${Math.max(l - 5, 35)}%`);
+        document.documentElement.style.setProperty("--destructive-foreground", "0 0% 98%");
+        
+        // Chart colors - paleta derivada da primária
         document.documentElement.style.setProperty("--chart-1", `${h} ${s}% ${l}%`);
-        document.documentElement.style.setProperty("--chart-2", `${(h + 12) % 360} ${Math.max(s - 8, 50)}% ${l + 4}%`);
-        document.documentElement.style.setProperty("--chart-3", `${(h + 24) % 360} ${Math.max(s - 14, 45)}% ${l + 8}%`);
+        document.documentElement.style.setProperty("--chart-2", `${(h + 40) % 360} ${Math.max(s - 10, 40)}% ${l}%`);
+        document.documentElement.style.setProperty("--chart-3", `${(h + 80) % 360} ${Math.max(s - 15, 35)}% ${l}%`);
+        document.documentElement.style.setProperty("--chart-4", `${(h + 120) % 360} ${Math.max(s - 20, 30)}% ${l}%`);
+        document.documentElement.style.setProperty("--chart-5", `${(h + 160) % 360} ${Math.max(s - 25, 25)}% ${l}%`);
         
-        // Destructive com a mesma saturação da primária mas em vermelho
-        document.documentElement.style.setProperty("--destructive", `0 ${s}% ${l}%`);
+        // Colors para badges e tags
+        document.documentElement.style.setProperty("--badge-color-1", `${h} ${s}% ${l}%`);
+        document.documentElement.style.setProperty("--badge-color-2", `${(h + 30) % 360} ${Math.max(s - 5, 50)}% ${l}%`);
+        document.documentElement.style.setProperty("--badge-color-3", `${(h + 60) % 360} ${Math.max(s - 10, 45)}% ${l}%`);
+        document.documentElement.style.setProperty("--badge-color-4", `${(h + 90) % 360} ${Math.max(s - 15, 40)}% ${l}%`);
+        document.documentElement.style.setProperty("--badge-color-5", `${(h + 120) % 360} ${Math.max(s - 20, 35)}% ${l}%`);
+        document.documentElement.style.setProperty("--badge-color-6", `${(h + 150) % 360} ${Math.max(s - 25, 30)}% ${l}%`);
+        
+        // Status colors
+        document.documentElement.style.setProperty("--status-success", `${(h + 120) % 360} ${Math.max(s - 10, 50)}% ${l}%`);
+        document.documentElement.style.setProperty("--status-warning", `${(h + 45) % 360} ${Math.max(s - 5, 55)}% ${l + 5}%`);
+        document.documentElement.style.setProperty("--status-error", `${h} ${s}% ${l}%`);
+        document.documentElement.style.setProperty("--status-info", `${(h + 200) % 360} ${Math.max(s - 15, 40)}% ${l}%`);
       }
       
-      // Cores secundárias
+      // Cores secundárias para destaque
       if (secondaryHSL) {
-        const { h, s, l } = parseHSL(secondaryHSL);
-        
         document.documentElement.style.setProperty("--secondary", secondaryHSL);
-        
-        // Chart colors complementares
-        document.documentElement.style.setProperty("--chart-4", `${h} ${Math.max(s - 20, 30)}% ${l + 10}%`);
-        document.documentElement.style.setProperty("--chart-5", `${(h + 15) % 360} ${Math.max(s - 25, 25)}% ${l + 15}%`);
+        document.documentElement.style.setProperty("--secondary-foreground", "0 0% 98%");
       }
     };
 
