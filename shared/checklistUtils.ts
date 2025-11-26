@@ -9,6 +9,7 @@ export type ChecklistData = {
   somEletrica: ChecklistItem[];
   lataria: ChecklistItem[];
   documentacao: ChecklistItem[];
+  equipamentos: ChecklistItem[];
 };
 
 export type VehicleType = "Carro" | "Moto";
@@ -19,7 +20,8 @@ export const checklistCategoriesCarro = {
   interior: "INTERIOR / BANCOS",
   somEletrica: "SOM / ELÉTRICA",
   lataria: "LATARIA / PINTURA",
-  documentacao: "DOCUMENTAÇÃO"
+  documentacao: "DOCUMENTAÇÃO",
+  equipamentos: "EQUIPAMENTOS DE SEGURANÇA"
 } as const;
 
 export const checklistItemsCarro = {
@@ -27,7 +29,8 @@ export const checklistItemsCarro = {
   interior: ["Limpeza", "Estado dos bancos", "Tapetes", "Porta-objetos"],
   somEletrica: ["Funcionamento do som", "Vidros elétricos", "Ar-condicionado", "Travas elétricas"],
   lataria: ["Arranhões", "Amassados", "Pintura desbotada", "Faróis/Lanternas"],
-  documentacao: ["Documento do veículo", "IPVA", "Licenciamento"]
+  documentacao: ["Documento do veículo", "IPVA", "Licenciamento"],
+  equipamentos: ["Macaco", "Chave de Roda", "Triângulo"]
 } as const;
 
 // Categorias para MOTOS
@@ -36,7 +39,8 @@ export const checklistCategoriesMoto = {
   interior: "BANCO / ESTOFAMENTO",
   somEletrica: "SISTEMA ELÉTRICO",
   lataria: "CARENAGENS / PINTURA",
-  documentacao: "DOCUMENTAÇÃO"
+  documentacao: "DOCUMENTAÇÃO",
+  equipamentos: "EQUIPAMENTOS DE SEGURANÇA"
 } as const;
 
 export const checklistItemsMoto = {
@@ -44,7 +48,8 @@ export const checklistItemsMoto = {
   interior: ["Limpeza", "Estado do banco", "Apoio para passageiro"],
   somEletrica: ["Faróis", "Lanterna", "Setas", "Bateria", "Painel"],
   lataria: ["Carenagens", "Tanque", "Arranhões", "Amassados", "Pintura"],
-  documentacao: ["Documento do veículo", "IPVA", "Licenciamento"]
+  documentacao: ["Documento do veículo", "IPVA", "Licenciamento"],
+  equipamentos: ["Macaco", "Chave de Roda", "Triângulo"]
 } as const;
 
 // Função helper para obter categorias baseado no tipo
@@ -67,7 +72,8 @@ export function normalizeChecklistData(rawChecklist: any, vehicleType: VehicleTy
     interior: [],
     somEletrica: [],
     lataria: [],
-    documentacao: []
+    documentacao: [],
+    equipamentos: []
   };
 
   if (!rawChecklist) return normalized;
