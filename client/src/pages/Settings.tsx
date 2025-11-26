@@ -51,6 +51,7 @@ const companySchema = z.object({
     const num = parseFloat(val);
     return !isNaN(num) && num >= 0;
   }, { message: "Comissão deve ser um número válido maior ou igual a zero" }),
+  changeIconColors: z.string().optional(),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -127,12 +128,14 @@ export default function Settings() {
       alertaDiasParado: company.alertaDiasParado,
       locaisComuns: company.locaisComuns.join(", "),
       comissaoFixaGlobal: (company as any).comissaoFixaGlobal || "",
+      changeIconColors: (company as any).changeIconColors || "true",
     } : {
       nomeFantasia: "",
       corPrimaria: "#8B5CF6",
       corSecundaria: "#10B981",
       alertaDiasParado: 7,
       comissaoFixaGlobal: "",
+      changeIconColors: "true",
     },
   });
 
@@ -468,26 +471,44 @@ export default function Settings() {
 
                 <Separator />
 
-                <div className="rounded-lg border p-4 bg-muted/50">
-                  <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <RotateCcw className="h-4 w-4" />
-                    Cores Padrão do VeloStock
-                  </h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Restaure as cores originais do VeloStock (violeta e verde).
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      form.setValue("corPrimaria", "#8B5CF6");
-                      form.setValue("corSecundaria", "#10B981");
-                    }}
-                    data-testid="button-reset-colors"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Voltar ao Padrão
-                  </Button>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-4 bg-muted/30 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Mudar Cor dos Ícones</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Os ícones do dashboard e cards também mudarão de cor junto com o tema personalizado
+                        </p>
+                      </div>
+                      <Switch
+                        checked={form.watch("changeIconColors") === "true"}
+                        onCheckedChange={(checked) => form.setValue("changeIconColors", checked ? "true" : "false")}
+                        data-testid="toggle-icon-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-4 bg-muted/50">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <RotateCcw className="h-4 w-4" />
+                      Cores Padrão do VeloStock
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Restaure as cores originais do VeloStock (violeta e verde).
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        form.setValue("corPrimaria", "#8B5CF6");
+                        form.setValue("corSecundaria", "#10B981");
+                      }}
+                      data-testid="button-reset-colors"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Voltar ao Padrão
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="rounded-lg border p-4 bg-muted/30">

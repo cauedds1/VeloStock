@@ -7,6 +7,7 @@ interface CompanyThemeContextType {
   companyName: string;
   logoUrl?: string | null;
   isCustomTheme: boolean;
+  changeIconColors: boolean;
 }
 
 // Cores padrão do VeloStock (violeta e verde)
@@ -19,6 +20,7 @@ const CompanyThemeContext = createContext<CompanyThemeContextType>({
   companyName: "VeloStock",
   logoUrl: null,
   isCustomTheme: false,
+  changeIconColors: true,
 });
 
 export function useCompanyTheme() {
@@ -38,6 +40,7 @@ export function CompanyThemeProvider({ children }: CompanyThemeProviderProps) {
   const isCustomTheme = 
     (company?.corPrimaria && company.corPrimaria !== DEFAULT_PRIMARY) ||
     (company?.corSecundaria && company.corSecundaria !== DEFAULT_SECONDARY) || false;
+  const changeIconColors = (company as any)?.changeIconColors !== "false"; // Default true
 
   const themeValue: CompanyThemeContextType = {
     primaryColor,
@@ -45,6 +48,7 @@ export function CompanyThemeProvider({ children }: CompanyThemeProviderProps) {
     companyName: company?.nomeFantasia || "VeloStock",
     logoUrl: company?.logoUrl,
     isCustomTheme,
+    changeIconColors,
   };
 
   useEffect(() => {

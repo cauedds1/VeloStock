@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, DollarSign, TrendingDown, TrendingUp, AlertCircle, Calendar, CheckCircle, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCompanyTheme } from "@/components/CompanyThemeProvider";
 
 type Bill = {
   id: string;
@@ -36,6 +37,7 @@ type DashboardData = {
 };
 
 export default function Bills() {
+  const { changeIconColors } = useCompanyTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -300,7 +302,7 @@ export default function Bills() {
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--destructive) / 0.1)" }}>
-                <TrendingDown className="h-6 w-6" style={{ color: "hsl(var(--destructive))" }} />
+                <TrendingDown className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--destructive))" : "currentColor" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total a Pagar</p>
@@ -313,7 +315,7 @@ export default function Bills() {
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-1) / 0.1)" }}>
-                <TrendingUp className="h-6 w-6" style={{ color: "hsl(var(--badge-color-1))" }} />
+                <TrendingUp className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--badge-color-1))" : "currentColor" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total a Receber</p>
@@ -326,11 +328,11 @@ export default function Bills() {
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-2) / 0.1)" }}>
-                <DollarSign className="h-6 w-6" style={{ color: "hsl(var(--badge-color-2))" }} />
+                <DollarSign className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--badge-color-2))" : "currentColor" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Saldo Previsto</p>
-                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.saldoPrevisto) >= 0 ? "hsl(var(--badge-color-1))" : "hsl(var(--destructive))" }}>
+                <p className="text-2xl font-bold" style={{ color: changeIconColors ? (parseFloat(dashboard.saldoPrevisto) >= 0 ? "hsl(var(--badge-color-1))" : "hsl(var(--destructive))") : "inherit" }}>
                   R$ {parseFloat(dashboard.saldoPrevisto).toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -340,11 +342,11 @@ export default function Bills() {
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-5) / 0.1)" }}>
-                <AlertCircle className="h-6 w-6" style={{ color: "hsl(var(--badge-color-5))" }} />
+                <AlertCircle className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--badge-color-5))" : "currentColor" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Contas Vencidas</p>
-                <p className="text-2xl font-bold" style={{ color: "hsl(var(--badge-color-5))" }}>{dashboard.vencidas.quantidade}</p>
+                <p className="text-2xl font-bold" style={{ color: changeIconColors ? "hsl(var(--badge-color-5))" : "inherit" }}>{dashboard.vencidas.quantidade}</p>
                 <p className="text-xs text-muted-foreground">R$ {parseFloat(dashboard.vencidas.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
@@ -353,11 +355,11 @@ export default function Bills() {
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-4) / 0.1)" }}>
-                <Calendar className="h-6 w-6" style={{ color: "hsl(var(--badge-color-4))" }} />
+                <Calendar className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--badge-color-4))" : "currentColor" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Próximos 7 Dias</p>
-                <p className="text-2xl font-bold" style={{ color: "hsl(var(--badge-color-4))" }}>{dashboard.proximosVencimentos.quantidade}</p>
+                <p className="text-2xl font-bold" style={{ color: changeIconColors ? "hsl(var(--badge-color-4))" : "inherit" }}>{dashboard.proximosVencimentos.quantidade}</p>
                 <p className="text-xs text-muted-foreground">R$ {parseFloat(dashboard.proximosVencimentos.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
@@ -366,12 +368,12 @@ export default function Bills() {
           <Card className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-1) / 0.1)" }}>
-                <CheckCircle className="h-6 w-6" style={{ color: "hsl(var(--badge-color-1))" }} />
+                <CheckCircle className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--badge-color-1))" : "currentColor" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Pago este Mês</p>
-                <p className="text-xl font-bold" style={{ color: "hsl(var(--destructive))" }}>- R$ {parseFloat(dashboard.pagosMes.totalPago).toLocaleString("pt-BR")}</p>
-                <p className="text-xl font-bold" style={{ color: "hsl(var(--badge-color-1))" }}>+ R$ {parseFloat(dashboard.pagosMes.totalRecebido).toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-bold" style={{ color: changeIconColors ? "hsl(var(--destructive))" : "inherit" }}>- R$ {parseFloat(dashboard.pagosMes.totalPago).toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-bold" style={{ color: changeIconColors ? "hsl(var(--badge-color-1))" : "inherit" }}>+ R$ {parseFloat(dashboard.pagosMes.totalRecebido).toLocaleString("pt-BR")}</p>
               </div>
             </div>
           </Card>

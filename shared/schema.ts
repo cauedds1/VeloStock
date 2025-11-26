@@ -421,6 +421,8 @@ export const companies = pgTable("companies", {
   alertaDiasParado: integer("alerta_dias_parado").default(7),
   // Comissão fixa global (valor em R$)
   comissaoFixaGlobal: numeric("comissao_fixa_global", { precision: 10, scale: 2 }).default("0"),
+  // Toggle para mudar cor dos ícones junto com tema
+  changeIconColors: varchar("change_icon_colors").default("true"), // "true" ou "false"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -2,8 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Car, CheckCircle, Wrench, TrendingUp, DollarSign, Clock, ArrowUp, ArrowDown } from "lucide-react";
+import { useCompanyTheme } from "./CompanyThemeProvider";
 
 export function DashboardMetricsEnhanced() {
+  const { changeIconColors } = useCompanyTheme();
+  
   const { data: metrics, isLoading } = useQuery<any>({
     queryKey: ["/api/metrics"],
   });
@@ -139,13 +142,13 @@ export function DashboardMetricsEnhanced() {
               {metric.title}
             </CardTitle>
             <div className="p-3 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: metric.iconBg }}>
-              <metric.icon className="h-5 w-5 text-white" style={{ color: metric.gradientBg }} />
+              <metric.icon className="h-5 w-5" style={{ color: changeIconColors ? metric.gradientBg : "currentColor" }} />
             </div>
           </CardHeader>
           
           <CardContent className="relative">
             <div className="flex items-baseline gap-2">
-              <div className="text-4xl font-bold" style={{ color: metric.gradientBg }}>
+              <div className="text-4xl font-bold" style={{ color: changeIconColors ? metric.gradientBg : "inherit" }}>
                 {metric.value}
               </div>
               {metric.trend && (

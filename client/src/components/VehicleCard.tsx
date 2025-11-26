@@ -2,6 +2,7 @@ import { Clock, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import { useCompanyTheme } from "./CompanyThemeProvider";
 
 export interface VehicleCardProps {
   id: string;
@@ -33,6 +34,7 @@ export function VehicleCard({
   status,
 }: VehicleCardProps) {
   const [, setLocation] = useLocation();
+  const { changeIconColors } = useCompanyTheme();
 
   const handleClick = () => {
     setLocation(`/vehicles/${id}`);
@@ -95,7 +97,7 @@ export function VehicleCard({
         {salePrice && salePrice > 0 && (
           <div className="mt-2 text-sm">
             <span className="text-muted-foreground">Preço:</span>
-            <span className="ml-1 text-card-foreground font-bold" style={{ color: "hsl(var(--badge-color-6))" }}>
+            <span className="ml-1 text-card-foreground font-bold" style={{ color: changeIconColors ? "hsl(var(--badge-color-6))" : "inherit" }}>
               R$ {Number(salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
