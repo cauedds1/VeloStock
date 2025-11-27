@@ -12,24 +12,9 @@ export const zSmtpMessage = z.object({
   subject: z.string().describe("Email subject"),
   text: z.string().optional().describe("Plain text body"),
   html: z.string().optional().describe("HTML body"),
-  attachments: z
-    .array(
-      z.object({
-        filename: z.string().describe("File name"),
-        content: z.string().describe("Base64 encoded content"),
-        contentType: z.string().optional().describe("MIME type"),
-        encoding: z
-          .enum(["base64", "7bit", "quoted-printable", "binary"])
-          .default("base64"),
-      })
-    )
-    .optional()
-    .describe("Email attachments"),
 });
 
 export type SmtpMessage = z.infer<typeof zSmtpMessage>;
-
-let connectionSettings: any;
 
 async function getCredentials() {
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
@@ -43,7 +28,7 @@ async function getCredentials() {
     throw new Error('X_REPLIT_TOKEN not found for repl/depl');
   }
 
-  connectionSettings = await fetch(
+  const response = await fetch(
     'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
     {
       headers: {
@@ -51,55 +36,59 @@ async function getCredentials() {
         'X_REPLIT_TOKEN': xReplitToken
       }
     }
-  ).then(res => res.json()).then(data => data.items?.[0]);
+  );
+  
+  const data = await response.json();
+  const connectionSettings = data.items?.[0];
 
-  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
+  if (!connectionSettings || !connectionSettings.settings.api_key || !connectionSettings.settings.from_email) {
     throw new Error('SendGrid not connected');
   }
-  return { apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email };
-}
-
-async function getUncachableSendGridClient() {
-  const { apiKey, email } = await getCredentials();
-  sgMail.setApiKey(apiKey);
-  return {
-    client: sgMail,
-    fromEmail: email
+  
+  return { 
+    apiKey: connectionSettings.settings.api_key, 
+    email: connectionSettings.settings.from_email 
   };
 }
 
-export async function sendEmail(message: SmtpMessage): Promise<{
-  accepted: string[];
-  rejected: string[];
-  pending?: string[];
-  messageId: string;
-  response: string;
-}> {
+export async function sendEmail(message: SmtpMessage) {
   try {
     console.log("[SendGrid] Enviando email para:", message.to);
 
-    const { client, fromEmail } = await getUncachableSendGridClient();
+    const { apiKey, email } = await getCredentials();
+    sgMail.setApiKey(apiKey);
 
-    const msg = {
+    const msg: any = {
       to: message.to,
-      cc: message.cc,
-      from: fromEmail,
+      from: email,
       subject: message.subject,
-      text: message.text,
-      html: message.html,
-      attachments: message.attachments,
     };
 
-    const result = await client.send(msg);
+    if (message.html) {
+      msg.html = message.html;
+    }
     
-    console.log("[SendGrid] Email enviado com sucesso:", result);
+    if (message.text) {
+      msg.text = message.text;
+    }
+
+    if (!message.html && !message.text) {
+      msg.text = 'Email';
+    }
+
+    if (message.cc) {
+      msg.cc = message.cc;
+    }
+
+    const result = await sgMail.send(msg);
     
-    // Normalizar resposta para o formato esperado
+    console.log("[SendGrid] Email enviado com sucesso!");
+    
     const toArray = Array.isArray(message.to) ? message.to : [message.to];
     return {
       accepted: toArray,
       rejected: [],
-      messageId: result[0].headers['x-message-id'] || `sg-${Date.now()}`,
+      messageId: `sg-${Date.now()}`,
       response: 'Email sent successfully'
     };
   } catch (error) {
