@@ -21,7 +21,7 @@ export function SetSalesTargetDialog({ open, onOpenChange, vendedorId }: SetSale
 
   const saveMeta = useMutation({
     mutationFn: async (data: { metaQuantidade: number | null; metaValor: number | null }) => {
-      const response = await fetch("/api/sales-targets", {
+      const response = await fetch("/api/financial/sales-targets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
