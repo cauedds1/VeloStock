@@ -21,20 +21,23 @@ interface Reminder {
   alertType: "Nenhum" | "1_dia_antes" | "no_dia" | "passou";
 }
 
-export function RemindersTab({ vehicleId }: { vehicleId: string }) {
+export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newReminder, setNewReminder] = useState({ titulo: "", descricao: "", dataLimite: "" });
 
+  // Se tem vehicleId, usa rota de veículo. Senão, usa rota global
+  const endpoint = vehicleId ? `/api/vehicles/${vehicleId}/reminders` : `/api/reminders`;
+
   const { data: reminders = [] } = useQuery<Reminder[]>({
-    queryKey: [`/api/vehicles/${vehicleId}/reminders`],
-    enabled: !!vehicleId,
+    queryKey: [endpoint],
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", `/api/vehicles/${vehicleId}/reminders`, {
+      const url = vehicleId ? `/api/vehicles/${vehicleId}/reminders` : `/api/reminders`;
+      return await apiRequest("POST", url, {
         titulo: newReminder.titulo,
         descricao: newReminder.descricao,
         dataLimite: new Date(newReminder.dataLimite),
@@ -42,7 +45,7 @@ export function RemindersTab({ vehicleId }: { vehicleId: string }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/reminders`] });
+      queryClient.invalidateQueries({ queryKey: [endpoint] });
       setNewReminder({ titulo: "", descricao: "", dataLimite: "" });
       setIsDialogOpen(false);
       toast({ title: "Lembrete criado com sucesso!" });
@@ -51,21 +54,23 @@ export function RemindersTab({ vehicleId }: { vehicleId: string }) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { id: string; status: string }) => {
-      return await apiRequest("PATCH", `/api/vehicles/${vehicleId}/reminders/${data.id}`, {
+      const url = vehicleId ? `/api/vehicles/${vehicleId}/reminders/${data.id}` : `/api/reminders/${data.id}`;
+      return await apiRequest("PATCH", url, {
         status: data.status,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/reminders`] });
+      queryClient.invalidateQueries({ queryKey: [endpoint] });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (reminderId: string) => {
-      return await apiRequest("DELETE", `/api/vehicles/${vehicleId}/reminders/${reminderId}`);
+      const url = vehicleId ? `/api/vehicles/${vehicleId}/reminders/${reminderId}` : `/api/reminders/${reminderId}`;
+      return await apiRequest("DELETE", url);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/reminders`] });
+      queryClient.invalidateQueries({ queryKey: [endpoint] });
       toast({ title: "Lembrete deletado!" });
     },
   });

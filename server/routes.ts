@@ -1620,6 +1620,123 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
   // REMINDERS (Lembretes - Isolados por Usuário)
   // ============================================
 
+  // GET /api/reminders - Listar lembretes globais do usuário (pessoais)
+  app.get("/api/reminders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      // Buscar APENAS os lembretes do usuário logado (sem vehicleId = globais)
+      const userReminders = await storage.getUserReminders(userCompany.userId, userCompany.empresaId);
+      const globalReminders = userReminders.filter((r: any) => !r.vehicleId || r.vehicleId === "");
+      
+      res.json(globalReminders);
+    } catch (error) {
+      console.error("Erro ao listar lembretes:", error);
+      res.status(500).json({ error: "Erro ao listar lembretes" });
+    }
+  });
+
+  // POST /api/reminders - Criar novo lembrete global (para todos os usuários)
+  app.post("/api/reminders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      // Validar dados do lembrete
+      const validated = insertReminderSchema.parse({
+        ...req.body,
+        empresaId: userCompany.empresaId,
+        vehicleId: "", // Lembrete global, não vinculado a veículo
+        userId: userCompany.userId, // FORÇA o userId do usuário logado
+      });
+
+      const reminder = await storage.createReminder(validated as any);
+
+      // Emitir notificação APENAS para este usuário específico
+      io.to(`user:${userCompany.userId}`).emit("reminderCreated", reminder);
+      
+      res.status(201).json(reminder);
+    } catch (error: any) {
+      console.error("Erro ao criar lembrete:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+      }
+      res.status(500).json({ error: "Erro ao criar lembrete" });
+    }
+  });
+
+  // PATCH /api/reminders/:reminderId - Atualizar lembrete global (APENAS se for o dono)
+  app.patch("/api/reminders/:reminderId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      // Buscar o lembrete
+      const allReminders = await storage.getUserReminders(userCompany.userId, userCompany.empresaId);
+      const reminder = allReminders.find((r: any) => r.id === req.params.reminderId);
+
+      if (!reminder) {
+        return res.status(404).json({ error: "Lembrete não encontrado" });
+      }
+
+      // GARANTIR que o usuário só pode editar seus próprios lembretes
+      if (reminder.userId !== userCompany.userId) {
+        return res.status(403).json({ error: "Você não tem permissão para editar este lembrete" });
+      }
+
+      // Atualizar o lembrete
+      const updated = await storage.updateReminder(req.params.reminderId, req.body);
+
+      // Emitir notificação APENAS para o dono do lembrete
+      io.to(`user:${userCompany.userId}`).emit("reminderUpdated", updated);
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Erro ao atualizar lembrete:", error);
+      res.status(500).json({ error: "Erro ao atualizar lembrete" });
+    }
+  });
+
+  // DELETE /api/reminders/:reminderId - Deletar lembrete global (APENAS se for o dono)
+  app.delete("/api/reminders/:reminderId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userCompany = await getUserWithCompany(req);
+      if (!userCompany) {
+        return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
+      }
+
+      // Buscar o lembrete
+      const allReminders = await storage.getUserReminders(userCompany.userId, userCompany.empresaId);
+      const reminder = allReminders.find((r: any) => r.id === req.params.reminderId);
+
+      if (!reminder) {
+        return res.status(404).json({ error: "Lembrete não encontrado" });
+      }
+
+      // GARANTIR que o usuário só pode deletar seus próprios lembretes
+      if (reminder.userId !== userCompany.userId) {
+        return res.status(403).json({ error: "Você não tem permissão para deletar este lembrete" });
+      }
+
+      await storage.deleteReminder(req.params.reminderId);
+
+      // Emitir notificação APENAS para o dono do lembrete
+      io.to(`user:${userCompany.userId}`).emit("reminderDeleted", req.params.reminderId);
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Erro ao deletar lembrete:", error);
+      res.status(500).json({ error: "Erro ao deletar lembrete" });
+    }
+  });
+
   // GET /api/vehicles/:id/reminders - Listar lembretes do veículo (APENAS do usuário logado)
   app.get("/api/vehicles/:id/reminders", isAuthenticated, async (req: any, res) => {
     try {
