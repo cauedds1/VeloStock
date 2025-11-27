@@ -175,12 +175,13 @@ export function NotificationCenter() {
   
   const totalNotifications = totalVehiclesWithChecklistIssues + totalChecklistObservations + displayedObservations + totalIntelligentAlerts + displayedOverdueReminders;
 
-  // Contar tarefas urgentes (>7 dias)
+  // Contar tarefas urgentes (>7 dias) + lembretes vencidos
   const urgentCount = 
     vehiclesWithoutChecklist.filter(v => v.isUrgent).length +
     vehiclesWithPendingChecklist.filter(v => v.isUrgent).length +
     vehiclesWithChecklistObservations.filter(v => v.isUrgent).length +
     pendingObservations.filter(obs => obs.isUrgent).length +
+    overdueReminders.length +
     (alertsData?.highSeverity || 0);
 
   return (
