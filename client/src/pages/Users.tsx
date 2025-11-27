@@ -464,11 +464,16 @@ function EditUserDialog({ open, onOpenChange, user, onSubmit, isLoading }: EditU
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Converter customPermissions para strings "true"/"false" para armazenamento
+    const permissionsToSubmit: any = {};
+    for (const [key, value] of Object.entries(customPermissions)) {
+      permissionsToSubmit[key] = value === true ? "true" : value === false ? "false" : value;
+    }
     const dataToSubmit = {
       ...formData,
       usarComissaoFixaGlobal: formData.usarComissaoFixaGlobal ? "true" : "false",
       comissaoFixa: formData.usarComissaoFixaGlobal ? null : (formData.comissaoFixa || null),
-      customPermissions: customPermissions,
+      customPermissions: permissionsToSubmit,
     };
     onSubmit(dataToSubmit);
   };

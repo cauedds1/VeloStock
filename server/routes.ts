@@ -1742,6 +1742,7 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         isActive: user.isActive,
         comissaoFixa: user.comissaoFixa,
         usarComissaoFixaGlobal: user.usarComissaoFixaGlobal,
+        customPermissions: user.customPermissions,
         createdAt: user.createdAt,
         createdBy: user.createdBy,
       }));
@@ -1838,7 +1839,7 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         return res.status(400).json({ error: "Você não pode desativar sua própria conta" });
       }
 
-      const { firstName, lastName, role, isActive, comissaoFixa, usarComissaoFixaGlobal } = req.body;
+      const { firstName, lastName, role, isActive, comissaoFixa, usarComissaoFixaGlobal, customPermissions } = req.body;
       const updates: any = {};
 
       if (firstName !== undefined) updates.firstName = firstName;
@@ -1851,6 +1852,7 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         updates.role = role;
       }
       if (isActive !== undefined) updates.isActive = isActive;
+      if (customPermissions !== undefined) updates.customPermissions = customPermissions;
       
       // Atualizar configurações de comissão
       if (usarComissaoFixaGlobal !== undefined) {
@@ -1885,6 +1887,9 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         lastName: updatedUser.lastName,
         role: updatedUser.role,
         isActive: updatedUser.isActive,
+        customPermissions: updatedUser.customPermissions,
+        comissaoFixa: updatedUser.comissaoFixa,
+        usarComissaoFixaGlobal: updatedUser.usarComissaoFixaGlobal,
       });
     } catch (error) {
       console.error("Erro ao atualizar usuário:", error);
