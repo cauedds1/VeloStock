@@ -46,6 +46,27 @@ VeloStock is a universal multi-tenant SaaS platform for comprehensive vehicle de
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Authentication System
+
+### Email Verification & Recovery (November 27, 2025)
+- **Signup Verification**: 2-step process (create account → verify email)
+  - Step 1: User creates account with email/password
+  - Step 2: 6-digit verification code sent via Replit Mail (15-minute expiry)
+  - Email marked as `emailVerified: "true"` after verification
+  - Routes: `/api/auth/signup-step1` and `/api/auth/verify-signup-email`
+  
+- **Password Recovery**: 3-step process
+  - `POST /api/auth/forgot-password` - Generate code and send email
+  - `POST /api/auth/verify-reset-code` - Validate code
+  - `POST /api/auth/reset-password` - Update password with bcrypt
+  - Code expires in 15 minutes
+  - Frontend pages: `/forgot-password` and `/reset-password`
+
+- **Email Delivery**: Uses Replit Mail integration (REPLIT_CONNECTORS_HOSTNAME)
+  - HTML-formatted emails with VeloStock branding (purple/green gradient)
+  - Logging added for email delivery debugging
+  - Automatic code generation and expiry management
+
 ## System Architecture
 
 ### UI/UX Decisions

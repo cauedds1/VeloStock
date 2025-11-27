@@ -110,6 +110,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/auth/verify-signup-email - Verificar email no signup
+  app.post('/api/auth/verify-signup-email', async (req: any, res) => {
+    try {
+      const { email, code } = req.body;
+      if (!email || !code) {
+        return res.status(400).json({ message: "Email e código são obrigatórios" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: "Usuário não encontrado" });
+      }
+
+      if (user.verificationCode !== code) {
+        return res.status(400).json({ message: "Código inválido" });
+      }
+
+      if (!user.verificationCodeExpiry || new Date() > user.verificationCodeExpiry) {
+        return res.status(400).json({ message: "Código expirado" });
+      }
+
+      // Marcar email como verificado
+      await storage.updateUser(user.id, {
+        emailVerified: "true",
+      });
+
+      // Limpar código
+      await storage.updateUserVerificationCode(user.id, null as any, null as any);
+
+      res.json({ message: "Email verificado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao verificar email:", error);
+      res.status(500).json({ message: "Erro ao verificar email" });
+    }
+  });
+
   // POST /api/auth/forgot-password - Enviar código de recuperação
   app.post('/api/auth/forgot-password', async (req: any, res) => {
     try {

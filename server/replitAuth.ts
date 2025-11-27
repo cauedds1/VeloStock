@@ -59,9 +59,8 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
-  // Local signup endpoint
+  // Local signup step 1 - Create account and send verification email
   app.post("/api/auth/signup-step1", (req, res, next) => {
-    // Server-side validation
     const { email, password, firstName, lastName } = req.body;
     
     if (!email || !password || !firstName || !lastName) {
@@ -83,11 +82,11 @@ export async function setupAuth(app: Express) {
       if (!user) {
         return res.status(400).json({ message: info?.message || "Erro ao criar conta" });
       }
-      req.logIn(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Erro ao fazer login" });
-        }
-        return res.status(201).json({ success: true });
+      // User created, but not logged in yet - will verify email first
+      return res.status(201).json({ 
+        success: true, 
+        message: "Conta criada. Verifique seu email para ativar a conta.",
+        email: email
       });
     })(req, res, next);
   });
