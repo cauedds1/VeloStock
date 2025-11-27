@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardMetricsEnhanced } from "@/components/DashboardMetricsEnhanced";
 import { DashboardAlerts } from "@/components/DashboardAlerts";
@@ -6,14 +7,17 @@ import { RecentActivity } from "@/components/RecentActivity";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { AddVehicleDialog } from "@/components/AddVehicleDialog";
 import { SellerDashboard } from "@/components/SellerDashboard";
+import { SetSalesTargetDialog } from "@/components/SetSalesTargetDialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, DollarSign, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, DollarSign, Clock, Target } from "lucide-react";
 import { useCompanyTheme } from "@/components/CompanyThemeProvider";
 import { usePermissions } from "@/hooks/use-permissions";
 
 export default function Dashboard() {
   const { changeIconColors, primaryColor } = useCompanyTheme();
   const { isVendedor } = usePermissions();
+  const [setTargetOpen, setSetTargetOpen] = useState(false);
   const { data: vehicles = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
   });
@@ -35,9 +39,25 @@ export default function Dashboard() {
               Visão geral completa do estoque e operações
             </p>
           </div>
-          <AddVehicleDialog onAdd={(data) => console.log("Novo veículo:", data)} />
+          <div className="flex gap-2">
+            {isVendedor && (
+              <Button
+                onClick={() => setSetTargetOpen(true)}
+                variant="outline"
+                className="gap-2"
+                data-testid="button-set-target"
+              >
+                <Target className="h-4 w-4" />
+                Definir Meta
+              </Button>
+            )}
+            <AddVehicleDialog onAdd={(data) => console.log("Novo veículo:", data)} />
+          </div>
         </div>
       </div>
+
+      {/* Dialog para definir meta */}
+      <SetSalesTargetDialog open={setTargetOpen} onOpenChange={setSetTargetOpen} />
 
       {/* Conteúdo principal */}
       <div className="flex-1 overflow-auto p-8">

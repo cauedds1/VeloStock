@@ -730,6 +730,66 @@ router.delete("/expenses/:id", async (req, res) => {
 });
 
 // ============================================
+// GERENCIAR METAS DE VENDAS
+// ============================================
+
+router.post("/sales-targets", requireRole(["vendedor"]), async (req, res) => {
+  try {
+    const userId = req.user?.claims?.id || req.user?.claims?.sub;
+    if (!userId) return res.status(401).json({ error: "Não autenticado" });
+
+    const user = req.userFromDb;
+    const empresaId = user.empresaId;
+    const { metaQuantidade, metaValor } = req.body;
+
+    const now = new Date();
+    const mesReferencia = now.getMonth() + 1;
+    const anoReferencia = now.getFullYear();
+
+    // Verificar se já existe meta para este mês
+    const [existingMeta] = await db
+      .select()
+      .from(salesTargets)
+      .where(
+        and(
+          eq(salesTargets.empresaId, empresaId),
+          eq(salesTargets.vendedorId, userId),
+          eq(salesTargets.mesReferencia, mesReferencia),
+          eq(salesTargets.anoReferencia, anoReferencia)
+        )
+      )
+      .limit(1);
+
+    if (existingMeta) {
+      // Atualizar meta existente
+      await db
+        .update(salesTargets)
+        .set({
+          metaQuantidade: metaQuantidade || null,
+          metaValor: metaValor ? metaValor.toString() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(salesTargets.id, existingMeta.id));
+    } else {
+      // Criar nova meta
+      await db.insert(salesTargets).values({
+        empresaId,
+        vendedorId: userId,
+        mesReferencia,
+        anoReferencia,
+        metaQuantidade: metaQuantidade || null,
+        metaValor: metaValor ? metaValor.toString() : null,
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Erro ao salvar meta:", error);
+    res.status(500).json({ error: "Erro ao salvar meta" });
+  }
+});
+
+// ============================================
 // DASHBOARD DO VENDEDOR
 // ============================================
 
