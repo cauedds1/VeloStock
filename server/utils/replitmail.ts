@@ -1,4 +1,5 @@
-import { z } from "zod";
+import sgMail from '@sendgrid/mail';
+import { z } from 'zod';
 
 export const zSmtpMessage = z.object({
   to: z
@@ -28,6 +29,45 @@ export const zSmtpMessage = z.object({
 
 export type SmtpMessage = z.infer<typeof zSmtpMessage>;
 
+let connectionSettings: any;
+
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+      ? 'depl ' + process.env.WEB_REPL_RENEWAL
+      : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
+    throw new Error('SendGrid not connected');
+  }
+  return { apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email };
+}
+
+async function getUncachableSendGridClient() {
+  const { apiKey, email } = await getCredentials();
+  sgMail.setApiKey(apiKey);
+  return {
+    client: sgMail,
+    fromEmail: email
+  };
+}
+
 export async function sendEmail(message: SmtpMessage): Promise<{
   accepted: string[];
   rejected: string[];
@@ -36,57 +76,34 @@ export async function sendEmail(message: SmtpMessage): Promise<{
   response: string;
 }> {
   try {
-    console.log("[Email] Enviando email para:", message.to);
+    console.log("[SendGrid] Enviando email para:", message.to);
 
-    // Em desenvolvimento, apenas logar
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[Email] MODO DESENVOLVIMENTO - Email não enviado fisicamente");
-      console.log("[Email] Detalhes:", {
-        to: message.to,
-        subject: message.subject,
-      });
+    const { client, fromEmail } = await getUncachableSendGridClient();
 
-      // Retornar simulado
-      return {
-        accepted: Array.isArray(message.to) ? message.to : [message.to],
-        rejected: [],
-        messageId: `dev-${Date.now()}`,
-        response: "Email logged in development mode",
-      };
-    }
+    const msg = {
+      to: message.to,
+      cc: message.cc,
+      from: fromEmail,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+      attachments: message.attachments,
+    };
 
-    // Em produção, usar a API do Replit Connectors
-    const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME || "connectors.replit.com";
-
-    // Tentar enviar via Replit Mail
-    const response = await fetch(`https://${hostname}/api/v2/mailer/send`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: message.to,
-        cc: message.cc,
-        subject: message.subject,
-        text: message.text,
-        html: message.html,
-        attachments: message.attachments,
-      }),
-    });
-
-    console.log("[Email] Response status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[Email] Error response:", errorText);
-      throw new Error(`Failed to send email: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("[Email] Email sent successfully:", result);
-    return result;
+    const result = await client.send(msg);
+    
+    console.log("[SendGrid] Email enviado com sucesso:", result);
+    
+    // Normalizar resposta para o formato esperado
+    const toArray = Array.isArray(message.to) ? message.to : [message.to];
+    return {
+      accepted: toArray,
+      rejected: [],
+      messageId: result[0].headers['x-message-id'] || `sg-${Date.now()}`,
+      response: 'Email sent successfully'
+    };
   } catch (error) {
-    console.error("[Email] Fatal error sending email:", error);
+    console.error("[SendGrid] Erro ao enviar email:", error);
     throw error;
   }
 }
