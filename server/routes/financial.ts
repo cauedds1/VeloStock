@@ -95,22 +95,25 @@ router.get("/report/complete", requireFinancialOrManagerAccess, async (req, res)
         and(
           eq(vehicles.empresaId, empresaId),
           eq(vehicles.status, "Vendido"),
-          gte(vehicles.dataSaida, startDate.toISOString()),
-          lte(vehicles.dataSaida, endDate.toISOString())
+          gte(vehicles.dataVenda, startDate),
+          lte(vehicles.dataVenda, endDate)
         )
       );
 
-    // Custos do período
+    // Custos dos veículos VENDIDOS no período
     const custosPeriodo = await db
       .select()
       .from(vehicleCosts)
+      .innerJoin(vehicles, eq(vehicleCosts.vehicleId, vehicles.id))
       .where(
         and(
-          eq(vehicleCosts.empresaId, empresaId),
-          gte(vehicleCosts.date, startDate.toISOString()),
-          lte(vehicleCosts.date, endDate.toISOString())
+          eq(vehicles.empresaId, empresaId),
+          eq(vehicles.status, "Vendido"),
+          gte(vehicles.dataVenda, startDate),
+          lte(vehicles.dataVenda, endDate)
         )
-      );
+      )
+      .then(rows => rows.map(r => r.vehicle_costs));
 
     // Despesas operacionais do período
     const despesasPeriodo = await db
