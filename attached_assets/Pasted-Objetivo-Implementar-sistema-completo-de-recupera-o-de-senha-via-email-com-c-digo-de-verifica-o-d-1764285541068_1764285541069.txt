@@ -1,0 +1,104 @@
+Objetivo: Implementar sistema completo de recuperação de senha via email com código de verificação de 6 dígitos.
+
+Contexto: O projeto VeloStock já possui:
+
+Sistema de autenticação local (email/senha) em server/localAuth.ts
+Utilitário para gerar códigos em server/utils/verificationCode.ts
+Sistema de envio de email via Replit Mail em server/utils/replitmail.ts
+Schema de usuários em shared/schema.ts com campos verificationCode e verificationCodeExpiry
+Páginas de Login (client/src/pages/Login.tsx) e Signup (client/src/pages/Signup.tsx)
+Requisitos de Implementação:
+
+1. Backend (Server)
+Criar rota POST /api/auth/forgot-password
+Recebe: { email }
+Valida se email existe no banco
+Gera código de 6 dígitos usando generateVerificationCode() de server/utils/verificationCode.ts
+Define expiração de 15 minutos usando getVerificationCodeExpiry()
+Salva código e expiração no usuário usando método existente storage.updateUserVerificationCode()
+Envia email usando sendEmail() de server/utils/replitmail.ts com:
+Assunto: "VeloStock - Recuperação de Senha"
+Corpo HTML formatado com o código de 6 dígitos
+Design consistente com a identidade visual do VeloStock (roxo/verde)
+Retorna sucesso MESMO se email não existir (segurança)
+Criar rota POST /api/auth/verify-reset-code
+Recebe: { email, code }
+Valida se código existe e não expirou
+Valida se código corresponde ao usuário
+Retorna token temporário válido por 10 minutos para resetar senha
+Limpa código de verificação após validação bem-sucedida
+Criar rota POST /api/auth/reset-password
+Recebe: { email, code, newPassword }
+Revalida código (caso usuário não use token)
+Valida força da senha (mínimo 6 caracteres)
+Faz hash da nova senha usando bcrypt
+Atualiza passwordHash do usuário
+Limpa código de verificação
+Retorna sucesso
+2. Frontend (Client)
+Criar página client/src/pages/ForgotPassword.tsx
+Layout similar ao Login/Signup:
+
+Gradiente roxo/verde no fundo
+Card centralizado com logo VeloStock
+Campo de email
+Botão "Enviar Código"
+Link "Voltar para login"
+Mensagens de feedback usando useToast
+Criar página client/src/pages/ResetPassword.tsx
+Dois estados:
+
+Verificação de Código:
+Campo para código de 6 dígitos
+Botão "Verificar Código"
+Link para reenviar código
+Nova Senha:
+Campo "Nova Senha"
+Campo "Confirmar Nova Senha"
+Botão "Redefinir Senha"
+Validação de correspondência de senhas
+Atualizar client/src/pages/Login.tsx
+Adicionar link "Esqueceu sua senha?" abaixo do botão de login
+Link redireciona para /forgot-password
+Atualizar client/src/App.tsx
+Adicionar rotas:
+/forgot-password → ForgotPassword
+/reset-password → ResetPassword
+3. Validações e Segurança
+Rate limiting: Limitar tentativas de envio de código (máximo 3 em 15 minutos por email)
+Validação de código: Marcar código como inválido após 3 tentativas incorretas
+Expiração: Código expira em 15 minutos
+Limpeza: Limpar códigos após uso bem-sucedido ou expiração
+4. UX/UI
+Feedback visual: Loading states em todos os botões
+Mensagens claras:
+"Código enviado para seu email"
+"Código inválido ou expirado"
+"Senha redefinida com sucesso"
+Redirecionamento: Após resetar senha, redirecionar para login com mensagem de sucesso
+Design consistente: Usar mesmos componentes UI do shadcn/ui
+5. Email Template
+Criar template HTML responsivo para o email com:
+
+Logo VeloStock
+Mensagem amigável
+Código em destaque (fonte grande, box colorido)
+Tempo de expiração (15 minutos)
+Link alternativo para suporte
+Footer com informações da empresa
+Estrutura de Arquivos a Criar/Modificar:
+Criar:
+
+client/src/pages/ForgotPassword.tsx
+client/src/pages/ResetPassword.tsx
+Modificar:
+
+server/routes.ts (adicionar 3 novas rotas)
+client/src/App.tsx (adicionar rotas)
+client/src/pages/Login.tsx (adicionar link)
+Observações:
+
+NÃO usar serviços externos (tudo deve usar Replit Mail grátis)
+NÃO modificar .replit, package.json ou arquivos de configuração
+Seguir padrões existentes do código (TypeScript, React, Express)
+Usar mesma paleta de cores (roxo #9333ea e verde #22c55e)
