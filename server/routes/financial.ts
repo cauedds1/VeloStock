@@ -322,6 +322,149 @@ function getUserWithCompanyForReport(req: any): { userId: string; empresaId: str
   return { userId, empresaId: user.empresaId };
 }
 
+// ============================================
+// GERENCIAR METAS DE VENDAS (VENDEDORES)
+// ============================================
+
+router.post("/sales-targets", requireRole(["vendedor", "proprietario", "gerente"]), async (req, res) => {
+  try {
+    const { metaQuantidade, metaValor, vendedorId } = req.body;
+    const { userId, empresaId } = getUserWithCompany(req);
+    
+    const targetUserId = (req as any).userRole === "vendedor" ? userId : vendedorId;
+    if (!targetUserId) return res.status(400).json({ error: "ID do vendedor é obrigatório" });
+
+    const now = new Date();
+    const mesReferencia = now.getMonth() + 1;
+    const anoReferencia = now.getFullYear();
+
+    const [existingMeta] = await db
+      .select()
+      .from(salesTargets)
+      .where(
+        and(
+          eq(salesTargets.empresaId, empresaId),
+          eq(salesTargets.vendedorId, targetUserId),
+          eq(salesTargets.mesReferencia, mesReferencia),
+          eq(salesTargets.anoReferencia, anoReferencia)
+        )
+      )
+      .limit(1);
+
+    if (existingMeta) {
+      await db
+        .update(salesTargets)
+        .set({
+          metaQuantidade: metaQuantidade || null,
+          metaValor: metaValor ? metaValor.toString() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(salesTargets.id, existingMeta.id));
+    } else {
+      await db.insert(salesTargets).values({
+        empresaId,
+        vendedorId: targetUserId,
+        mesReferencia,
+        anoReferencia,
+        metaQuantidade: metaQuantidade || null,
+        metaValor: metaValor ? metaValor.toString() : null,
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Erro ao salvar meta:", error);
+    res.status(500).json({ error: "Erro ao salvar meta" });
+  }
+});
+
+router.get("/seller-dashboard", requireRole(["vendedor"]), async (req, res) => {
+  try {
+    const { userId, empresaId } = getUserWithCompany(req);
+    if (!userId) return res.status(401).json({ error: "Não autenticado" });
+    const now = new Date();
+    const mesNum = now.getMonth() + 1;
+    const anoNum = now.getFullYear();
+    const startDate = new Date(anoNum, mesNum - 1, 1);
+    const endDate = new Date(anoNum, mesNum, 0, 23, 59, 59);
+
+    const [metaVendedor] = await db
+      .select()
+      .from(salesTargets)
+      .where(
+        and(
+          eq(salesTargets.empresaId, empresaId),
+          eq(salesTargets.vendedorId, userId)
+        )
+      )
+      .limit(1);
+
+    const vendasVendedor = await db
+      .select()
+      .from(vehicles)
+      .where(
+        and(
+          eq(vehicles.empresaId, empresaId),
+          eq(vehicles.vendedorId, userId),
+          eq(vehicles.status, "Vendido"),
+          gte(vehicles.dataVenda, startDate),
+          lte(vehicles.dataVenda, endDate)
+        )
+      );
+
+    const [comissaoData] = await db
+      .select({
+        total: sql<string>`COALESCE(SUM(${commissionPayments.valorComissao}), 0)`,
+        pagas: sql<string>`COALESCE(SUM(CASE WHEN ${commissionPayments.status} = 'Paga' THEN ${commissionPayments.valorComissao} ELSE 0 END), 0)`,
+        aPagar: sql<string>`COALESCE(SUM(CASE WHEN ${commissionPayments.status} = 'A Pagar' THEN ${commissionPayments.valorComissao} ELSE 0 END), 0)`,
+      })
+      .from(commissionPayments)
+      .where(
+        and(
+          eq(commissionPayments.empresaId, empresaId),
+          eq(commissionPayments.vendedorId, userId),
+          gte(commissionPayments.createdAt, startDate),
+          lte(commissionPayments.createdAt, endDate)
+        )
+      );
+
+    const [percentualConfig] = await db
+      .select()
+      .from(commissionsConfig)
+      .where(
+        and(
+          eq(commissionsConfig.empresaId, empresaId),
+          eq(commissionsConfig.vendedorId, userId)
+        )
+      )
+      .limit(1);
+
+    const quantidadeVendas = vendasVendedor.length;
+    const receitaTotal = vendasVendedor.reduce((sum, v) => sum + Number(v.salePrice || 0), 0);
+    const metaQuantidade = metaVendedor?.metaQuantidade || null;
+    const metaValor = metaVendedor?.metaValor ? Number(metaVendedor.metaValor) : null;
+    const percentualComissao = percentualConfig?.percentualComissao ? Number(percentualConfig.percentualComissao) : 0;
+
+    res.json({
+      meta: {
+        metaQuantidade,
+        metaValor,
+        quantidadeVendas,
+        receitaTotal,
+      },
+      comissoes: {
+        total: Number(comissaoData?.total || 0),
+        pagas: Number(comissaoData?.pagas || 0),
+        aPagar: Number(comissaoData?.aPagar || 0),
+        percentualComissao,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao gerar dashboard do vendedor:", error);
+    res.status(500).json({ error: "Erro ao gerar dashboard" });
+  }
+});
+
 // Todas as outras rotas financeiras exigem papel de Proprietário ou Gerente
 router.use(requireProprietarioOrGerente);
 
@@ -727,161 +870,6 @@ router.delete("/expenses/:id", async (req, res) => {
     );
 
   res.json({ success: true });
-});
-
-// ============================================
-// GERENCIAR METAS DE VENDAS
-// ============================================
-
-router.post("/sales-targets", requireRole(["vendedor", "proprietario", "gerente"]), async (req, res) => {
-  try {
-    const { metaQuantidade, metaValor, vendedorId } = req.body;
-    const { userId, empresaId } = getUserWithCompany(req);
-    
-    // Se for vendedor, usa seu próprio ID. Se for proprietário/gerente, usa o vendedorId enviado
-    const targetUserId = (req as any).userRole === "vendedor" ? userId : vendedorId;
-    if (!targetUserId) return res.status(400).json({ error: "ID do vendedor é obrigatório" });
-
-    const now = new Date();
-    const mesReferencia = now.getMonth() + 1;
-    const anoReferencia = now.getFullYear();
-
-    // Verificar se já existe meta para este mês
-    const [existingMeta] = await db
-      .select()
-      .from(salesTargets)
-      .where(
-        and(
-          eq(salesTargets.empresaId, empresaId),
-          eq(salesTargets.vendedorId, targetUserId),
-          eq(salesTargets.mesReferencia, mesReferencia),
-          eq(salesTargets.anoReferencia, anoReferencia)
-        )
-      )
-      .limit(1);
-
-    if (existingMeta) {
-      // Atualizar meta existente
-      await db
-        .update(salesTargets)
-        .set({
-          metaQuantidade: metaQuantidade || null,
-          metaValor: metaValor ? metaValor.toString() : null,
-          updatedAt: new Date(),
-        })
-        .where(eq(salesTargets.id, existingMeta.id));
-    } else {
-      // Criar nova meta
-      await db.insert(salesTargets).values({
-        empresaId,
-        vendedorId: targetUserId,
-        mesReferencia,
-        anoReferencia,
-        metaQuantidade: metaQuantidade || null,
-        metaValor: metaValor ? metaValor.toString() : null,
-      });
-    }
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Erro ao salvar meta:", error);
-    res.status(500).json({ error: "Erro ao salvar meta" });
-  }
-});
-
-// ============================================
-// DASHBOARD DO VENDEDOR
-// ============================================
-
-router.get("/seller-dashboard", requireRole(["vendedor"]), async (req, res) => {
-  try {
-    const { userId, empresaId } = getUserWithCompany(req);
-    if (!userId) return res.status(401).json({ error: "Não autenticado" });
-    const now = new Date();
-    const mesNum = now.getMonth() + 1;
-    const anoNum = now.getFullYear();
-    const startDate = new Date(anoNum, mesNum - 1, 1);
-    const endDate = new Date(anoNum, mesNum, 0, 23, 59, 59);
-
-    // Meta do vendedor
-    const [metaVendedor] = await db
-      .select()
-      .from(salesTargets)
-      .where(
-        and(
-          eq(salesTargets.empresaId, empresaId),
-          eq(salesTargets.vendedorId, userId)
-        )
-      )
-      .limit(1);
-
-    // Vendas do vendedor no mês
-    const vendasVendedor = await db
-      .select()
-      .from(vehicles)
-      .where(
-        and(
-          eq(vehicles.empresaId, empresaId),
-          eq(vehicles.vendedorId, userId),
-          eq(vehicles.status, "Vendido"),
-          gte(vehicles.dataVenda, startDate),
-          lte(vehicles.dataVenda, endDate)
-        )
-      );
-
-    // Comissões do vendedor
-    const [comissaoData] = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(${commissionPayments.valorComissao}), 0)`,
-        pagas: sql<string>`COALESCE(SUM(CASE WHEN ${commissionPayments.status} = 'Paga' THEN ${commissionPayments.valorComissao} ELSE 0 END), 0)`,
-        aPagar: sql<string>`COALESCE(SUM(CASE WHEN ${commissionPayments.status} = 'A Pagar' THEN ${commissionPayments.valorComissao} ELSE 0 END), 0)`,
-      })
-      .from(commissionPayments)
-      .where(
-        and(
-          eq(commissionPayments.empresaId, empresaId),
-          eq(commissionPayments.vendedorId, userId),
-          gte(commissionPayments.createdAt, startDate),
-          lte(commissionPayments.createdAt, endDate)
-        )
-      );
-
-    // Percentual de comissão do vendedor
-    const [percentualConfig] = await db
-      .select()
-      .from(commissionsConfig)
-      .where(
-        and(
-          eq(commissionsConfig.empresaId, empresaId),
-          eq(commissionsConfig.vendedorId, userId)
-        )
-      )
-      .limit(1);
-
-    const quantidadeVendas = vendasVendedor.length;
-    const receitaTotal = vendasVendedor.reduce((sum, v) => sum + Number(v.salePrice || 0), 0);
-    const metaQuantidade = metaVendedor?.metaQuantidade || null;
-    const metaValor = metaVendedor?.metaValor ? Number(metaVendedor.metaValor) : null;
-    const percentualComissao = percentualConfig?.percentualComissao ? Number(percentualConfig.percentualComissao) : 0;
-
-    res.json({
-      meta: {
-        metaQuantidade,
-        metaValor,
-        quantidadeVendas,
-        receitaTotal,
-      },
-      comissoes: {
-        total: Number(comissaoData?.total || 0),
-        pagas: Number(comissaoData?.pagas || 0),
-        aPagar: Number(comissaoData?.aPagar || 0),
-        percentualComissao,
-      },
-    });
-  } catch (error) {
-    console.error("Erro ao gerar dashboard do vendedor:", error);
-    res.status(500).json({ error: "Erro ao gerar dashboard" });
-  }
 });
 
 // ============================================
