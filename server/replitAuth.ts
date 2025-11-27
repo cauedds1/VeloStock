@@ -76,25 +76,19 @@ export async function setupAuth(app: Express) {
     if (password.length < 6) {
       return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
     }
-    
-    passport.authenticate("local-signup", async (err: any, user: any, info: any) => {
-      try {
-        if (err) {
-          return res.status(500).json({ message: "Erro ao criar conta" });
-        }
-        if (!user) {
-          return res.status(400).json({ message: info?.message || "Erro ao criar conta" });
-        }
-        
-        // Gerar código de verificação ANTES de confirmar a criação
-        const code = generateVerificationCode();
-        const expiry = getVerificationCodeExpiry();
-        const userId = user.claims.id || user.claims.sub;
-        
-        console.log(`[Signup] Código gerado para ${email}: ${code}`);
-        
-        // Enviar email
-        const emailHtml = `
+
+    try {
+      // Checar se email já existe
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email já cadastrado" });
+      }
+
+      // Gerar código antes de enviar
+      const code = generateVerificationCode();
+      const expiry = getVerificationCodeExpiry();
+
+      const emailHtml = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -135,36 +129,43 @@ export async function setupAuth(app: Express) {
     </div>
   </body>
 </html>
-        `;
-        
-        try {
-          console.log(`[Signup] Enviando email de verificação para ${email}...`);
-          await sendEmail({
-            to: email,
-            subject: 'VeloStock - Verificação de Email',
-            html: emailHtml,
-          });
-          console.log(`[Signup] Email enviado com sucesso para ${email}`);
-          
-          // Salvar código SÓ após email ter sido enviado
-          await storage.updateUserVerificationCode(userId, code, expiry);
-        } catch (emailError) {
-          // Se falhar ao enviar email, não salvar o código (usuário não pode fazer login)
-          console.error("[Signup] Erro ao enviar email:", emailError);
-          return res.status(500).json({ message: "Erro ao enviar email de verificação" });
-        }
-        
-        // User created, but not logged in yet - will verify email first
-        return res.status(201).json({ 
-          success: true, 
-          message: "Conta criada. Verifique seu email para ativar a conta.",
-          email: email
-        });
-      } catch (error) {
-        console.error("[Signup] Erro no signup:", error);
-        return res.status(500).json({ message: "Erro ao criar conta" });
-      }
-    })(req, res, next);
+      `;
+
+      // ENVIAR EMAIL PRIMEIRO
+      console.log(`[Signup] Código gerado para ${email}: ${code}`);
+      console.log(`[Signup] Enviando email de verificação para ${email}...`);
+      
+      await sendEmail({
+        to: email,
+        subject: 'VeloStock - Verificação de Email',
+        html: emailHtml,
+      });
+
+      console.log(`[Signup] Email enviado com sucesso para ${email}`);
+
+      // SÓ depois de enviar com sucesso, criar o usuário
+      const passwordHash = await require('bcrypt').hash(password, 10);
+      const newUser = await storage.createLocalUser({
+        email,
+        firstName,
+        lastName,
+        passwordHash,
+        authProvider: "local",
+      });
+
+      // Salvar código no usuário
+      await storage.updateUserVerificationCode(newUser.id, code, expiry);
+
+      // User created, but not logged in yet - will verify email first
+      return res.status(201).json({ 
+        success: true, 
+        message: "Conta criada. Verifique seu email para ativar a conta.",
+        email: email
+      });
+    } catch (error) {
+      console.error("[Signup] Erro no signup:", error);
+      return res.status(500).json({ message: "Erro ao enviar email de verificação" });
+    }
   });
 
   // Local login endpoint
