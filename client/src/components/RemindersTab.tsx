@@ -132,7 +132,7 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
                       <p className="mt-1 text-sm text-muted-foreground">{reminder.descricao}</p>
                     )}
                     <div className="mt-3 flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
+                      <span className={`text-xs ${alert.type === "passed" ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
                         {format(new Date(reminder.dataLimite), "dd 'de' MMMM", { locale: ptBR })}
                       </span>
                       <Badge variant="outline" className={`${color.bg} ${color.text} border-0`}>

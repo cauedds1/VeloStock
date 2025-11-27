@@ -28,6 +28,10 @@ export function NotificationCenter() {
     queryKey: ["/api/store-observations"],
   });
 
+  const { data: reminders = [] } = useQuery<any[]>({
+    queryKey: ["/api/reminders"],
+  });
+
   // Helper para calcular dias desde última atualização
   const getDaysSince = (dateStr: string): number => {
     if (!dateStr) return 0;
@@ -139,7 +143,16 @@ export function NotificationCenter() {
     });
   
   const pendingObservations = pendingObservationsWithDays;
-  
+
+  // Processar lembretes vencidos
+  const overdueReminders = reminders.filter((reminder: any) => {
+    if (reminder.status !== "Pendente") return false;
+    const daysUntil = Math.floor(
+      (new Date(reminder.dataLimite).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return daysUntil < 0; // Vencido
+  });
+
   // Aplicar filtros baseado nas configurações
   const showChecklistAlerts = settings.readyForSaleAlerts;
   const showTaskAlerts = settings.taskAlerts;
@@ -148,17 +161,19 @@ export function NotificationCenter() {
   const actualChecklistIssues = vehiclesWithoutChecklist.length + vehiclesWithPendingChecklist.length;
   const actualChecklistObservations = vehiclesWithChecklistObservations.length;
   const actualObservationIssues = pendingObservations.length;
+  const actualOverdueReminders = overdueReminders.length;
   
   // Problemas exibidos (filtrados pelas configurações)
   const totalVehiclesWithChecklistIssues = showChecklistAlerts ? actualChecklistIssues : 0;
   const totalChecklistObservations = showChecklistAlerts ? actualChecklistObservations : 0;
   const displayedObservations = showTaskAlerts ? actualObservationIssues : 0;
+  const displayedOverdueReminders = showTaskAlerts ? actualOverdueReminders : 0;
   
   // Adicionar alertas inteligentes
   const intelligentAlerts = alertsData?.alerts || [];
   const totalIntelligentAlerts = intelligentAlerts.length;
   
-  const totalNotifications = totalVehiclesWithChecklistIssues + totalChecklistObservations + displayedObservations + totalIntelligentAlerts;
+  const totalNotifications = totalVehiclesWithChecklistIssues + totalChecklistObservations + displayedObservations + totalIntelligentAlerts + displayedOverdueReminders;
 
   // Contar tarefas urgentes (>7 dias)
   const urgentCount = 
@@ -253,6 +268,61 @@ export function NotificationCenter() {
                     {intelligentAlerts.length > 5 && (
                       <p className="text-xs text-muted-foreground italic">
                         + {intelligentAlerts.length - 5} alertas...
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {showTaskAlerts && displayedOverdueReminders > 0 && (
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10">
+                      <Clock className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">Lembretes Vencidos</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {overdueReminders.length} {overdueReminders.length === 1 ? 'lembrete vencido' : 'lembretes vencidos'}
+                      </p>
+                    </div>
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
+                      {overdueReminders.length}
+                    </Badge>
+                  </div>
+                  
+                  <div className="pl-11 space-y-2">
+                    {overdueReminders.slice(0, 5).map((reminder: any, idx: number) => (
+                      <Link 
+                        key={idx} 
+                        href="/observacoes-gerais"
+                        onClick={() => setOpen(false)}
+                        className="flex items-start justify-between gap-2 text-xs hover:text-foreground transition-colors p-2 -ml-1.5 rounded hover:bg-accent group bg-pulse-urgent border-l-2 border-red-600 text-red-700 font-medium"
+                      >
+                        <span className="flex items-start gap-2 flex-1">
+                          <AlertCircle className="h-3.5 w-3.5 text-red-600 animate-pulse-urgent flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="font-medium">{reminder.titulo}</div>
+                            <div className="text-[10px] text-red-600 opacity-90">
+                              {Math.abs(
+                                Math.floor(
+                                  (new Date(reminder.dataLimite).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                                )
+                              )} dias vencido
+                            </div>
+                          </div>
+                        </span>
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
+                          URGENTE
+                        </Badge>
+                      </Link>
+                    ))}
+                    {overdueReminders.length > 5 && (
+                      <p className="text-xs text-muted-foreground italic">
+                        + {overdueReminders.length - 5} lembretes...
                       </p>
                     )}
                   </div>
