@@ -26,7 +26,7 @@ export const checklistCategoriesCarro = {
 
 export const checklistItemsCarro = {
   pneus: ["Pneus Dianteiros", "Pneus Traseiros"],
-  interior: ["Limpeza", "Estado dos bancos", "Tapetes", "Porta-objetos"],
+  interior: ["Limpeza", "Estado dos bancos", "Tapetes", "Porta-objetos", "Acabamentos"],
   somEletrica: ["Funcionamento do som", "Vidros elétricos", "Ar-condicionado", "Travas elétricas"],
   lataria: ["Arranhões", "Amassados", "Pintura desbotada", "Faróis/Lanternas"],
   documentacao: ["Documento do veículo", "IPVA", "Licenciamento"],
