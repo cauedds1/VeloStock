@@ -299,7 +299,7 @@ export function NotificationCenter() {
                     {overdueReminders.slice(0, 5).map((reminder: any, idx: number) => (
                       <Link 
                         key={idx} 
-                        href="/observacoes-gerais"
+                        href="/anotacoes"
                         onClick={() => setOpen(false)}
                         className="flex items-start justify-between gap-2 text-xs hover:text-foreground transition-colors p-2 -ml-1.5 rounded hover:bg-accent group bg-pulse-urgent border-l-2 border-red-600 text-red-700 font-medium"
                       >
