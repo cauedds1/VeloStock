@@ -5,37 +5,46 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
-export default function Login() {
+export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
 
       if (response.ok) {
-        window.location.href = "/";
+        setCodeSent(true);
+        toast({
+          title: "Código enviado!",
+          description: "Verifique seu email para recuperar a senha",
+        });
+        setTimeout(() => {
+          setLocation(`/reset-password?email=${encodeURIComponent(email)}`);
+        }, 1500);
       } else {
         const error = await response.json();
         toast({
-          title: "Erro ao fazer login",
-          description: error.message || "Email ou senha incorretos",
+          title: "Erro",
+          description: error.message || "Não foi possível enviar o código",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Erro ao fazer login",
+        title: "Erro",
         description: "Ocorreu um erro. Tente novamente.",
         variant: "destructive",
       });
@@ -55,16 +64,16 @@ export default function Login() {
           <span className="text-3xl font-bold text-white">VeloStock</span>
         </div>
 
-        {/* Card de Login */}
+        {/* Card de Recuperação */}
         <Card className="border-0 shadow-2xl">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Fazer Login</CardTitle>
+            <CardTitle className="text-2xl font-bold">Recuperar Senha</CardTitle>
             <CardDescription>
-              Entre com seu email e senha para acessar sua conta
+              Digite seu email para receber um código de recuperação
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleSendCode} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -74,17 +83,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+                  disabled={isLoading}
                 />
               </div>
               <Button
@@ -92,34 +91,17 @@ export default function Login() {
                 className="w-full bg-purple-600 hover:bg-purple-700"
                 disabled={isLoading}
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {isLoading ? "Enviando..." : "Enviar Código"}
               </Button>
             </form>
 
-            <div className="text-center text-sm pt-4 space-y-2">
+            <div className="text-center text-sm pt-4 space-y-3">
               <div>
                 <button
-                  className="text-sm text-purple-600 hover:text-purple-700 font-semibold underline"
-                  onClick={() => window.location.href = '/forgot-password'}
+                  className="text-purple-600 hover:text-purple-700 font-semibold underline"
+                  onClick={() => setLocation("/login")}
                 >
-                  Esqueceu sua senha?
-                </button>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Não tem uma conta? </span>
-                <button
-                  className="p-0 h-auto font-semibold text-purple-600 hover:text-purple-700 underline"
-                  onClick={() => window.location.href = '/signup'}
-                >
-                  Criar conta
-                </button>
-              </div>
-              <div>
-                <button
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => window.location.href = '/'}
-                >
-                  ← Voltar para home
+                  ← Voltar para Login
                 </button>
               </div>
             </div>

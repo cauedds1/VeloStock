@@ -22,6 +22,8 @@ import costApprovalsRoutes from "./routes/costApprovals";
 import billsRoutes from "./routes/bills";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
+import { generateVerificationCode, getVerificationCodeExpiry } from "./utils/verificationCode";
+import { sendEmail } from "./utils/replitmail";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -105,6 +107,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // POST /api/auth/forgot-password - Enviar código de recuperação
+  app.post('/api/auth/forgot-password', async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email é obrigatório" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Segurança: retorna sucesso mesmo se email não existe
+        return res.json({ message: "Se o email existir, um código será enviado" });
+      }
+
+      // Gerar código e expiração
+      const code = generateVerificationCode();
+      const expiry = getVerificationCodeExpiry();
+      
+      await storage.updateUserVerificationCode(user.id, code, expiry);
+
+      // Enviar email
+      const emailHtml = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: linear-gradient(to right, #9333ea, #22c55e); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+      .header h1 { margin: 0; font-size: 28px; }
+      .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+      .code-box { background: white; border: 2px solid #9333ea; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
+      .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #9333ea; font-family: monospace; }
+      .expiry { color: #666; font-size: 14px; margin-top: 15px; }
+      .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #999; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>VeloStock</h1>
+        <p>Recuperação de Senha</p>
+      </div>
+      <div class="content">
+        <p>Olá <strong>${user.firstName || 'usuário'}</strong>,</p>
+        <p>Recebemos uma solicitação para redefinir sua senha. Use o código abaixo para continuar:</p>
+        
+        <div class="code-box">
+          <div class="code">${code}</div>
+          <div class="expiry">Este código expira em 15 minutos</div>
+        </div>
+
+        <p>Se você não solicitou essa recuperação, pode ignorar este email. Sua conta está segura.</p>
+        
+        <div class="footer">
+          <p>&copy; 2024 VeloStock. Todos os direitos reservados.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+      `;
+
+      await sendEmail({
+        to: email,
+        subject: 'VeloStock - Recuperação de Senha',
+        html: emailHtml,
+      });
+
+      res.json({ message: "Código enviado para seu email" });
+    } catch (error) {
+      console.error("Erro ao enviar código:", error);
+      res.status(500).json({ message: "Erro ao enviar código" });
+    }
+  });
+
+  // POST /api/auth/verify-reset-code - Verificar código
+  app.post('/api/auth/verify-reset-code', async (req: any, res) => {
+    try {
+      const { email, code } = req.body;
+      if (!email || !code) {
+        return res.status(400).json({ message: "Email e código são obrigatórios" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: "Código inválido ou expirado" });
+      }
+
+      if (user.verificationCode !== code) {
+        return res.status(400).json({ message: "Código inválido ou expirado" });
+      }
+
+      if (!user.verificationCodeExpiry || new Date() > user.verificationCodeExpiry) {
+        return res.status(400).json({ message: "Código expirado" });
+      }
+
+      // Código válido
+      res.json({ message: "Código verificado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao verificar código:", error);
+      res.status(500).json({ message: "Erro ao verificar código" });
+    }
+  });
+
+  // POST /api/auth/reset-password - Redefinir senha
+  app.post('/api/auth/reset-password', async (req: any, res) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ message: "Email, código e nova senha são obrigatórios" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: "Email não encontrado" });
+      }
+
+      // Validar código
+      if (user.verificationCode !== code) {
+        return res.status(400).json({ message: "Código inválido" });
+      }
+
+      if (!user.verificationCodeExpiry || new Date() > user.verificationCodeExpiry) {
+        return res.status(400).json({ message: "Código expirado" });
+      }
+
+      // Fazer hash da nova senha
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+
+      // Atualizar usuário
+      await storage.updateUser(user.id, {
+        passwordHash,
+      });
+
+      // Limpar código de verificação
+      await storage.updateUserVerificationCode(user.id, null as any, null as any);
+
+      res.json({ message: "Senha redefinida com sucesso" });
+    } catch (error) {
+      console.error("Erro ao redefinir senha:", error);
+      res.status(500).json({ message: "Erro ao redefinir senha" });
     }
   });
 

@@ -21,6 +21,8 @@ import FirstTimeSetup from "@/pages/FirstTimeSetup";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/not-found";
 import Leads from "@/pages/Leads";
 import Bills from "@/pages/Bills";
@@ -75,12 +77,18 @@ function AppContent() {
     "--sidebar-width-icon": "3rem",
   };
 
-  // Show login/signup pages without auth check
+  // Show login/signup/password recovery pages without auth check
   if (location === "/login") {
     return <Login />;
   }
   if (location === "/signup") {
     return <Signup />;
+  }
+  if (location === "/forgot-password") {
+    return <ForgotPassword />;
+  }
+  if (location === "/reset-password") {
+    return <ResetPassword />;
   }
 
   // Show landing page if not authenticated or still loading auth
