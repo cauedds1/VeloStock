@@ -93,6 +93,21 @@ router.post("/", async (req: any, res) => {
       }
     }
     
+    // Se fornecido veiculoInteresse, buscar nome legível do veículo
+    let veiculoInteresseNome = null;
+    if (leadData.veiculoInteresse) {
+      const [vehicle] = await db.select().from(vehicles).where(
+        and(
+          eq(vehicles.id, leadData.veiculoInteresse),
+          eq(vehicles.empresaId, empresaId)
+        )
+      );
+      
+      if (vehicle) {
+        veiculoInteresseNome = `${vehicle.brand} ${vehicle.model} ${vehicle.year} - ${vehicle.color}`;
+      }
+    }
+    
     // Criar lead (sem spread para evitar injeção de campos sensíveis)
     const [newLead] = await db.insert(leads).values({
       nome: leadData.nome,
@@ -102,6 +117,7 @@ router.post("/", async (req: any, res) => {
       status: leadData.status || "Novo",
       observacoes: leadData.observacoes,
       veiculoInteresse: leadData.veiculoInteresse,
+      veiculoInteresseNome,
       empresaId,
       criadoPor: userId,
       vendedorResponsavel,
@@ -204,6 +220,24 @@ router.put("/:id", async (req: any, res) => {
         safeUpdates[field] = updates[field];
       }
     });
+    
+    // Se atualizou veiculoInteresse, buscar nome legível do veículo
+    if (updates.veiculoInteresse !== undefined) {
+      if (updates.veiculoInteresse) {
+        const [vehicle] = await db.select().from(vehicles).where(
+          and(
+            eq(vehicles.id, updates.veiculoInteresse),
+            eq(vehicles.empresaId, empresaId)
+          )
+        );
+        
+        if (vehicle) {
+          safeUpdates.veiculoInteresseNome = `${vehicle.brand} ${vehicle.model} ${vehicle.year} - ${vehicle.color}`;
+        }
+      } else {
+        safeUpdates.veiculoInteresseNome = null;
+      }
+    }
     
     // Atualizar lead
     const [updated] = await db.update(leads)
