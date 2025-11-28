@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +17,20 @@ export interface VehicleCardProps {
   timeInStatus: string;
   hasNotes?: boolean;
   plate?: string;
-  salePrice?: number; // in cents
-  status?: string; // status do veículo
+  salePrice?: number;
+  status?: string;
 }
 
-export function VehicleCard({
+const LOCATION_COLORS: Record<string, string> = {
+  "Entrada": "hsl(var(--badge-color-1))",
+  "Lavagem": "hsl(var(--badge-color-2))",
+  "Mecânica": "hsl(var(--badge-color-3))",
+  "Funilaria": "hsl(var(--badge-color-4))",
+  "Documentação": "hsl(var(--badge-color-5))",
+  "Pronto para Venda": "hsl(var(--badge-color-6))",
+};
+
+function VehicleCardComponent({
   id,
   image,
   brand,
@@ -37,18 +47,13 @@ export function VehicleCard({
   const [, setLocation] = useLocation();
   const { changeIconColors } = useCompanyTheme();
 
-  const displayImage = image && image.trim() ? image : carPlaceholderImg;
+  const displayImage = useMemo(
+    () => image && image.trim() ? image : carPlaceholderImg,
+    [image]
+  );
 
   const handleClick = () => {
     setLocation(`/vehicles/${id}`);
-  };
-  const locationColors: Record<string, string> = {
-    "Entrada": "hsl(var(--badge-color-1))",
-    "Lavagem": "hsl(var(--badge-color-2))",
-    "Mecânica": "hsl(var(--badge-color-3))",
-    "Funilaria": "hsl(var(--badge-color-4))",
-    "Documentação": "hsl(var(--badge-color-5))",
-    "Pronto para Venda": "hsl(var(--badge-color-6))",
   };
 
   return (
@@ -62,11 +67,12 @@ export function VehicleCard({
           src={displayImage}
           alt={`${brand} ${model}`}
           className="h-full w-full object-cover"
+          loading="lazy"
         />
         {status !== "Vendido" && status !== "Arquivado" && (
           <Badge
             className="absolute left-2 top-2 text-white border-0"
-            style={{ backgroundColor: locationColors[location] || "hsl(var(--muted))" }}
+            style={{ backgroundColor: LOCATION_COLORS[location] || "hsl(var(--muted))" }}
           >
             {location}
           </Badge>
@@ -113,3 +119,5 @@ export function VehicleCard({
     </Card>
   );
 }
+
+export const VehicleCard = memo(VehicleCardComponent);
