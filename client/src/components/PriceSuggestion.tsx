@@ -94,7 +94,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
         description: "A IA está analisando custos e margem desejada.",
       });
 
-      const response = await fetch(`/api/vehicles/${vehicleId}/suggest-price`, {
+      const response = await fetch(`/api/vehicles/${vehicleId}/suggest-price-dynamic`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
