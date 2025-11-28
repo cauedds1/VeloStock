@@ -221,7 +221,14 @@ export default function Reports() {
 
     filteredVehicles.forEach((v) => {
       const status = v.status || v.location || "Entrada";
-      const daysInStatus = v.daysInStatus || 0; // Usar valor calculado corretamente pela API
+      
+      // Calcular dias em status baseado na data de criação
+      let daysInStatus = 0;
+      if (v.createdAt) {
+        const createdDate = new Date(v.createdAt);
+        const today = new Date();
+        daysInStatus = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
 
       const current = stageTime.get(status) || { total: 0, count: 0 };
       stageTime.set(status, {
@@ -238,7 +245,7 @@ export default function Reports() {
           dias: data ? Math.round(data.total / data.count) : 0,
         };
       })
-      .filter(item => item.dias > 0);
+      .filter(item => item.dias >= 0); // Mostrar também status com 0 dias
   };
 
   const getVehiclesWithLongestTime = () => {
