@@ -320,16 +320,18 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         valorVenda: vehicles.valorVenda,
       }).from(vehicles).where(eq(vehicles.empresaId, userCompany.empresaId));
 
-      // ====== EXTRAIR VEÍCULO EM CONTEXTO DO HISTÓRICO ======
-      // Procura por menções de marca + modelo nos últimos 5 turnos
+      // ====== EXTRAIR CONTEXTO COMPLETO DO HISTÓRICO ======
+      // Procura por: 1) veículo mencionado, 2) tópico da conversa
       let vehicleInContext: { id: string; brand: string; model: string; year?: number } | null = null;
+      let conversationTopic = "geral"; // custos, localização, vendas, comissões, status, etc
+      
       if (validHistory.length > 0 && allVehicles.length > 0) {
         const recentText = validHistory
           .map((m) => m.content)
           .join(" ")
           .toLowerCase();
         
-        // Procurar por nome de veículo mencionado (ex: "chevrolet onix", "ford fiesta")
+        // 1. Procurar por nome de veículo mencionado (ex: "chevrolet onix", "ford fiesta")
         for (const vehicle of allVehicles) {
           const searchText = `${vehicle.brand} ${vehicle.model}`.toLowerCase();
           if (recentText.includes(searchText)) {
@@ -342,7 +344,22 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
             break;
           }
         }
+        
+        // 2. Detectar tópico da conversa pelos keywords
+        if (recentText.match(/cust|despesa|gast|valor/i)) conversationTopic = "custos";
+        else if (recentText.match(/localiz|local|endereco|estoque|deposito/i)) conversationTopic = "localização";
+        else if (recentText.match(/vend|vendido|preço|preco/i)) conversationTopic = "vendas";
+        else if (recentText.match(/comiss|comissao/i)) conversationTopic = "comissões";
+        else if (recentText.match(/status|etapa|preparacao|reparos|higien|pronto/i)) conversationTopic = "status/preparação";
+        else if (recentText.match(/lead|negociac|cliente/i)) conversationTopic = "leads";
+        else if (recentText.match(/document|transfer|vistori|placa/i)) conversationTopic = "documentação";
       }
+
+      // Obter contexto resumido do último turno do usuário
+      const lastUserMessage = validHistory
+        .reverse()
+        .find((m: any) => m.role === 'user')?.content || "";
+      validHistory.reverse(); // Restaurar ordem
 
       // 2. Observações pendentes
       const pendingObservations = await db.select({
@@ -499,11 +516,15 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
       const systemContext = `${vehiclesContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${vehicleContextInfo}`;
 
-      const prompt = `${historyText ? `Histórico:\n${historyText}\n\n` : ''}Usuário perguntou: ${sanitizedMessage}
+      const contextSummary = `CONTEXTO DA CONVERSA:\n- Tópico: ${conversationTopic}${vehicleInContext ? `\n- Veículo em foco: ${vehicleInContext.brand} ${vehicleInContext.model} ${vehicleInContext.year}` : ""}`;
 
-Responda de forma CONCISA e DIRETA, respondendo APENAS o que foi perguntado, sem adicionar informações extras ou irrelevantes.${vehicleInContext ? `\n\nIMPORTANTE: Quando perguntarem sobre custos, movimentações ou detalhes do ${vehicleInContext.brand} ${vehicleInContext.model}, responda APENAS sobre ESTE VEÍCULO ESPECÍFICO, não sobre outros carros.` : ""}`;
+      const prompt = `${historyText ? `Histórico completo:\n${historyText}\n\n` : ''}Última pergunta: ${sanitizedMessage}
+
+Responda de forma CONCISA e DIRETA, respondendo APENAS o que foi perguntado, sem adicionar informações extras ou irrelevantes.${vehicleInContext ? `\n\nIMPORTANTE: Você está conversando sobre ${conversationTopic} do ${vehicleInContext.brand} ${vehicleInContext.model}. SEMPRE que perguntarem sobre ${conversationTopic}, comissões, custos ou detalhes deste veículo, responda APENAS sobre ESTE VEÍCULO ESPECÍFICO (ID: ${vehicleInContext.id}), não sobre outros carros.` : ""}`;
 
       const veloStockSystemPrompt = `Você é o assistente virtual especializado do VeloStock - um sistema completo de gestão de revenda de veículos da "${companyName}".
+
+## ${contextSummary}
 
 ## DADOS DO SISTEMA (para sua referência)
 ${systemContext}
@@ -513,8 +534,23 @@ Papel: ${userRole}
 Permissões de Visualização de Dados Financeiros: ${canViewBills ? 'SIM' : 'NÃO'}
 Permissões de Visualização de Comissões: ${canViewCommissions ? 'SIM' : 'NÃO'}
 
-## REGRA PRINCIPAL - FUNDAMENTAL
-**RESPONDA APENAS O QUE FOI PERGUNTADO.** Não adicione contexto, informações extras, ou dados irrelevantes. Se perguntam sobre carros sem fotos, fale APENAS sobre carros sem fotos. Se perguntam sobre contas, fale APENAS sobre contas. Sem exceções.
+## REGRA PRINCIPAL - FUNDAMENTAL: ENTENDA O CONTEXTO
+**VOCÊ DEVE ENTENDER E MANTER CONTEXTO DA CONVERSA:**
+1. **Histórico**: Leia o histórico completo para entender do que estão falando
+2. **Tópico**: A conversa é sobre: ${conversationTopic}
+3. **Veículo**: ${vehicleInContext ? `Estão falando sobre o ${vehicleInContext.brand} ${vehicleInContext.model}` : "Nenhum veículo específico em foco"}
+4. **Resposta**: Responda APENAS sobre o que está sendo discutido. Se perguntam sobre custos deste carro, NÃO mostre custos de outros carros
+
+## EXEMPLOS DE CONTEXT AWARENESS
+SE a conversa é sobre "Chevrolet Onix" e custos:
+- Pergunta: "quais foram os custos?"
+- CORRETO: Liste APENAS os custos do Chevrolet Onix
+- ERRADO: Liste custos de 15 carros diferentes
+
+SE a conversa mudou para "localização":
+- Pergunta: "onde está agora?"
+- CORRETO: Responda sobre a localização do Onix
+- ERRADO: Responda sobre localização geral de todos os carros
 
 ## COMPORTAMENTO
 1. **Mestre do Sistema**: Você tem acesso a TUDO nos dados acima
