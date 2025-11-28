@@ -911,8 +911,8 @@ router.get("/metrics", async (req, res) => {
   const vendasResult = await db
     .select({
       totalVendas: sql<number>`COUNT(*)::int`,
-      receitaTotal: sql<string>`COALESCE(SUM(${vehicles.valorVenda}), 0)`,
-      ticketMedio: sql<string>`COALESCE(AVG(${vehicles.valorVenda}), 0)`,
+      receitaTotal: sql<string>`COALESCE(SUM(COALESCE(${vehicles.valorVenda}, ${vehicles.salePrice})), 0)`,
+      ticketMedio: sql<string>`COALESCE(AVG(COALESCE(${vehicles.valorVenda}, ${vehicles.salePrice})), 0)`,
     })
     .from(vehicles)
     .where(
