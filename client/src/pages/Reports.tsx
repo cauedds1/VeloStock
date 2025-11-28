@@ -270,7 +270,10 @@ export default function Reports() {
   const getAvgDaysByLocation = () => {
     const locationMap = new Map<string, { total: number; count: number }>();
 
-    filteredVehicles.forEach((v) => {
+    // Excluir veículos vendidos/arquivados da análise de localização
+    const activeVehicles = filteredVehicles.filter(v => v.status !== "Vendido" && v.status !== "Arquivado");
+
+    activeVehicles.forEach((v) => {
       const location = v.physicalLocation || "Sem localização";
       
       // Calcular dias baseado na data de criação
