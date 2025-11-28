@@ -86,7 +86,7 @@ export function ChatbotWidget() {
       <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
-          <span className="font-semibold">Assistente Virtual</span>
+          <span className="font-semibold">VeloBot</span>
         </div>
         <Button
           variant="ghost"
@@ -102,8 +102,9 @@ export function ChatbotWidget() {
       <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         <div className="space-y-3">
           {messages.length === 0 && (
-            <div className="text-center text-muted-foreground text-sm py-4">
-              Olá! Como posso ajudar você hoje?
+            <div className="text-center text-muted-foreground text-sm py-4 space-y-2">
+              <div className="font-semibold">Bem-vindo ao VeloBot!</div>
+              <div>Sou seu assistente virtual de vendas. Posso ajudar com informações sobre veículos, responder dúvidas e muito mais!</div>
             </div>
           )}
           {messages.map((message, index) => (
