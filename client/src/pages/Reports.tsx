@@ -53,6 +53,7 @@ export default function Reports() {
   const [checklistDialogType, setChecklistDialogType] = useState<"completed" | "missing">("missing");
   const [observationsDialogOpen, setObservationsDialogOpen] = useState(false);
   const [observationsDialogType, setObservationsDialogType] = useState<"pending" | "resolved">("pending");
+  const [avgDaysDialogOpen, setAvgDaysDialogOpen] = useState(false);
   
   // Estados para filtros da aba Custos
   const [costSearchTerm, setCostSearchTerm] = useState("");
@@ -266,6 +267,36 @@ export default function Reports() {
       .slice(0, 10);
   };
 
+  const getAvgDaysByLocation = () => {
+    const locationMap = new Map<string, { total: number; count: number }>();
+
+    filteredVehicles.forEach((v) => {
+      const location = v.physicalLocation || "Sem localização";
+      
+      // Calcular dias baseado na data de criação
+      let daysInLocation = 0;
+      if (v.createdAt) {
+        const createdDate = new Date(v.createdAt);
+        const today = new Date();
+        daysInLocation = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
+
+      const current = locationMap.get(location) || { total: 0, count: 0 };
+      locationMap.set(location, {
+        total: current.total + daysInLocation,
+        count: current.count + 1,
+      });
+    });
+
+    return Array.from(locationMap.entries())
+      .map(([location, data]) => ({
+        location,
+        dias: Math.round(data.total / data.count),
+        veiculos: data.count,
+      }))
+      .sort((a, b) => b.dias - a.dias);
+  };
+
   const vehiclesByStatus = getVehiclesByStatusData();
   const costsByCategory = getCostsByCategoryData();
   const avgTimePerStage = getAvgTimePerStageData();
@@ -322,12 +353,17 @@ export default function Reports() {
               </div>
             </Card>
 
-            <Card className="p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border-muted/40">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/20 transition-transform duration-300 hover:scale-110">
+            <Button
+              variant="ghost"
+              onClick={() => setAvgDaysDialogOpen(true)}
+              className="p-6 h-auto transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 border border-muted/40 rounded-lg justify-start"
+              data-testid="button-avg-days"
+            >
+              <div className="flex items-center gap-4 w-full">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/20">
                   <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div>
+                <div className="text-left">
                   <p className="text-sm text-muted-foreground font-medium">Média de Dias</p>
                   <p className="text-2xl font-bold text-foreground">
                     {avgTimePerStage.length > 0
@@ -336,7 +372,7 @@ export default function Reports() {
                   </p>
                 </div>
               </div>
-            </Card>
+            </Button>
           </div>
 
           <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
@@ -1263,6 +1299,46 @@ export default function Reports() {
       ) : (
         inventoryContent
       )}
+
+      {/* Dialog de Média de Dias por Localização */}
+      <Dialog open={avgDaysDialogOpen} onOpenChange={setAvgDaysDialogOpen}>
+        <DialogContent className="max-w-lg" data-testid="dialog-avg-days">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Média de Dias por Localização
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {getAvgDaysByLocation().length > 0 ? (
+              getAvgDaysByLocation().map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-muted"
+                  data-testid={`location-row-${index}`}
+                >
+                  <div>
+                    <p className="font-medium text-sm">{item.location}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.veiculos} {item.veiculos === 1 ? 'veículo' : 'veículos'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {item.dias}
+                    </p>
+                    <p className="text-xs text-muted-foreground">dias</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                Nenhuma localização registrada no período
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
