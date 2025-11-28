@@ -123,12 +123,24 @@ export default function Reports() {
   };
 
   const { data: financialMetrics, isLoading: isLoadingMetrics } = useQuery<FinancialMetrics>({
-    queryKey: [buildMetricsUrl()],
+    queryKey: ["/api/financial/metrics", dateFilter],
+    queryFn: async () => {
+      const url = buildMetricsUrl();
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch metrics");
+      return response.json();
+    },
     enabled: hasFinancialAccess,
   });
 
   const { data: sellersRanking = [], isLoading: isLoadingRanking } = useQuery<SellerRanking[]>({
-    queryKey: [buildRankingUrl()],
+    queryKey: ["/api/financial/sellers/ranking", dateFilter],
+    queryFn: async () => {
+      const url = buildRankingUrl();
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch ranking");
+      return response.json();
+    },
     enabled: hasFinancialAccess,
   });
 
