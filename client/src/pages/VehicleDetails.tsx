@@ -745,15 +745,19 @@ export default function VehicleDetails() {
           </TabsContent>
 
           <TabsContent value="preco">
-            <PriceSuggestion
-              vehicleId={vehicleId}
-              vehicleData={{
-                brand: vehicle.brand,
-                model: vehicle.model,
-                year: vehicle.year,
-              }}
-              fipeReferencePrice={vehicle.fipeReferencePrice}
-            />
+            {vehicle ? (
+              <PriceSuggestion
+                vehicleId={vehicleId}
+                vehicleData={{
+                  brand: vehicle.brand,
+                  model: vehicle.model,
+                  year: vehicle.year,
+                }}
+                fipeReferencePrice={vehicle.fipeReferencePrice}
+              />
+            ) : (
+              <Skeleton className="h-96 w-full" />
+            )}
           </TabsContent>
 
           <TabsContent value="anuncio">
