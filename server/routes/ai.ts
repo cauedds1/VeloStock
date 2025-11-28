@@ -353,8 +353,6 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         billsContext = bills.length > 0 ? `\n## CONTAS A PAGAR (Pendentes):\n${bills.map(b => 
           `- ${b.descricao}: R$ ${Number(b.valor).toFixed(2)} (Vence: ${new Date(b.dataVencimento).toLocaleDateString('pt-BR')})`
         ).join("\n")}` : "\n## CONTAS: Nenhuma conta pendente";
-      } else {
-        billsContext = "\n[Usuário sem permissão para visualizar contas financeiras]";
       }
 
       // 4. Leads ativos
@@ -419,7 +417,8 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
       // 8. Comissões pendentes (apenas se usuário tem permissão)
       let commissionsContext = "";
-      if (hasRole(userRole, "proprietario", "gerente")) {
+      const canViewCommissions = hasRole(userRole, "proprietario", "gerente") || userPermissions?.viewBills;
+      if (canViewCommissions) {
         const pendingCommissions = await db.select({
           id: commissionPayments.id,
           vendedorId: commissionPayments.vendedorId,
@@ -456,7 +455,8 @@ ${systemContext}
 
 ## ROLE DO USUÁRIO ATUAL
 Papel: ${userRole}
-Permissões de Visualização de Contas: ${canViewBills ? 'SIM' : 'NÃO'}
+Permissões de Visualização de Dados Financeiros: ${canViewBills ? 'SIM' : 'NÃO'}
+Permissões de Visualização de Comissões: ${canViewCommissions ? 'SIM' : 'NÃO'}
 
 ## REGRA PRINCIPAL - FUNDAMENTAL
 **RESPONDA APENAS O QUE FOI PERGUNTADO.** Não adicione contexto, informações extras, ou dados irrelevantes. Se perguntam sobre carros sem fotos, fale APENAS sobre carros sem fotos. Se perguntam sobre contas, fale APENAS sobre contas. Sem exceções.
