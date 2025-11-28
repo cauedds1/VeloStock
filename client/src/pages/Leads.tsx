@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Phone, Mail, User, TrendingUp, Calendar, Edit, Trash2 } from "lucide-react";
+import { Plus, Phone, Mail, User, TrendingUp, Calendar, Edit, Trash2, Car } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LeadAssistant } from "@/components/LeadAssistant";
@@ -22,9 +22,19 @@ type Lead = {
   status: string;
   origem: string | null;
   observacoes: string | null;
-  valorProposta: string | null;
+  veiculoInteresse: string | null;
+  veiculoInteresseNome: string | null;
   createdAt: string;
   vendedorNome?: string;
+};
+
+type Vehicle = {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  status: string;
 };
 
 type LeadStats = {
@@ -46,7 +56,7 @@ export default function Leads() {
     status: "Novo",
     origem: "",
     observacoes: "",
-    valorProposta: "",
+    veiculoInteresse: "",
   });
 
   // Buscar leads (backend já filtra por vendedor)
@@ -57,6 +67,12 @@ export default function Leads() {
   // Estatísticas
   const { data: stats } = useQuery<LeadStats>({
     queryKey: ["/api/leads/stats/me"],
+  });
+
+  // Buscar veículos em estoque (não vendidos nem arquivados)
+  const { data: vehicles = [] } = useQuery<Vehicle[]>({
+    queryKey: ["/api/vehicles"],
+    select: (data: any[]) => data.filter((v: any) => v.status !== "Vendido" && v.status !== "Arquivado"),
   });
 
   // Buscar origens de leads das configurações avançadas
@@ -137,7 +153,7 @@ export default function Leads() {
       status: "Novo",
       origem: "",
       observacoes: "",
-      valorProposta: "",
+      veiculoInteresse: "",
     });
   };
 
@@ -250,13 +266,22 @@ export default function Leads() {
               </div>
 
               <div>
-                <Label>Valor da Proposta (R$)</Label>
-                <Input
-                  type="number"
-                  value={formData.valorProposta}
-                  onChange={(e) => setFormData({ ...formData, valorProposta: e.target.value })}
-                  placeholder="50000"
-                />
+                <Label>Carro em Negociação</Label>
+                <Select value={formData.veiculoInteresse || ""} onValueChange={(v) => setFormData({ ...formData, veiculoInteresse: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um carro (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((v: Vehicle) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        <div className="flex items-center gap-2">
+                          <Car className="w-4 h-4" />
+                          {v.brand} {v.model} {v.year} - {v.color}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -345,10 +370,10 @@ export default function Leads() {
                         {lead.email}
                       </div>
                     )}
-                    {lead.valorProposta && (
+                    {lead.veiculoInteresseNome && (
                       <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        R$ {parseFloat(lead.valorProposta).toLocaleString("pt-BR")}
+                        <Car className="w-4 h-4" />
+                        {lead.veiculoInteresseNome}
                       </div>
                     )}
                     <div className="flex items-center gap-2">
@@ -363,7 +388,22 @@ export default function Leads() {
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
-                  <LeadAssistant leadId={lead.id} leadName={lead.nome} />
+                  {(() => {
+                    const vehicle = lead.veiculoInteresse ? vehicles.find((v: Vehicle) => v.id === lead.veiculoInteresse) : null;
+                    return (
+                      <LeadAssistant 
+                        leadId={lead.id} 
+                        leadName={lead.nome}
+                        veiculoNome={lead.veiculoInteresseNome || undefined}
+                        veiculoData={vehicle ? {
+                          brand: vehicle.brand,
+                          model: vehicle.model,
+                          year: vehicle.year,
+                          color: vehicle.color,
+                        } : undefined}
+                      />
+                    );
+                  })()}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -376,7 +416,7 @@ export default function Leads() {
                         status: lead.status,
                         origem: lead.origem || "",
                         observacoes: lead.observacoes || "",
-                        valorProposta: lead.valorProposta || "",
+                        veiculoInteresse: lead.veiculoInteresse || "",
                       });
                       setIsCreateOpen(true);
                     }}

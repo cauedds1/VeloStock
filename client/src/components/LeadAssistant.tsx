@@ -9,9 +9,16 @@ import { useToast } from "@/hooks/use-toast";
 interface LeadAssistantProps {
   leadId: string;
   leadName: string;
+  veiculoNome?: string;
+  veiculoData?: {
+    brand: string;
+    model: string;
+    year: number;
+    color: string;
+  };
 }
 
-export function LeadAssistant({ leadId, leadName }: LeadAssistantProps) {
+export function LeadAssistant({ leadId, leadName, veiculoNome, veiculoData }: LeadAssistantProps) {
   const [suggestedResponse, setSuggestedResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -26,6 +33,15 @@ export function LeadAssistant({ leadId, leadName }: LeadAssistantProps) {
       const response = await fetch(`/api/leads/${leadId}/suggest-response`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          veiculoData: veiculoData ? {
+            nome: veiculoNome,
+            brand: veiculoData.brand,
+            model: veiculoData.model,
+            year: veiculoData.year,
+            color: veiculoData.color,
+          } : null,
+        }),
       });
 
       if (!response.ok) {
