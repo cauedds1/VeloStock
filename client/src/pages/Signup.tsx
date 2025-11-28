@@ -83,9 +83,7 @@ export default function Signup() {
           <span className="text-3xl font-bold text-white">VeloStock</span>
         </div>
 
-        {step === "register" ? (
-          /* PASSO 1: Registrar Conta */
-          <Card className="border-0 shadow-2xl">
+        <Card className="border-0 shadow-2xl">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Criar Conta</CardTitle>
               <CardDescription>
@@ -190,7 +188,6 @@ export default function Signup() {
               </div>
             </CardContent>
           </Card>
-        )}
       </div>
     </div>
   );
