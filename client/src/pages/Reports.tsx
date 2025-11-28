@@ -88,6 +88,8 @@ export default function Reports() {
 
   const { data: vehicles = [], isLoading: isLoadingVehicles, refetch: refetchVehicles } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const { data: allCosts = [], isLoading: isLoadingCosts } = useQuery<any[]>({
