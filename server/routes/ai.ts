@@ -433,6 +433,17 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         `- ${v.brand} ${v.model} ${v.year} (${v.color}) | Placa: ${v.plate} | Local: ${v.location || "N/A"}`
       ).join("\n")}` : "\n## ESTOQUE: Vazio";
 
+      // 5b. Se tópico é sobre status/preparação, também mostrar veículos em reparo/preparação
+      let repairContext = "";
+      if (conversationTopic === "status/preparação") {
+        const inRepair = allVehicles.filter(v => 
+          v.status === "Em Reparo" || v.status === "Higienização" || v.status === "Mecânica" || v.status === "Estética"
+        );
+        repairContext = inRepair.length > 0 ? `\n## VEÍCULOS EM PREPARAÇÃO (${inRepair.length} veículos):\n${inRepair.slice(0, 15).map(v => 
+          `- ${v.brand} ${v.model} ${v.year} (${v.color}) | Placa: ${v.plate} | Status: ${v.status} | Local: ${v.location || "N/A"}`
+        ).join("\n")}` : "\n## VEÍCULOS EM PREPARAÇÃO: Nenhum";
+      }
+
       // 6. Veículos vendidos (últimos 30 dias)
       const soldVehicles = allVehicles.filter(v => v.status === "Vendido" && v.dataVenda);
       const soldContext = soldVehicles.length > 0 ? `\n## VENDAS RECENTES:\n${soldVehicles.slice(0, 10).map(v => {
@@ -514,7 +525,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         }
       }
 
-      const systemContext = `${vehiclesContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${vehicleContextInfo}`;
+      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${vehicleContextInfo}`;
 
       const contextSummary = `CONTEXTO DA CONVERSA:\n- Tópico: ${conversationTopic}${vehicleInContext ? `\n- Veículo em foco: ${vehicleInContext.brand} ${vehicleInContext.model} ${vehicleInContext.year}` : ""}`;
 
