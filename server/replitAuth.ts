@@ -6,6 +6,7 @@ import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { setupLocalAuth } from "./localAuth";
 import { getDatabaseUrl } from "./config/database";
@@ -85,7 +86,7 @@ export async function setupAuth(app: Express) {
       }
 
       // Criar usuário diretamente (verificação de email DESATIVADA)
-      const passwordHash = await require('bcrypt').hash(password, 10);
+      const passwordHash = await bcrypt.hash(password, 10);
       const newUser = await storage.createLocalUser({
         email,
         firstName,

@@ -1,0 +1,217 @@
+MISSÃO: Implementar 10 funcionalidades de IA usando OpenAI API no sistema VeloStock (gestão de revendas de veículos).
+---
+## 📋 CONTEXTO DO PROJETO
+Sistema: VeloStock - Gestão completa de concessionárias
+Stack: React + TypeScript + Express + PostgreSQL + Drizzle ORM
+IA existente: AdGenerator (geração de anúncios) e PriceSuggestion (sugestão de preços)
+Chave API: Já configurada em process.env.OPENAI_API_KEY
+---
+## 🎯 FUNCIONALIDADES A IMPLEMENTAR
+### 1️⃣ **Assistente de Leads Inteligente** (PRIORIDADE ALTA)
+📁 Arquivos: `client/src/components/LeadAssistant.tsx` + `server/routes/leads.ts`
+**Frontend (LeadAssistant.tsx):**
+- Componente com textarea para conversa do lead
+- Botão "Sugerir Resposta IA"
+- Exibição da resposta sugerida
+- Botão para copiar/enviar via WhatsApp
+**Backend (POST /api/leads/:id/suggest-response):**
+- Buscar histórico de follow-ups do lead
+- Criar prompt: "Baseado neste histórico: [followUps], sugira uma resposta profissional e persuasiva"
+- Usar GPT-4o-mini
+- Retornar { suggestedResponse: string }
+**Integração:**
+- Adicionar botão "🤖 Sugerir Resposta" em `client/src/pages/Leads.tsx`
+- Abrir modal `<LeadAssistant leadId={lead.id} />`
+---
+### 2️⃣ **Análise de Desempenho de Vendedores**
+📁 Arquivos: `server/routes/financial.ts` (novo endpoint)
+**Backend (POST /api/financial/seller-analysis):**
+- Buscar métricas do vendedor (vendas, comissões, taxa de conversão)
+- Prompt: "Analise o desempenho: [dados]. Forneça insights, pontos fortes, áreas de melhoria e sugestões de treinamento"
+- Retornar { analysis: string, recommendations: string[] }
+**Frontend:**
+- Adicionar botão "📊 Análise IA" em `client/src/components/SellerDashboard.tsx`
+- Exibir análise em Dialog
+---
+### 3️⃣ **Melhorar Geração de Anúncios (Multi-Plataforma)**
+📁 Arquivo: `server/routes.ts` (modificar endpoint existente)
+**Modificar POST /api/vehicles/:id/generate-ad:**
+- Retornar objeto em vez de string:
+```json
+{
+  "instagram_story": "50 chars",
+  "instagram_feed": "150 chars",
+  "facebook": "200 chars",
+  "olx_title": "SEO otimizado - 60 chars",
+  "whatsapp": "tom conversacional"
+}
+Frontend (AdGenerator.tsx):
+
+Adicionar tabs para cada plataforma
+Botão de copiar individual por plataforma
+Mostrar contagem de caracteres
+4️⃣ Chatbot FAQ Inteligente
+📁 Arquivos: client/src/components/ChatbotWidget.tsx + server/routes.ts
+
+Frontend (ChatbotWidget.tsx):
+
+Ícone flutuante no canto inferior direito (💬)
+Modal com histórico de conversa
+Input de mensagem
+Respostas da IA em tempo real
+Backend (POST /api/chatbot/message):
+
+System prompt: "Você é assistente da [empresa]. Responda perguntas sobre compra de carros, financiamento, documentos, garantia..."
+Usar GPT-4o-mini
+Manter contexto da conversa (últimas 5 mensagens)
+Integração:
+
+Adicionar <ChatbotWidget /> em client/src/App.tsx
+5️⃣ Sugestão de Observações para Checklists
+📁 Arquivo: client/src/components/ChecklistObservationDialog.tsx
+
+Adicionar botão "✨ Sugerir com IA":
+
+Quando item marcado como "Fazer Reparo"
+Endpoint: POST /api/checklists/suggest-observation
+Prompt: "Item do checklist: [nome]. Categoria: [categoria]. Veículo: [marca modelo]. Sugira observação técnica profissional"
+Auto-preencher campo de observação
+6️⃣ Email Marketing Personalizado
+📁 Arquivos: client/src/pages/Leads.tsx + server/routes/leads.ts
+
+Backend (POST /api/leads/generate-email-campaign):
+
+Input: leadIds[], campaignType ("followup" | "promotion" | "reactivation")
+Para cada lead: gerar email personalizado
+Prompt: "Crie email de [tipo] para [nome], interessado em [veículo]. Tom: [profissional/amigável]"
+Retornar array de { leadId, subject, body }
+Frontend:
+
+Botão "📧 Campanha Email IA" na lista de leads
+Seleção de leads (checkboxes)
+Preview dos emails antes de enviar
+7️⃣ Análise de Precificação Dinâmica
+📁 Arquivo: client/src/components/PriceSuggestion.tsx (melhorar existente)
+
+Adicionar análise de mercado:
+
+Buscar veículos similares no estoque
+Considerar tempo parado (>30 dias = sugerir desconto)
+Sazonalidade (fim de ano, férias)
+Prompt: "Veículo: [dados]. Similares: [lista]. Dias parado: [X]. Época: [mês]. Sugira preço estratégico e justifique"
+8️⃣ Resumo Automático de Notas
+📁 Arquivos: client/src/pages/Notes.tsx + server/routes.ts
+
+Backend (POST /api/notes/:id/summarize):
+
+Buscar conteúdo da nota
+Prompt: "Resuma esta nota em 2-3 tópicos principais: [conteúdo]"
+Retornar { summary: string }
+Frontend:
+
+Botão "📝 Resumir IA" em cada nota
+Exibir resumo acima do conteúdo completo
+9️⃣ Meta de Vendas Inteligente (Coaching)
+📁 Arquivo: client/src/components/SellerDashboard.tsx
+
+Backend (POST /api/financial/seller-coaching):
+
+Buscar progresso atual vs meta
+Leads em pipeline
+Histórico de vendas
+Prompt: "Vendedor: [nome]. Meta: [X]. Progresso: [Y%]. Leads: [lista]. Forneça 3 dicas específicas para atingir a meta"
+Retornar { tips: string[], focusArea: string }
+Frontend:
+
+Card "🎯 Coaching IA" no dashboard do vendedor
+Atualizar diariamente
+🔟 Geração de Títulos SEO para Anúncios
+📁 Integrar em AdGenerator.tsx
+
+Adicionar campo "Título SEO":
+
+Prompt: "Gere título SEO otimizado (60 chars) para: [marca modelo ano]. Palavras-chave: usado, [cidade], financiamento"
+Exibir junto com os outros formatos de anúncio
+📦 ESTRUTURA DE IMPLEMENTAÇÃO
+FASE 1 - Fundação (Dias 1-2)
+Criar server/utils/openai.ts com helpers:
+
+generateCompletion(prompt, options)
+generateJSON(prompt, schema)
+Tratamento de erros (quota, rate limit)
+Melhorar componentes existentes:
+
+AdGenerator (multi-plataforma)
+PriceSuggestion (análise dinâmica)
+FASE 2 - Leads e CRM (Dias 3-4)
+Implementar LeadAssistant
+Email marketing personalizado
+Análise de desempenho
+FASE 3 - UX e Automação (Dias 5-6)
+Chatbot FAQ
+Sugestões de checklist
+Resumo de notas
+FASE 4 - Inteligência de Vendas (Dia 7)
+Coaching de vendedores
+Títulos SEO
+⚙️ PADRÕES A SEGUIR
+Tratamento de Erros:
+
+try {
+  const completion = await openai.chat.completions.create({...});
+  // ...
+} catch (error: any) {
+  if (error.status === 429) {
+    return res.status(429).json({ 
+      error: "Limite de uso excedido. Tente mais tarde." 
+    });
+  }
+  // ...
+}
+Validação de API Key:
+
+if (!process.env.OPENAI_API_KEY) {
+  return res.status(400).json({ 
+    error: "OpenAI API não configurada" 
+  });
+}
+UI Consistente:
+
+Botões com ícone ✨ para recursos IA
+Loading states com "Gerando..." ou spinner
+Toast notifications para sucesso/erro
+Máximo 600 tokens por request (custo-benefício)
+🎨 COMPONENTES UI NECESSÁRIOS
+Criar em client/src/components/:
+
+LeadAssistant.tsx
+ChatbotWidget.tsx
+SellerAnalysisDialog.tsx
+EmailCampaignDialog.tsx
+CoachingCard.tsx
+🔐 SEGURANÇA
+NUNCA expor OPENAI_API_KEY no frontend
+Validar empresaId em todos os endpoints
+Rate limiting: máx 10 requests/min por usuário
+Sanitizar inputs do usuário antes de enviar à IA
+📊 MÉTRICAS DE SUCESSO
+Após implementação, adicionar tracking:
+
+Quantas sugestões IA foram aceitas/rejeitadas
+Tempo médio economizado por funcionalidade
+ROI (vendas geradas vs custo de API)
+🚀 ORDEM DE IMPLEMENTAÇÃO RECOMENDADA
+AdGenerator Multi-Plataforma (já existe base)
+LeadAssistant (alto impacto em vendas)
+PriceSuggestion Dinâmica (melhora margem)
+Chatbot FAQ (reduz atendimento manual)
+Email Marketing (automação)
+Restante conforme demanda
+IMPORTANTE:
+
+Use GPT-4o-mini (mais barato) para a maioria
+GPT-4 apenas se precisar raciocínio complexo
+Valide TODOS os inputs do usuário
+Implemente cache quando possível (ex: FAQ)
+Adicione botão "⚙️ Configurar IA" em Settings para ajustar comportamento
+Comece pela funcionalidade #1 (LeadAssistant) e vá implementando sequencialmente!
