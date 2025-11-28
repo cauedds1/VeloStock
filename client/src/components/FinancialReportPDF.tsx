@@ -292,14 +292,14 @@ export function FinancialReportPDF() {
           </div>
         </div>
         
-        <div className="flex-1 overflow-auto border rounded-lg bg-white">
+        <div className="flex-1 overflow-auto border rounded-lg bg-white dark:bg-slate-950">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Carregando dados...</span>
             </div>
           ) : reportData ? (
-            <div ref={reportRef} className="p-8" style={{ backgroundColor: 'white', color: '#1a1a1a' }}>
+            <div ref={reportRef} className="p-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
               <style>{getPrintStyles()}</style>
               <div className="report-container">
                 <div className="header">
