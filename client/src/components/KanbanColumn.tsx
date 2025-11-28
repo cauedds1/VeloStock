@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 
 interface KanbanColumnProps {
@@ -6,7 +7,7 @@ interface KanbanColumnProps {
   children: React.ReactNode;
 }
 
-export function KanbanColumn({ title, count, children }: KanbanColumnProps) {
+function KanbanColumnComponent({ title, count, children }: KanbanColumnProps) {
   return (
     <div className="flex h-full w-80 flex-shrink-0 flex-col rounded-lg bg-card border border-card-border">
       <div className="flex items-center justify-between border-b border-card-border p-4">
@@ -21,3 +22,5 @@ export function KanbanColumn({ title, count, children }: KanbanColumnProps) {
     </div>
   );
 }
+
+export const KanbanColumn = memo(KanbanColumnComponent);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { KanbanColumn } from "./KanbanColumn";
 import { VehicleCard, VehicleCardProps } from "./VehicleCard";
 import { Input } from "@/components/ui/input";
@@ -11,37 +11,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const STATUS_COLUMNS = [
+  "Entrada",
+  "Em Reparos",
+  "Em Higienização",
+  "Pronto para Venda",
+];
+
 interface KanbanBoardProps {
   vehicles: VehicleCardProps[];
 }
 
-export function KanbanBoard({ vehicles }: KanbanBoardProps) {
+function KanbanBoardComponent({ vehicles }: KanbanBoardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const statusColumns = [
-    "Entrada",
-    "Em Reparos",
-    "Em Higienização",
-    "Pronto para Venda",
-  ];
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter((vehicle) => {
+      const matchesSearch =
+        vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.plate?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const vehicleStatus = (vehicle as any).status;
+      const matchesStatus =
+        statusFilter === "all" || vehicleStatus === statusFilter;
 
-  const filteredVehicles = vehicles.filter((vehicle) => {
-    const matchesSearch =
-      vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.plate?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const vehicleStatus = (vehicle as any).status;
-    const matchesStatus =
-      statusFilter === "all" || vehicleStatus === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [vehicles, searchTerm, statusFilter]);
 
-    return matchesSearch && matchesStatus;
-  });
-
-  const getVehiclesByStatus = (status: string) => {
+  const getVehiclesByStatus = useCallback((status: string) => {
     return filteredVehicles.filter((v) => (v as any).status === status);
-  };
+  }, [filteredVehicles]);
 
   return (
     <div className="flex h-full flex-col">
@@ -62,7 +64,7 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os Status</SelectItem>
-            {statusColumns.map((status) => (
+            {STATUS_COLUMNS.map((status) => (
               <SelectItem key={status} value={status}>
                 {status}
               </SelectItem>
@@ -73,7 +75,7 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
 
       <div className="flex-1 overflow-x-auto">
         <div className="flex h-full gap-4 pb-4">
-          {statusColumns.map((status) => {
+          {STATUS_COLUMNS.map((status) => {
             const vehiclesInStatus = getVehiclesByStatus(status);
             return (
               <KanbanColumn
@@ -92,3 +94,5 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
     </div>
   );
 }
+
+export const KanbanBoard = memo(KanbanBoardComponent);
