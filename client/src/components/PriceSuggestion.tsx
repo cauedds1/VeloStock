@@ -151,19 +151,17 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
       </div>
 
       {fipeReferencePrice && (
-        <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 p-3 bg-muted rounded-md border border-border/50">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">
-                Preço FIPE Cadastrado
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">
+                FIPE
               </p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+              <p className="text-lg font-semibold text-foreground">
                 {fipeReferencePrice}
               </p>
             </div>
-            <div className="text-blue-300 dark:text-blue-700">
-              <TrendingUp className="h-8 w-8" />
-            </div>
+            <TrendingUp className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
           </div>
         </div>
       )}
