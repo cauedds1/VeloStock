@@ -5,7 +5,7 @@ import { generateCompletion, generateJSON, handleOpenAIError } from "../utils/op
 import { getAdFromCache, saveAdToCache, clearAdCache } from "../utils/adCache";
 import { normalizeRole, hasRole } from "../utils/roleHelper";
 import { db } from "../db";
-import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts } from "@shared/schema";
+import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts, commissionPayments } from "@shared/schema";
 import { eq, and, desc, isNull, lt, gte, sql } from "drizzle-orm";
 
 async function getUserWithCompany(req: any): Promise<{ userId: string; empresaId: string } | null> {
@@ -417,7 +417,33 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         `- ${o.description} (Criada em: ${new Date(o.createdAt).toLocaleDateString('pt-BR')})`
       ).join("\n")}` : "\n## OBSERVAÇÕES: Nenhuma observação pendente";
 
-      const systemContext = `${vehiclesContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}`;
+      // 8. Comissões pendentes (apenas se usuário tem permissão)
+      let commissionsContext = "";
+      if (hasRole(userRole, "proprietario", "gerente")) {
+        const pendingCommissions = await db.select({
+          id: commissionPayments.id,
+          vendedorId: commissionPayments.vendedorId,
+          valorComissao: commissionPayments.valorComissao,
+          status: commissionPayments.status,
+          createdAt: commissionPayments.createdAt,
+        }).from(commissionPayments).where(
+          and(
+            eq(commissionPayments.empresaId, userCompany.empresaId),
+            eq(commissionPayments.status, "A Pagar")
+          )
+        ).limit(20);
+        
+        if (pendingCommissions.length > 0) {
+          const totalComissoes = pendingCommissions.reduce((sum, c) => sum + Number(c.valorComissao), 0);
+          commissionsContext = `\n## COMISSÕES PENDENTES (${pendingCommissions.length} registros):\nTotal: R$ ${totalComissoes.toFixed(2)}\n${pendingCommissions.map(c => 
+            `- Comissão: R$ ${Number(c.valorComissao).toFixed(2)} (Registrada em: ${new Date(c.createdAt).toLocaleDateString('pt-BR')})`
+          ).join("\n")}`;
+        } else {
+          commissionsContext = "\n## COMISSÕES: Nenhuma comissão pendente";
+        }
+      }
+
+      const systemContext = `${vehiclesContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}`;
 
       const prompt = `${historyText ? `Histórico:\n${historyText}\n\n` : ''}Usuário perguntou: ${sanitizedMessage}
 
