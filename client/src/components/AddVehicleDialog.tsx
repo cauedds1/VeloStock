@@ -107,31 +107,27 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   
   const priceMutation = useFipePriceByVersion();
 
-  // Watch para limpar cache quando marca/modelo/ano mudan
+  // Watch para detectar mudanças
   const watchedBrand = form.watch("brand");
   const watchedModel = form.watch("model");
   const watchedYear = form.watch("year");
 
-  // Limpar cache de versões quando marca, modelo, ano ou tipo de veículo mudam
+  // SINGLE useEffect: Carrega versões quando marca/modelo/ano mudam, sem conflito
   useEffect(() => {
-    setFipeVersions([]);
-    setFipeMetadata(null);
-    form.setValue("version", "");
-  }, [watchedBrand, watchedModel, watchedYear, vehicleType]);
-
-  // CARREGAMENTO AUTOMÁTICO E EAGERLY: Buscar versões em background assim que marca/modelo/ano forem preenchidos
-  useEffect(() => {
-    const brand = form.getValues("brand");
-    const model = form.getValues("model");
-    const year = form.getValues("year");
+    const brand = watchedBrand;
+    const model = watchedModel;
+    const year = watchedYear;
     const currentVehicleType = form.getValues("vehicleType");
 
-    // Só carrega se tiver todos os dados e ainda não carregou
-    if (!brand || !model || !year || fipeVersions.length > 0) {
+    // Se qualquer campo está vazio, limpa versões
+    if (!brand || !model || !year) {
+      setFipeVersions([]);
+      setFipeMetadata(null);
+      form.setValue("version", "");
       return;
     }
 
-    // Carregar versões em background (sem aguardar)
+    // Carregar versões em background
     const loadVersions = async () => {
       try {
         const fipeVehicleType = vehicleTypeMap[currentVehicleType] || "carros";
@@ -149,7 +145,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
     };
 
     loadVersions();
-  }, [watchedBrand, watchedModel, watchedYear, vehicleType, fipeVersions.length]);
+  }, [watchedBrand, watchedModel, watchedYear, vehicleType]);
 
   // Quando usuário seleciona uma versão, buscar preço FIPE automaticamente
   const handleVersionChange = async (versionJson: string) => {

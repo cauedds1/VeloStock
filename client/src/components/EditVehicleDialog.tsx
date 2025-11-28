@@ -134,18 +134,12 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
   
   const priceMutation = useFipePriceByVersion();
 
-  // Watch para limpar cache quando marca/modelo/ano mudam
+  // Watch para detectar mudanças
   const watchedBrand = form.watch("brand");
   const watchedModel = form.watch("model");
   const watchedYear = form.watch("year");
 
-  // Limpar cache de versões quando marca, modelo ou ano mudam
-  useEffect(() => {
-    setFipeVersions([]);
-    setFipeMetadata(null);
-    form.setValue("version", "");
-  }, [watchedBrand, watchedModel, watchedYear]);
-
+  // Quando o veículo muda, resetar tudo
   useEffect(() => {
     form.reset({
       brand: vehicle.brand,
@@ -166,6 +160,34 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
     setFipeVersions([]);
     setFipeMetadata(null);
   }, [vehicle, form]);
+
+  // SINGLE useEffect: Carrega versões quando marca/modelo/ano mudam, sem conflito
+  useEffect(() => {
+    const brand = watchedBrand;
+    const model = watchedModel;
+    const year = watchedYear;
+
+    // Se qualquer campo está vazio, limpa versões
+    if (!brand || !model || !year) {
+      setFipeVersions([]);
+      setFipeMetadata(null);
+      form.setValue("version", "");
+      return;
+    }
+
+    // Carregar versões em background
+    const loadVersions = async () => {
+      try {
+        const result = await versionsMutation.mutateAsync();
+        setFipeVersions(result.versions);
+        setFipeMetadata({ brandId: result.brandId });
+      } catch (error: any) {
+        // Falha silenciosa - usuário verá mensagem de erro se tentar usar
+      }
+    };
+
+    loadVersions();
+  }, [watchedBrand, watchedModel, watchedYear]);
 
   const removeExistingImage = async (imageId: string) => {
     try {
