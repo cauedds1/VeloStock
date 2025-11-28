@@ -161,15 +161,24 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
     setFipeMetadata(null);
   }, [vehicle, form]);
 
-  // SINGLE useEffect: Carrega versões quando marca/modelo/ano mudam, sem conflito
+  // SIMPLE useEffect: Carrega versões quando marca/modelo/ano mudam
   useEffect(() => {
-    const brand = watchedBrand?.trim();
-    const model = watchedModel?.trim();
-    const year = watchedYear;
+    // Pega valores diretos do form (getValues é mais confiável que watch)
+    const brand = form.getValues("brand")?.trim();
+    const model = form.getValues("model")?.trim();
+    const year = form.getValues("year");
 
-    // Se qualquer campo está vazio, limpa versões
-    // Validação mais robusta: year pode ser 0 quando está vazio no Input
-    if (!brand || !model || !year || year === 0 || isNaN(Number(year))) {
+    // Validação simples: se algum campo essencial está vazio, limpa versões
+    if (!brand || !model || !year) {
+      setFipeVersions([]);
+      setFipeMetadata(null);
+      form.setValue("version", "");
+      return;
+    }
+
+    // Converter year para número de forma segura
+    const yearNum = parseInt(String(year), 10);
+    if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
       setFipeVersions([]);
       setFipeMetadata(null);
       form.setValue("version", "");
@@ -179,7 +188,6 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
     // Carregar versões em background
     const loadVersions = async () => {
       try {
-        const yearNum = typeof year === "string" ? parseInt(year) : year;
         const result = await versionsMutation.mutateAsync({ 
           brand, 
           model, 
@@ -188,7 +196,7 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
         setFipeVersions(result.versions);
         setFipeMetadata({ brandId: result.brandId });
       } catch (error: any) {
-        // Falha silenciosa - usuário verá mensagem de erro se tentar usar
+        // Falha silenciosa
       }
     };
 

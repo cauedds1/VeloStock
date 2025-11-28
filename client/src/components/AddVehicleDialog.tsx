@@ -104,7 +104,6 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   };
   
   const versionsMutation = useFipeVehicleVersions();
-  
   const priceMutation = useFipePriceByVersion();
 
   // Watch para detectar mudanças
@@ -112,16 +111,25 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   const watchedModel = form.watch("model");
   const watchedYear = form.watch("year");
 
-  // SINGLE useEffect: Carrega versões quando marca/modelo/ano mudam, sem conflito
+  // SIMPLE useEffect: Carrega versões quando marca/modelo/ano mudam
   useEffect(() => {
-    const brand = watchedBrand?.trim();
-    const model = watchedModel?.trim();
-    const year = watchedYear;
+    // Pega valores diretos do form (getValues é mais confiável que watch)
+    const brand = form.getValues("brand")?.trim();
+    const model = form.getValues("model")?.trim();
+    const year = form.getValues("year");
     const currentVehicleType = form.getValues("vehicleType");
 
-    // Se qualquer campo está vazio, limpa versões
-    // Validação mais robusta: year pode ser 0 quando está vazio no Input
-    if (!brand || !model || !year || year === 0 || isNaN(Number(year))) {
+    // Validação simples: se algum campo essencial está vazio, limpa versões
+    if (!brand || !model || !year) {
+      setFipeVersions([]);
+      setFipeMetadata(null);
+      form.setValue("version", "");
+      return;
+    }
+
+    // Converter year para número de forma segura
+    const yearNum = parseInt(String(year), 10);
+    if (isNaN(yearNum) || yearNum < 1900 || yearNum > 2100) {
       setFipeVersions([]);
       setFipeMetadata(null);
       form.setValue("version", "");
@@ -132,7 +140,6 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
     const loadVersions = async () => {
       try {
         const fipeVehicleType = vehicleTypeMap[currentVehicleType] || "carros";
-        const yearNum = typeof year === "string" ? parseInt(year) : year;
         const result = await versionsMutation.mutateAsync({ 
           brand, 
           model, 
@@ -142,7 +149,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
         setFipeVersions(result.versions);
         setFipeMetadata({ brandId: result.brandId });
       } catch (error: any) {
-        // Falha silenciosa - usuário verá mensagem de erro se tentar usar
+        // Falha silenciosa
       }
     };
 
