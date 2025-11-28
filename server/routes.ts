@@ -20,6 +20,7 @@ import followupsRoutes from "./routes/followups";
 import activityLogRoutes from "./routes/activityLog";
 import costApprovalsRoutes from "./routes/costApprovals";
 import billsRoutes from "./routes/bills";
+import { registerAIRoutes } from "./routes/ai";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import { generateVerificationCode, getVerificationCodeExpiry } from "./utils/verificationCode";
@@ -3088,6 +3089,9 @@ Retorne APENAS um JSON válido no formato:
   // CONTAS A PAGAR E A RECEBER
   // ============================================
   app.use("/api/bills", isAuthenticated, requireProprietario, billsRoutes);
+
+  // AI Routes
+  registerAIRoutes(app);
 
   // ============================================
   // GERENCIAR ACESSOS (Permissões Customizadas - Proprietário apenas)
