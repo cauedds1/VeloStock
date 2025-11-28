@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { isAuthenticated } from "../replitAuth";
 import { storage } from "../storage";
 import { generateCompletion, generateJSON, handleOpenAIError } from "../utils/openai";
+import { getAdFromCache, saveAdToCache, clearAdCache } from "../utils/adCache";
 import { db } from "../db";
 import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts } from "@shared/schema";
 import { eq, and, desc, isNull, lt, gte, sql } from "drizzle-orm";
@@ -18,7 +19,7 @@ async function getUserWithCompany(req: any): Promise<{ userId: string; empresaId
 
 export function registerAIRoutes(app: Express) {
   
-  // POST /api/vehicles/:id/generate-ad-multi - Gerar anúncios multi-plataforma
+  // POST /api/vehicles/:id/generate-ad-multi - Gerar anúncios multi-plataforma (com cache)
   app.post("/api/vehicles/:id/generate-ad-multi", isAuthenticated, async (req: any, res) => {
     try {
       const userCompany = await getUserWithCompany(req);
@@ -26,7 +27,17 @@ export function registerAIRoutes(app: Express) {
         return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
       }
 
-      const vehicle = await storage.getVehicle(req.params.id, userCompany.empresaId);
+      const vehicleId = req.params.id;
+
+      // ===== VERIFICAR CACHE =====
+      const cachedAd = getAdFromCache(vehicleId);
+      if (cachedAd) {
+        // Remover timestamp antes de retornar
+        const { timestamp, ...adWithoutTimestamp } = cachedAd;
+        return res.json({ ...adWithoutTimestamp, fromCache: true });
+      }
+
+      const vehicle = await storage.getVehicle(vehicleId, userCompany.empresaId);
       if (!vehicle) {
         return res.status(404).json({ error: "Veículo não encontrado" });
       }
@@ -68,7 +79,10 @@ Use linguagem brasileira natural. Não use emojis excessivos.`;
         systemPrompt: "Você é um copywriter especialista em vendas de veículos. Retorne apenas JSON válido.",
       });
 
-      res.json(result);
+      // ===== SALVAR EM CACHE =====
+      saveAdToCache(vehicleId, result);
+
+      res.json({ ...result, fromCache: false });
     } catch (error) {
       handleOpenAIError(error, res);
     }
