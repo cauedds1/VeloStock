@@ -469,9 +469,6 @@ export function EditVehicleDialog({ vehicleId, vehicle, open, onOpenChange }: Ed
                     <Select 
                       onValueChange={handleVersionChange}
                       value={field.value}
-                      onOpenChange={(open) => {
-                        if (open) handleLoadVersions();
-                      }}
                     >
                       <FormControl>
                         <SelectTrigger>

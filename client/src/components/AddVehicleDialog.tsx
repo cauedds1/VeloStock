@@ -346,9 +346,6 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
                     <Select 
                       onValueChange={handleVersionChange}
                       value={field.value}
-                      onOpenChange={(open) => {
-                        if (open) handleLoadVersions();
-                      }}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="select-version">
