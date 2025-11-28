@@ -40,55 +40,38 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
     try {
       let fipeValue = "";
       
-      // Se já temos FIPE cadastrada, usar diretamente
+      // Se já temos FIPE cadastrada, usar direto e gerar sugestão imediatamente
       if (fipeReferencePrice) {
         fipeValue = fipeReferencePrice.replace("R$", "").trim();
         setFipePrice(fipeValue);
       } else {
-        // Passo 1: Buscar preço FIPE automaticamente se não estiver cadastrada
-        toast({
-          title: "Consultando FIPE...",
-          description: "Buscando preço de referência para o veículo.",
-        });
-
-        try {
-          // Buscar versões disponíveis
-          const versionsData = await versionsMutation.mutateAsync();
-          
-          if (versionsData.versions.length > 1) {
-            toast({
-              title: "Múltiplas versões encontradas",
-              description: `Usando a primeira versão encontrada (${versionsData.versions[0].nome}). Para escolher uma versão específica, consulte FIPE no cadastro do veículo.`,
-              variant: "default",
+        // Tentar buscar FIPE em background (com timeout)
+        // Não bloqueia a sugestão de preço, apenas tenta adicionar referência
+        const fipePromise = (async () => {
+          try {
+            const versionsData = await Promise.race([
+              versionsMutation.mutateAsync(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000)) // Timeout de 3s
+            ]);
+            
+            const firstVersion = versionsData.versions[0];
+            const fipeData = await priceMutation.mutateAsync?.({
+              brandId: versionsData.brandId,
+              modelId: versionsData.modelId,
+              versionCode: firstVersion.codigo
             });
+            
+            fipeValue = fipeData.Valor.replace("R$", "").trim();
+            setFipePrice(fipeValue);
+          } catch (e) {
+            // Falha silenciosa - continua sem FIPE
           }
-          
-          // Usar primeira versão disponível
-          const firstVersion = versionsData.versions[0];
-          const fipeData = await priceMutation.mutateAsync({
-            brandId: versionsData.brandId,
-            modelId: versionsData.modelId,
-            versionCode: firstVersion.codigo
-          });
-          
-          fipeValue = fipeData.Valor.replace("R$", "").trim();
-          setFipePrice(fipeValue);
-          
-          toast({
-            title: "Preço FIPE encontrado!",
-            description: `${fipeData.Marca} ${fipeData.Modelo}: ${fipeData.Valor}`,
-          });
-        } catch (fipeError: any) {
-          console.warn("Erro ao buscar FIPE:", fipeError);
-          toast({
-            title: "FIPE não encontrado",
-            description: "Continuando sugestão sem referência FIPE...",
-            variant: "default",
-          });
-        }
+        })();
+        
+        // Não aguarda a FIPE - segue direto com a sugestão
       }
 
-      // Passo 2: Chamar IA para sugerir preço
+      // Chamar IA para sugerir preço IMEDIATAMENTE (não aguarda FIPE)
       toast({
         title: "Gerando sugestão...",
         description: "A IA está analisando custos e margem desejada.",
