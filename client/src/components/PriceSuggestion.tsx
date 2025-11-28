@@ -32,7 +32,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
     vehicleData.year
   );
   
-  const priceMutation = useFipePriceByVersion();
+  const priceMutation = useFipePriceByVersion?.();
 
   const handleSuggestPrice = async () => {
     setIsLoading(true);

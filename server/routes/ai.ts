@@ -697,7 +697,7 @@ Retorne JSON: { "tips": ["dica1", "dica2", "dica3"], "focusArea": "área de foco
 
       const { fipePrice, targetMarginPercent = 20 } = req.body;
 
-      // Buscar veículos similares
+      // Buscar veículos similares (mesma marca, ano próximo)
       const allVehicles = await storage.getAllVehicles(userCompany.empresaId);
       const similarVehicles = allVehicles.filter((v: any) => 
         v.id !== vehicle.id &&
@@ -709,6 +709,7 @@ Retorne JSON: { "tips": ["dica1", "dica2", "dica3"], "focusArea": "área de foco
       const similarPrices = similarVehicles.map((v: any) => ({
         model: v.model,
         year: v.year,
+        km: v.kmOdometer,
         price: Number(v.salePrice),
         status: v.status,
       }));
@@ -721,29 +722,51 @@ Retorne JSON: { "tips": ["dica1", "dica2", "dica3"], "focusArea": "área de foco
       const costs = await storage.getVehicleCosts(vehicle.id);
       const totalCosts = costs.reduce((sum: number, c: any) => sum + Number(c.value), 0) + Number(vehicle.purchasePrice || 0);
 
+      // Calcular KM médio esperado por ano
+      const currentYear = new Date().getFullYear();
+      const vehicleAge = currentYear - vehicle.year;
+      const kmOdometer = Number(vehicle.kmOdometer) || 0;
+      const expectedKmPerYear = 15000; // Média brasileira
+      const expectedTotalKm = vehicleAge * expectedKmPerYear;
+      const kmStatus = kmOdometer < expectedTotalKm * 0.7 ? "muito baixa (PREMIUM)" : kmOdometer < expectedTotalKm ? "normal" : "acima da média";
+
       const currentMonth = new Date().toLocaleString('pt-BR', { month: 'long' });
 
-      const prompt = `Veículo: ${vehicle.brand} ${vehicle.model} ${vehicle.year}
-Cor: ${vehicle.color}
-KM: ${vehicle.kmOdometer || 'N/A'}
-Custo total (compra + preparação): R$ ${totalCosts.toLocaleString('pt-BR')}
-Dias no estoque: ${daysInStock}
+      const prompt = `ANÁLISE DE PRECIFICAÇÃO DE VEÍCULO
+
+Veículo: ${vehicle.brand} ${vehicle.model} ${vehicle.year} (${vehicle.color})
+Idade: ${vehicleAge} anos
+Quilometragem: ${kmOdometer.toLocaleString('pt-BR')} km (Status: ${kmStatus})
+Custo total investido: R$ ${totalCosts.toLocaleString('pt-BR')}
+Dias em estoque: ${daysInStock}
 Mês atual: ${currentMonth}
-${fipePrice ? `Preço FIPE: R$ ${fipePrice}` : ''}
-Margem desejada: ${targetMarginPercent}%
+${fipePrice ? `Preço FIPE de referência: R$ ${fipePrice}` : 'Sem preço FIPE disponível'}
+Margem de lucro desejada: ${targetMarginPercent}%
 
-Veículos similares em estoque:
-${similarPrices.length > 0 ? similarPrices.map((v: any) => `- ${v.model} ${v.year}: R$ ${v.price.toLocaleString('pt-BR')} (${v.status})`).join('\n') : 'Nenhum similar encontrado'}
+ANÁLISE DE QUILOMETRAGEM:
+- KM esperado para esta idade: ~${(expectedTotalKm).toLocaleString('pt-BR')} km
+- KM real: ${kmOdometer.toLocaleString('pt-BR')} km
+- Diferença: ${kmOdometer < expectedTotalKm ? `${((expectedTotalKm - kmOdometer)).toLocaleString('pt-BR')} km ABAIXO do esperado (VANTAGEM)` : `${((kmOdometer - expectedTotalKm)).toLocaleString('pt-BR')} km ACIMA do esperado (DESVANTAGEM)`}
 
-Considerando:
-- Se está há mais de 30 dias: sugerir desconto para girar estoque
-- Sazonalidade (fim de ano, férias, etc)
-- Margem desejada
-- Preços de similares
+HISTÓRICO DE PREÇOS SIMILARES:
+${similarPrices.length > 0 ? similarPrices.map((v: any) => `- ${v.model} ${v.year}: ${v.km ? v.km.toLocaleString('pt-BR') + ' km' : 'N/A'} → R$ ${v.price.toLocaleString('pt-BR')} (${v.status})`).join('\n') : 'Nenhum similar encontrado'}
 
-Sugira um preço estratégico e justifique sua recomendação.
+FATORES A CONSIDERAR:
+1. **Quilometragem**: Se está MUITO ABAIXO do esperado, aplicar PREMIUM (até 10-15% acima de similar)
+2. **Custos**: Garantir cobertura de todos os gastos + margem desejada
+3. **Tempo em estoque**: Se >30 dias, reduzir 5-8%. Se <7 dias, manter firme.
+4. **Sazonalidade**: ${currentMonth === 'dezembro' || currentMonth === 'junho' ? 'Mês com alta demanda - considerar preço premium' : 'Mês normal - preço padrão'}
+5. **Competitividade**: Considerar preços similares, mas premiação por km baixa
 
-Retorne JSON: { "suggestedPrice": 00000.00, "reasoning": "justificativa", "recommendation": "recomendação de ação" }`;
+INSTRUÇÕES CRÍTICAS:
+- Se KM está muito abaixo do esperado (30% ou mais), é um diferencial REAL - precificar como premium
+- Aplicar o custo + margem como BASE MÍNIMA
+- Comparar com similares e ajustar para cima se KM for vantagem
+- Ser agressivo em precificação se KM for excepcional
+
+Analise TODOS esses fatores e retorne um preço estratégico que maximize venda respeitando a realidade do carro.
+
+Retorne APENAS JSON válido (sem markdown): { "suggestedPrice": 00000.00, "reasoning": "justificativa detalhada considerando todos os fatores", "recommendation": "recomendação de ação" }`;
 
       const result = await generateJSON(prompt, {
         model: "gpt-4o-mini",
