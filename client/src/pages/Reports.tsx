@@ -367,25 +367,39 @@ export default function Reports() {
                 Análise de Custos por Categoria
               </h3>
               {costsByCategory.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={costsByCategory}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(entry) => `${entry.name}: R$ ${entry.value.toFixed(0)}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
+                <div className="flex flex-col md:flex-row gap-6">
+                  <ResponsiveContainer width="100%" height={300} minWidth={200}>
+                    <PieChart>
+                      <Pie
+                        data={costsByCategory}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={70}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {costsByCategory.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => `R$ ${value.toFixed(2)}`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 md:w-48 overflow-y-auto max-h-80">
+                    <div className="space-y-2 text-sm">
                       {costsByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <div key={`legend-${index}`} className="flex items-center gap-2">
+                          <div 
+                            className="h-3 w-3 rounded-full flex-shrink-0" 
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-muted-foreground truncate">{entry.name}:</span>
+                          <span className="font-semibold text-foreground whitespace-nowrap">R$ {entry.value.toLocaleString('pt-BR')}</span>
+                        </div>
                       ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any) => `R$ ${value.toFixed(2)}`} />
-                  </PieChart>
-                </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <p className="text-center text-sm text-muted-foreground py-12">
                   Nenhum custo registrado
