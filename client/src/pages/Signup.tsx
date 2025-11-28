@@ -1,30 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, RotateCcw } from "lucide-react";
+import { Car } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Signup() {
-  const [step, setStep] = useState<"register" | "verify">("register");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
   const { toast } = useToast();
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (resendCooldown > 0) {
-      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [resendCooldown]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,12 +46,13 @@ export default function Signup() {
       });
 
       if (response.ok) {
-        setStep("verify");
-        setResendCooldown(60);
         toast({
-          title: "Conta criada!",
-          description: "Verifique seu email para ativar a conta",
+          title: "Sucesso!",
+          description: "Conta criada! Redirecionando para login...",
         });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
       } else {
         const error = await response.json();
         toast({
@@ -74,90 +64,6 @@ export default function Signup() {
     } catch (error) {
       toast({
         title: "Erro ao criar conta",
-        description: "Ocorreu um erro. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (verificationCode.length !== 6) {
-      toast({
-        title: "Erro",
-        description: "Digite um código válido com 6 dígitos",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/verify-signup-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code: verificationCode }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Sucesso!",
-          description: "Sua conta foi ativada. Redirecionando para login...",
-        });
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 1500);
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Erro",
-          description: error.message || "Código inválido ou expirado",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (resendCooldown > 0) return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/auth/resend-signup-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setResendCooldown(60);
-        toast({
-          title: "Código reenviado!",
-          description: "Verifique seu email",
-        });
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Erro",
-          description: error.message || "Erro ao reenviar código",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
         description: "Ocorreu um erro. Tente novamente.",
         variant: "destructive",
       });
@@ -281,65 +187,6 @@ export default function Signup() {
                     ← Voltar para home
                   </button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          /* PASSO 2: Verificar Email */
-          <Card className="border-0 shadow-2xl">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Verificar Email</CardTitle>
-              <CardDescription>
-                Digite o código de 6 dígitos enviado para {email}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={handleVerifyEmail} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="verificationCode">Código de Verificação</Label>
-                  <Input
-                    id="verificationCode"
-                    type="text"
-                    placeholder="000000"
-                    value={verificationCode}
-                    onChange={(e) =>
-                      setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
-                    required
-                    maxLength={6}
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                  disabled={isLoading || verificationCode.length !== 6}
-                >
-                  {isLoading ? "Verificando..." : "Verificar Email"}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  disabled={resendCooldown > 0 || isLoading}
-                  onClick={handleResendCode}
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  {resendCooldown > 0
-                    ? `Reenviar em ${resendCooldown}s`
-                    : "Reenviar Código"}
-                </Button>
-              </form>
-
-              <div className="text-center text-sm pt-4">
-                <button
-                  className="text-purple-600 hover:text-purple-700 font-semibold underline"
-                  onClick={() => setStep("register")}
-                >
-                  ← Voltar para registro
-                </button>
               </div>
             </CardContent>
           </Card>
