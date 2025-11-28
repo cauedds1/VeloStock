@@ -5,7 +5,7 @@ import { generateCompletion, generateJSON, handleOpenAIError } from "../utils/op
 import { getAdFromCache, saveAdToCache, clearAdCache } from "../utils/adCache";
 import { normalizeRole, hasRole } from "../utils/roleHelper";
 import { db } from "../db";
-import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts, commissionPayments } from "@shared/schema";
+import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts, commissionPayments, vehicleHistory } from "@shared/schema";
 import { eq, and, desc, isNull, lt, gte, sql } from "drizzle-orm";
 
 async function getUserWithCompany(req: any): Promise<{ userId: string; empresaId: string } | null> {
@@ -518,14 +518,52 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
       // Adicionar contexto do veículo se estiver sendo discutido
       let vehicleContextInfo = "";
+      let repairHistoryContext = "";
       if (vehicleInContext) {
         const vehicleData = allVehicles.find(v => v.id === vehicleInContext.id);
         if (vehicleData) {
           vehicleContextInfo = `\n## VEÍCULO EM DISCUSSÃO: ${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}\nPlaca: ${vehicleData.plate}\nStatus: ${vehicleData.status}\nLocalização: ${vehicleData.location || "N/A"}\nPreço de Venda: R$ ${vehicleData.salePrice || "N/A"}`;
         }
+
+        // Se tópico é sobre status/preparação, buscar histórico de movimentação por localização
+        if (conversationTopic === "status/preparação") {
+          const history = await db.select({
+            id: vehicleHistory.id,
+            toPhysicalLocation: vehicleHistory.toPhysicalLocation,
+            movedAt: vehicleHistory.movedAt,
+            toStatus: vehicleHistory.toStatus,
+          }).from(vehicleHistory)
+            .where(eq(vehicleHistory.vehicleId, vehicleInContext.id))
+            .orderBy(vehicleHistory.movedAt);
+
+          if (history.length > 0) {
+            // Calcular dias em cada localização
+            const locationData: { [key: string]: { startDate: Date; days: number } } = {};
+            for (let i = 0; i < history.length; i++) {
+              const current = history[i];
+              const next = history[i + 1];
+              const location = current.toPhysicalLocation || "Sem localização";
+              const startDate = new Date(current.movedAt);
+              const endDate = next ? new Date(next.movedAt) : new Date();
+              const days = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+              
+              if (!locationData[location]) {
+                locationData[location] = { startDate, days: 0 };
+              }
+              locationData[location].days += days;
+            }
+
+            // Formatar histórico de reparos
+            const repairDetails = Object.entries(locationData)
+              .map(([location, data]) => `${location}: ${data.days} dias`)
+              .join(" | ");
+
+            repairHistoryContext = `\n## HISTÓRICO DE REPAROS DO ${vehicleInContext.brand.toUpperCase()} ${vehicleInContext.model.toUpperCase()}:\n${repairDetails}`;
+          }
+        }
       }
 
-      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${vehicleContextInfo}`;
+      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${vehicleContextInfo}${repairHistoryContext}`;
 
       const contextSummary = `CONTEXTO DA CONVERSA:\n- Tópico: ${conversationTopic}${vehicleInContext ? `\n- Veículo em foco: ${vehicleInContext.brand} ${vehicleInContext.model} ${vehicleInContext.year}` : ""}`;
 
