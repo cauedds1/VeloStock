@@ -36,13 +36,17 @@ export function registerAIRoutes(app: Express) {
       const companyName = company?.nomeFantasia || "Nossa Loja";
 
       const features = vehicle.features?.join(", ") || "";
-      const hasPriceSet = vehicle.salePrice && Number(vehicle.salePrice) > 0;
+      const salePrice = Number(vehicle.salePrice) || 0;
+      const hasPriceSet = salePrice > 0;
       const priceInfo = hasPriceSet 
-        ? `Preço: R$ ${Number(vehicle.salePrice).toLocaleString('pt-BR')}`
+        ? `Preço: R$ ${salePrice.toLocaleString('pt-BR')}`
         : "Preço sob consulta";
+      
+      const kmOdometer = Number(vehicle.kmOdometer) || 0;
+      const kmInfo = kmOdometer > 0 ? `KM: ${kmOdometer.toLocaleString('pt-BR')}` : '';
 
       const prompt = `Gere anúncios para o veículo ${vehicle.brand} ${vehicle.model} ${vehicle.year} (${vehicle.color}) para a loja "${companyName}".
-${vehicle.kmOdometer ? `KM: ${vehicle.kmOdometer.toLocaleString('pt-BR')}` : ''}
+${kmInfo}
 ${vehicle.fuelType ? `Combustível: ${vehicle.fuelType}` : ''}
 ${features ? `Opcionais: ${features}` : ''}
 ${priceInfo}
@@ -200,20 +204,42 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
       }
 
       const { message, conversationHistory = [] } = req.body;
-      if (!message) {
+      if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: "Mensagem é obrigatória" });
+      }
+
+      // Sanitize and validate message length
+      const sanitizedMessage = message.trim().slice(0, 500);
+      if (!sanitizedMessage) {
+        return res.status(400).json({ error: "Mensagem inválida" });
       }
 
       const companies = await storage.getAllCompanies();
       const company = companies.find(c => c.id === userCompany.empresaId);
       const companyName = company?.nomeFantasia || "Nossa Loja";
 
-      const lastMessages = conversationHistory.slice(-5);
-      const historyText = lastMessages
-        .map((m: any) => `${m.role === 'user' ? 'Cliente' : 'Assistente'}: ${m.content}`)
+      // Validate and sanitize conversation history (only allow valid structure)
+      const validHistory = Array.isArray(conversationHistory) 
+        ? conversationHistory
+            .filter((m: any) => 
+              m && 
+              typeof m === 'object' &&
+              (m.role === 'user' || m.role === 'assistant') &&
+              typeof m.content === 'string' &&
+              m.content.length <= 500
+            )
+            .slice(-5)
+            .map((m: any) => ({
+              role: m.role as 'user' | 'assistant',
+              content: m.content.trim().slice(0, 500)
+            }))
+        : [];
+
+      const historyText = validHistory
+        .map((m) => `${m.role === 'user' ? 'Cliente' : 'Assistente'}: ${m.content}`)
         .join("\n");
 
-      const prompt = `${historyText ? `Histórico:\n${historyText}\n\n` : ''}Cliente: ${message}
+      const prompt = `${historyText ? `Histórico:\n${historyText}\n\n` : ''}Cliente: ${sanitizedMessage}
 
 Responda a pergunta do cliente sobre compra de carros, financiamento, documentação, garantia, ou outros temas relacionados à compra de veículos.`;
 
