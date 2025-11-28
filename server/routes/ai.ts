@@ -46,7 +46,8 @@ export function registerAIRoutes(app: Express) {
       const company = companies.find(c => c.id === userCompany.empresaId);
       const companyName = company?.nomeFantasia || "Nossa Loja";
 
-      const features = vehicle.features?.join(", ") || "";
+      // Montar descrição detalhada do veículo com informações específicas
+      const features = vehicle.features || [];
       const salePrice = Number(vehicle.salePrice) || 0;
       const hasPriceSet = salePrice > 0;
       const priceInfo = hasPriceSet 
@@ -54,29 +55,52 @@ export function registerAIRoutes(app: Express) {
         : "Preço sob consulta";
       
       const kmOdometer = Number(vehicle.kmOdometer) || 0;
-      const kmInfo = kmOdometer > 0 ? `KM: ${kmOdometer.toLocaleString('pt-BR')}` : '';
+      const kmInfo = kmOdometer > 0 ? `${kmOdometer.toLocaleString('pt-BR')} km` : 'Baixa quilometragem';
 
-      const prompt = `Gere anúncios para o veículo ${vehicle.brand} ${vehicle.model} ${vehicle.year} (${vehicle.color}) para a loja "${companyName}".
-${kmInfo}
-${vehicle.fuelType ? `Combustível: ${vehicle.fuelType}` : ''}
-${features ? `Opcionais: ${features}` : ''}
-${priceInfo}
+      // Selecionar alguns opcionais principais (máx 3-4 mais relevantes)
+      const mainFeatures = features.slice(0, 4).join(", ");
+      const featuresList = features.length > 4 
+        ? `Principais opcionais: ${mainFeatures} + ${features.length - 4} outros` 
+        : `Opcionais: ${mainFeatures}`;
 
-Gere um objeto JSON com os seguintes campos:
-- instagram_story: Texto curto e impactante para Story (máx 50 caracteres)
-- instagram_feed: Texto engajador para Feed (máx 150 caracteres)  
-- facebook: Post completo e persuasivo (máx 200 caracteres)
-- olx_title: Título SEO otimizado para OLX (máx 60 caracteres)
-- whatsapp: Mensagem conversacional e amigável para WhatsApp (máx 100 caracteres)
-- seo_title: Título otimizado para buscadores (máx 60 caracteres)
+      // Construir informações sobre o carro de forma mais detalhada
+      const vehicleDescription = `${vehicle.brand} ${vehicle.model} ${vehicle.year}
+Cor: ${vehicle.color}
+Combustível: ${vehicle.fuelType || 'Não especificado'}
+Quilometragem: ${kmInfo}
+${featuresList}
+${vehicle.notes ? `Observações importantes: ${vehicle.notes}` : ''}
+${priceInfo}`;
 
-Use linguagem brasileira natural. Não use emojis excessivos.`;
+      // Prompt mais detalhado e específico para gerar anúncios autênticos
+      const prompt = `Você é um especialista em vendas de veículos. Gere anúncios AUTÊNTICOS e ESPECÍFICOS (não genéricos) para este veículo:
+
+${vehicleDescription}
+
+Loja: "${companyName}"
+
+IMPORTANTE:
+1. Use informações ESPECÍFICAS do carro (não fale de "veículo bonito" ou similar - mencione características reais)
+2. Destaque os opcionais mencionados de forma natural
+3. Mencione a quilometragem como vantagem se for baixa
+4. Seja persuasivo mas honesto - pareça uma venda REAL, não template genérico
+5. Cada anúncio deve soar como se quem está vendendo conhece bem este carro específico
+
+Gere um objeto JSON com os seguintes campos (máximo de caracteres):
+- instagram_story: Texto curto e impactante para Story (máx 50 caracteres, mencione algo específico)
+- instagram_feed: Texto engajador para Feed (máx 150 caracteres, destaque 1-2 opcionais principais)
+- facebook: Post completo e persuasivo (máx 200 caracteres, conte uma "história" sobre o carro)
+- olx_title: Título SEO otimizado para OLX (máx 60 caracteres, inclua cor e ano se couber)
+- whatsapp: Mensagem conversacional (máx 100 caracteres, como se um amigo recomendasse)
+- seo_title: Título para buscadores (máx 60 caracteres, SEO friendly)
+
+Use linguagem brasileira natural, conversacional, sem emojis excessivos. Retorne APENAS JSON válido.`;
 
       const result = await generateJSON(prompt, {
         model: "gpt-4o-mini",
         temperature: 0.8,
-        maxTokens: 600,
-        systemPrompt: "Você é um copywriter especialista em vendas de veículos. Retorne apenas JSON válido.",
+        maxTokens: 800,
+        systemPrompt: "Você é um copywriter especialista em vendas de veículos automotivos com anos de experiência. Crie anúncios que pareçam reais e específicos, não genéricos. Retorne apenas JSON válido.",
       });
 
       // ===== SALVAR EM CACHE =====
