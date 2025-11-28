@@ -3,6 +3,7 @@ import { isAuthenticated } from "../replitAuth";
 import { storage } from "../storage";
 import { generateCompletion, generateJSON, handleOpenAIError } from "../utils/openai";
 import { getAdFromCache, saveAdToCache, clearAdCache } from "../utils/adCache";
+import { normalizeRole, hasRole } from "../utils/roleHelper";
 import { db } from "../db";
 import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts } from "@shared/schema";
 import { eq, and, desc, isNull, lt, gte, sql } from "drizzle-orm";
@@ -267,7 +268,11 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
       // Buscar usuário para verificar permissões
       const currentUser = await storage.getUser(userCompany.userId);
-      const userRole = currentUser?.role?.toLowerCase() || "vendedor";
+      if (!currentUser) {
+        return res.status(403).json({ error: "Usuário não encontrado" });
+      }
+      
+      const userRole = normalizeRole(currentUser.role);
       
       // CORRECAO: Motoristas nao podem usar chatbot
       if (userRole === "motorista") {
@@ -330,7 +335,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
       // 3. Contas a pagar (apenas se usuário tem permissão)
       let billsContext = "";
-      const canViewBills = userRole === "proprietario" || userRole === "gerente" || userPermissions?.viewBills;
+      const canViewBills = hasRole(userRole, "proprietario", "gerente") || userPermissions?.viewBills;
       if (canViewBills) {
         const bills = await db.select({
           id: billsPayable.id,
@@ -354,7 +359,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
       // 4. Leads ativos
       let leadsContext = "";
-      const userLeads = userRole === "proprietario" || userRole === "gerente" 
+      const userLeads = hasRole(userRole, "proprietario", "gerente")
         ? await db.select({
             nome: leads.nome,
             status: leads.status,
