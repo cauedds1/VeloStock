@@ -1,0 +1,156 @@
+O Pipeline de Veículos está causando lentidão quando há muitos carros. Vou propor otimizações de performance para o componente KanbanBoard e o Dashboard.
+
+As principais melhorias serão:
+
+Virtualização da lista de veículos (renderizar apenas os visíveis)
+Lazy loading de imagens
+Memoização agressiva de componentes
+Debounce na busca
+Limitação inicial de veículos renderizados
+🚀 PROMPT PARA O AGENT
+# MISSÃO: Otimizar Performance do Pipeline de Veículos (KanbanBoard)
+## PROBLEMA ATUAL
+O Dashboard fica extremamente lento quando há muitos veículos no Pipeline. O site trava ao fazer scroll até a seção "Pipeline de Veículos".
+## CAUSA RAIZ
+- Renderização de TODOS os veículos de uma vez (sem virtualização)
+- Imagens carregando todas simultaneamente
+- Re-renderizações desnecessárias
+- Componentes não memoizados
+## SOLUÇÃO: 5 OTIMIZAÇÕES CRÍTICAS
+### 1. VIRTUALIZAÇÃO DO KANBAN (Prioridade MÁXIMA)
+Implementar **windowing/virtualização** para renderizar APENAS os cards visíveis na tela.
+**Arquivo**: `client/src/components/KanbanBoard.tsx`
+**Mudanças**:
+- Usar `react-window` ou `react-virtual` para virtualizar cada coluna
+- Renderizar no máximo 10-15 cards por coluna inicialmente
+- Carregar mais conforme scroll (infinite scroll)
+- Altura fixa nas colunas para melhor performance
+### 2. MEMOIZAÇÃO AGRESSIVA
+Memoizar TODOS os componentes pesados:
+**Arquivos**: 
+- `client/src/components/VehicleCard.tsx` (já tem memo, mas melhorar)
+- `client/src/components/KanbanColumn.tsx` (adicionar memo)
+- `client/src/components/KanbanBoard.tsx` (usar useMemo para listas)
+**Mudanças**:
+```typescript
+// Em KanbanBoard.tsx
+const vehiclesByStatus = useMemo(() => {
+  return STATUS_COLUMNS.reduce((acc, status) => {
+    acc[status] = filteredVehicles.filter(v => v.status === status);
+    return acc;
+  }, {} as Record<string, VehicleCardProps[]>);
+}, [filteredVehicles]);
+// Memoizar KanbanColumn
+const KanbanColumn = memo(({ title, count, children }: KanbanColumnProps) => {
+  // ... código existente
+});
+3. LAZY LOADING DE IMAGENS
+Implementar carregamento preguiçoso de imagens:
+
+Arquivo: client/src/components/VehicleCard.tsx
+
+Mudanças:
+
+Usar loading="lazy" nativo (JÁ TEM, mas garantir)
+Adicionar Intersection Observer para carregar imagens apenas quando próximas do viewport
+Placeholder blur enquanto carrega
+Reduzir qualidade inicial (progressive loading)
+4. DEBOUNCE NA BUSCA
+A busca está sem debounce, causando re-renders a cada tecla:
+
+Arquivo: client/src/components/KanbanBoard.tsx
+
+Mudanças:
+
+import { useState, useMemo, useCallback, useTransition } from "react";
+const [searchTerm, setSearchTerm] = useState("");
+const [debouncedSearch, setDebouncedSearch] = useState("");
+const [isPending, startTransition] = useTransition();
+// Debounce de 300ms
+useEffect(() => {
+  const timer = setTimeout(() => {
+    startTransition(() => {
+      setDebouncedSearch(searchTerm);
+    });
+  }, 300);
+  return () => clearTimeout(timer);
+}, [searchTerm]);
+// Usar debouncedSearch para filtrar
+5. PAGINAÇÃO/LIMIT INICIAL
+Limitar quantidade inicial de veículos renderizados:
+
+Arquivo: client/src/components/KanbanBoard.tsx
+
+Mudanças:
+
+Renderizar no máximo 50 veículos inicialmente
+Botão "Carregar Mais" no final de cada coluna
+Ou infinite scroll automático
+6. REDUZIR RE-RENDERS NO DASHBOARD
+O Dashboard está re-renderizando o Pipeline desnecessariamente:
+
+Arquivo: client/src/pages/Dashboard.tsx
+
+Mudanças:
+
+// Memoizar a passagem de veículos para o KanbanBoard
+const kanbanVehicles = useMemo(() => vehicles, [vehicles]);
+// Evitar re-renders:
+<KanbanBoard vehicles={kanbanVehicles} />
+IMPLEMENTAÇÃO PASSO A PASSO
+FASE 1: Quick Wins (5 min)
+Adicionar debounce na busca
+Memoizar KanbanColumn
+Limitar renderização inicial (max 50 veículos)
+FASE 2: Otimização Média (15 min)
+Implementar virtualização básica (react-window)
+Melhorar lazy loading de imagens
+FASE 3: Otimização Avançada (20 min)
+Infinite scroll nas colunas
+Progressive image loading
+Code splitting do KanbanBoard
+EXEMPLO DE CÓDIGO: VIRTUALIZAÇÃO
+// client/src/components/KanbanBoard.tsx
+import { FixedSizeList as List } from 'react-window';
+// Dentro de KanbanColumn
+<List
+  height={600} // Altura fixa da coluna
+  itemCount={vehiclesInStatus.length}
+  itemSize={200} // Altura de cada card
+  width="100%"
+>
+  {({ index, style }) => (
+    <div style={style}>
+      <VehicleCard {...vehiclesInStatus[index]} />
+    </div>
+  )}
+</List>
+INSTALAÇÃO DE DEPENDÊNCIAS (se necessário)
+npm install react-window @types/react-window
+MÉTRICAS DE SUCESSO
+✅ Pipeline renderiza em <500ms mesmo com 100+ veículos
+✅ Scroll suave (60 FPS)
+✅ Busca sem lag
+✅ Imagens carregam progressivamente
+✅ Sem travamentos ao scroll
+IMPORTANTE
+NÃO altere a estrutura visual (design deve ficar idêntico)
+MANTENHA todas as funcionalidades existentes (drag-drop se houver)
+TESTE com 100+ veículos para garantir performance
+Use React DevTools Profiler para medir ganhos
+PRIORIDADE DE IMPLEMENTAÇÃO
+Debounce na busca (URGENTE - 2 min)
+Limit inicial de 50 veículos (URGENTE - 3 min)
+Memoização de KanbanColumn (ALTA - 5 min)
+Virtualização básica (ALTA - 15 min)
+Lazy loading avançado (MÉDIA - 10 min)
+IMPLEMENTE AS OTIMIZAÇÕES AGORA. FOCO EM PERFORMANCE SEM QUEBRAR FUNCIONALIDADES! 🚀
+
+---
+Este prompt guiará o Agent a:
+1. **Identificar gargalos** de performance
+2. **Implementar virtualização** (técnica mais eficaz)
+3. **Adicionar debounce** e memoização
+4. **Limitar renderização inicial** com lazy loading
+5. **Manter funcionalidades** intactas
+O resultado será um **Pipeline 10x mais rápido** mesmo com centenas de veículos! 🎯
