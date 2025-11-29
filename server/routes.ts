@@ -1389,6 +1389,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         v.status !== "Entrada"
       ).length;
 
+      // Calcular margem média (lucro sobre venda dos carros vendidos)
+      const soldVehicles = vehicles.filter(v => v.status === "Vendido");
+      let margemLucro = 0;
+      
+      if (soldVehicles.length > 0) {
+        let totalRevenue = 0;
+        let totalCosts = 0;
+        
+        for (const vehicle of soldVehicles) {
+          const salePrice = Number(vehicle.salePrice) || 0;
+          const purchasePrice = Number(vehicle.purchasePrice) || 0;
+          
+          // Buscar custos do veículo
+          const vehicleCosts = await storage.getVehicleCosts(vehicle.id);
+          const operationalCosts = vehicleCosts.reduce((sum, cost) => sum + Number(cost.value), 0);
+          
+          totalRevenue += salePrice;
+          totalCosts += purchasePrice + operationalCosts;
+        }
+        
+        if (totalRevenue > 0) {
+          const profit = totalRevenue - totalCosts;
+          margemLucro = (profit / totalRevenue) * 100;
+        }
+      }
+
       res.json({
         totalVehicles,
         readyForSale,
@@ -1397,6 +1423,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avgCost: avgCostCurrentMonth >= 1000 
           ? `R$ ${(avgCostCurrentMonth / 1000).toFixed(1)}K`
           : `R$ ${avgCostCurrentMonth.toFixed(2)}`,
+        resultados: {
+          margemLucro: Math.max(margemLucro, 0), // Nunca retorna valor negativo em exibição
+        }
       });
     } catch (error) {
       console.error("Erro ao calcular métricas:", error);

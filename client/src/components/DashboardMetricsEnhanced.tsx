@@ -57,7 +57,7 @@ export function DashboardMetricsEnhanced() {
     }
   });
 
-  const avgMargin = metrics?.resultados?.margemLucro?.toFixed(1) || "0.0";
+  const avgMargin = metrics?.resultados?.margemLucro ? (metrics.resultados.margemLucro).toFixed(1) : "0.0";
   const avgDays = countWithDays > 0 ? Math.round(totalDays / countWithDays) : 0;
 
   const baseMetricsData = [
