@@ -5,7 +5,22 @@ import { generateCompletion, generateJSON, handleOpenAIError } from "../utils/op
 import { getAdFromCache, saveAdToCache, clearAdCache } from "../utils/adCache";
 import { normalizeRole, hasRole } from "../utils/roleHelper";
 import { db } from "../db";
-import { leads, followUps, vehicles, storeObservations, billsPayable, users, vehicleCosts, commissionPayments, vehicleHistory } from "@shared/schema";
+import { 
+  leads, 
+  followUps, 
+  vehicles, 
+  storeObservations, 
+  billsPayable, 
+  users, 
+  vehicleCosts, 
+  commissionPayments, 
+  vehicleHistory,
+  reminders,
+  costApprovals,
+  operationalExpenses,
+  activityLog,
+  vehicleDocuments
+} from "@shared/schema";
 import { eq, and, desc, isNull, lt, gte, sql } from "drizzle-orm";
 
 async function getUserWithCompany(req: any): Promise<{ userId: string; empresaId: string } | null> {
@@ -318,6 +333,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         dataVenda: vehicles.dataVenda,
         vendedorNome: vehicles.vendedorNome,
         valorVenda: vehicles.valorVenda,
+        createdAt: vehicles.createdAt,
       }).from(vehicles).where(eq(vehicles.empresaId, userCompany.empresaId));
 
       // ====== EXTRAIR CONTEXTO COMPLETO DO HISTÓRICO ======
@@ -348,14 +364,21 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
           }
         }
         
-        // 2. Detectar tópico da conversa pelos keywords
-        if (recentText.match(/cust|despesa|gast|valor/i)) conversationTopic = "custos";
-        else if (recentText.match(/localiz|local|endereco|estoque|deposito/i)) conversationTopic = "localização";
-        else if (recentText.match(/vend|vendido|preço|preco/i)) conversationTopic = "vendas";
+        // 2. Detectar tópico da conversa pelos keywords (ordem de prioridade)
+        if (recentText.match(/follow[- ]?up|acompanhament|retorno|agendam/i)) conversationTopic = "follow-ups";
+        else if (recentText.match(/lembrete|aviso|prazo|pendencia|tarefa/i)) conversationTopic = "lembretes";
+        else if (recentText.match(/aprovaca|aprovar|autorizar|pendente para/i)) conversationTopic = "aprovações";
+        else if (recentText.match(/despesa\s+operac|operacional|fixa|aluguel|salario|conta\s+fixo/i)) conversationTopic = "despesas operacionais";
+        else if (recentText.match(/vendedor|equipe|quem vendeu|performance|desempenho/i)) conversationTopic = "vendedores";
+        else if (recentText.match(/cust|despesa|gast|valor/i)) conversationTopic = "custos";
+        else if (recentText.match(/localiz|local|endereco|estoque|deposito|onde\s+esta/i)) conversationTopic = "localização";
+        else if (recentText.match(/vend|vendido|preço|preco|faturament/i)) conversationTopic = "vendas";
         else if (recentText.match(/comiss|comissao/i)) conversationTopic = "comissões";
-        else if (recentText.match(/status|etapa|preparacao|reparos|higien|pronto/i)) conversationTopic = "status/preparação";
-        else if (recentText.match(/lead|negociac|cliente/i)) conversationTopic = "leads";
-        else if (recentText.match(/document|transfer|vistori|placa/i)) conversationTopic = "documentação";
+        else if (recentText.match(/status|etapa|preparacao|reparos|higien|pronto|quanto\s+tempo|dias?\s+em|tempo\s+na/i)) conversationTopic = "status/preparação";
+        else if (recentText.match(/lead|negociac|cliente|prospect/i)) conversationTopic = "leads";
+        else if (recentText.match(/document|transfer|vistori|placa|crlv|laudo/i)) conversationTopic = "documentação";
+        else if (recentText.match(/conta[s]?\s+(a\s+)?pagar|conta[s]?\s+(a\s+)?receber|venciment|boleto|fatura/i)) conversationTopic = "contas";
+        else if (recentText.match(/observa[cç][ãa]o|problem|pendenc/i)) conversationTopic = "observações";
       }
 
       // Obter contexto resumido do último turno do usuário
@@ -440,7 +463,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
       let repairContext = "";
       if (conversationTopic === "status/preparação") {
         const inRepair = allVehicles.filter(v => 
-          v.status === "Em Reparo" || v.status === "Higienização" || v.status === "Mecânica" || v.status === "Estética"
+          v.status === "Em Reparos" || v.status === "Em Higienização"
         );
         repairContext = inRepair.length > 0 ? `\n## VEÍCULOS EM PREPARAÇÃO (${inRepair.length} veículos):\n${inRepair.slice(0, 15).map(v => 
           `- ${v.brand} ${v.model} ${v.year} (${v.color}) | Placa: ${v.plate} | Status: ${v.status} | Local: ${v.location || "N/A"}`
@@ -519,54 +542,227 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         }
       }
 
+      // 9. Follow-ups pendentes (filtrado por role: vendedores veem apenas seus próprios)
+      let followUpsContext = "";
+      const isManagerOrOwner = hasRole(userRole, "proprietario", "gerente");
+      const followUpConditions = isManagerOrOwner
+        ? and(eq(followUps.empresaId, userCompany.empresaId), eq(followUps.status, "Pendente"))
+        : and(eq(followUps.empresaId, userCompany.empresaId), eq(followUps.status, "Pendente"), eq(followUps.assignedTo, userCompany.userId));
+      
+      const pendingFollowUps = await db.select({
+        id: followUps.id,
+        titulo: followUps.titulo,
+        descricao: followUps.descricao,
+        dataAgendada: followUps.dataAgendada,
+        status: followUps.status,
+        assignedTo: followUps.assignedTo,
+      }).from(followUps).where(followUpConditions).orderBy(followUps.dataAgendada).limit(10);
+      
+      if (pendingFollowUps.length > 0) {
+        const today = new Date();
+        const overdueCount = pendingFollowUps.filter(f => new Date(f.dataAgendada) < today).length;
+        followUpsContext = `\n## FOLLOW-UPS PENDENTES (${pendingFollowUps.length}${overdueCount > 0 ? ` - ${overdueCount} atrasados` : ''}):\n${pendingFollowUps.map(f => {
+          const date = new Date(f.dataAgendada);
+          const isOverdue = date < today;
+          return `- ${f.titulo}${isOverdue ? ' [ATRASADO]' : ''} | Agendado: ${date.toLocaleDateString('pt-BR')}`;
+        }).join("\n")}`;
+      }
+
+      // 10. Lembretes pendentes (filtrado por role: vendedores veem apenas seus próprios)
+      let remindersContext = "";
+      const reminderConditions = isManagerOrOwner
+        ? and(eq(reminders.empresaId, userCompany.empresaId), eq(reminders.status, "Pendente"))
+        : and(eq(reminders.empresaId, userCompany.empresaId), eq(reminders.status, "Pendente"), eq(reminders.userId, userCompany.userId));
+      
+      const pendingReminders = await db.select({
+        id: reminders.id,
+        titulo: reminders.titulo,
+        descricao: reminders.descricao,
+        dataLimite: reminders.dataLimite,
+        vehicleId: reminders.vehicleId,
+        status: reminders.status,
+      }).from(reminders).where(reminderConditions).orderBy(reminders.dataLimite).limit(10);
+      
+      if (pendingReminders.length > 0) {
+        const today = new Date();
+        const overdueReminders = pendingReminders.filter(r => new Date(r.dataLimite) < today).length;
+        remindersContext = `\n## LEMBRETES PENDENTES (${pendingReminders.length}${overdueReminders > 0 ? ` - ${overdueReminders} vencidos` : ''}):\n${pendingReminders.map(r => {
+          const date = new Date(r.dataLimite);
+          const isOverdue = date < today;
+          return `- ${r.titulo}${isOverdue ? ' [VENCIDO]' : ''} | Prazo: ${date.toLocaleDateString('pt-BR')}`;
+        }).join("\n")}`;
+      }
+
+      // 11. Aprovações de custos pendentes (apenas proprietário/gerente)
+      let costApprovalsContext = "";
+      if (hasRole(userRole, "proprietario", "gerente")) {
+        const pendingApprovals = await db.select({
+          id: costApprovals.id,
+          valor: costApprovals.valor,
+          status: costApprovals.status,
+          createdAt: costApprovals.createdAt,
+        }).from(costApprovals).where(
+          and(
+            eq(costApprovals.empresaId, userCompany.empresaId),
+            eq(costApprovals.status, "Pendente")
+          )
+        ).limit(20);
+        
+        if (pendingApprovals.length > 0) {
+          const totalPendingApproval = pendingApprovals.reduce((sum, a) => sum + Number(a.valor), 0);
+          costApprovalsContext = `\n## APROVAÇÕES PENDENTES (${pendingApprovals.length} custos):\nTotal a aprovar: R$ ${totalPendingApproval.toFixed(2)}`;
+        }
+      }
+
+      // 12. Despesas operacionais do mês (apenas proprietário/gerente)
+      let operationalExpensesContext = "";
+      if (hasRole(userRole, "proprietario", "gerente")) {
+        const currentMonth = new Date();
+        const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        
+        const monthlyExpenses = await db.select({
+          id: operationalExpenses.id,
+          description: operationalExpenses.description,
+          amount: operationalExpenses.amount,
+          category: operationalExpenses.category,
+          date: operationalExpenses.date,
+        }).from(operationalExpenses).where(
+          and(
+            eq(operationalExpenses.empresaId, userCompany.empresaId),
+            gte(operationalExpenses.date, firstDayOfMonth)
+          )
+        ).limit(30);
+        
+        if (monthlyExpenses.length > 0) {
+          const totalExpenses = monthlyExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+          const byCategory: { [key: string]: number } = {};
+          monthlyExpenses.forEach(e => {
+            const cat = e.category || 'Outros';
+            byCategory[cat] = (byCategory[cat] || 0) + Number(e.amount);
+          });
+          
+          const categoryBreakdown = Object.entries(byCategory)
+            .map(([cat, val]) => `${cat}: R$ ${val.toFixed(2)}`)
+            .join(" | ");
+          
+          operationalExpensesContext = `\n## DESPESAS OPERACIONAIS DO MÊS:\nTotal: R$ ${totalExpenses.toFixed(2)}\nPor categoria: ${categoryBreakdown}`;
+        }
+      }
+
+      // 13. Métricas de vendedores (apenas proprietário/gerente)
+      let sellersMetricsContext = "";
+      if (hasRole(userRole, "proprietario", "gerente")) {
+        const allSellers = await db.select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        }).from(users).where(
+          and(
+            eq(users.empresaId, userCompany.empresaId),
+            eq(users.role, "vendedor"),
+            eq(users.isActive, "true")
+          )
+        );
+        
+        if (allSellers.length > 0) {
+          const sellerMetrics = await Promise.all(allSellers.map(async (seller) => {
+            const sellerSales = allVehicles.filter(v => 
+              v.status === "Vendido" && v.vendedorNome?.includes(seller.firstName || '')
+            );
+            const sellerLeads = await db.select({ id: leads.id, status: leads.status })
+              .from(leads)
+              .where(and(
+                eq(leads.empresaId, userCompany.empresaId),
+                eq(leads.vendedorResponsavel, seller.id)
+              ));
+            const activeLeads = sellerLeads.filter(l => l.status !== "Convertido" && l.status !== "Perdido").length;
+            const convertedLeads = sellerLeads.filter(l => l.status === "Convertido").length;
+            
+            return {
+              name: `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || 'Vendedor',
+              sales: sellerSales.length,
+              activeLeads,
+              convertedLeads,
+            };
+          }));
+          
+          sellersMetricsContext = `\n## MÉTRICAS DE VENDEDORES:\n${sellerMetrics.map(s => 
+            `- ${s.name}: ${s.sales} vendas | ${s.activeLeads} leads ativos | ${s.convertedLeads} convertidos`
+          ).join("\n")}`;
+        }
+      }
+
+      // 14. Documentos pendentes (veículo em contexto)
+      let documentsContext = "";
+      if (vehicleInContext) {
+        const vehicleDocs = await db.select({
+          id: vehicleDocuments.id,
+          documentType: vehicleDocuments.documentType,
+          fileName: vehicleDocuments.fileName,
+        }).from(vehicleDocuments).where(eq(vehicleDocuments.vehicleId, vehicleInContext.id));
+        
+        const docTypes = ['crlv', 'recibo_compra', 'laudo_vistoria', 'contrato_venda', 'transferencia', 'outros'];
+        const existingTypes = vehicleDocs.map(d => d.documentType);
+        const missingTypes = docTypes.filter(t => !existingTypes.includes(t as any));
+        
+        if (missingTypes.length > 0 || vehicleDocs.length > 0) {
+          documentsContext = `\n## DOCUMENTAÇÃO DO ${vehicleInContext.brand.toUpperCase()} ${vehicleInContext.model.toUpperCase()}:\nDocumentos presentes: ${vehicleDocs.length > 0 ? vehicleDocs.map(d => d.documentType).join(', ') : 'Nenhum'}\nDocumentos faltando: ${missingTypes.length > 0 ? missingTypes.join(', ') : 'Nenhum - Completo!'}`;
+        }
+      }
+
       // Adicionar contexto do veículo se estiver sendo discutido
       let vehicleContextInfo = "";
       let repairHistoryContext = "";
       if (vehicleInContext) {
         const vehicleData = allVehicles.find(v => v.id === vehicleInContext.id);
         if (vehicleData) {
-          vehicleContextInfo = `\n## VEÍCULO EM DISCUSSÃO: ${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}\nPlaca: ${vehicleData.plate}\nStatus: ${vehicleData.status}\nLocalização: ${vehicleData.location || "N/A"}\nPreço de Venda: R$ ${vehicleData.salePrice || "N/A"}`;
+          // Calcular dias no estoque
+          const entryDate = vehicleData.createdAt ? new Date(vehicleData.createdAt) : new Date();
+          const daysInStock = Math.floor((Date.now() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+          vehicleContextInfo = `\n## VEÍCULO EM DISCUSSÃO: ${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}\nPlaca: ${vehicleData.plate}\nStatus: ${vehicleData.status}\nLocalização: ${vehicleData.location || "N/A"}\nPreço de Venda: R$ ${vehicleData.salePrice || "N/A"}\nDias no estoque: ${daysInStock} dias`;
         }
 
-        // Se tópico é sobre status/preparação, buscar histórico de movimentação por localização
-        if (conversationTopic === "status/preparação") {
-          const history = await db.select({
-            id: vehicleHistory.id,
-            toPhysicalLocation: vehicleHistory.toPhysicalLocation,
-            movedAt: vehicleHistory.movedAt,
-            toStatus: vehicleHistory.toStatus,
-          }).from(vehicleHistory)
-            .where(eq(vehicleHistory.vehicleId, vehicleInContext.id))
-            .orderBy(vehicleHistory.movedAt);
+        // Buscar histórico de movimentação por localização (sempre, não só para status/preparação)
+        const history = await db.select({
+          id: vehicleHistory.id,
+          toPhysicalLocation: vehicleHistory.toPhysicalLocation,
+          movedAt: vehicleHistory.movedAt,
+          toStatus: vehicleHistory.toStatus,
+        }).from(vehicleHistory)
+          .where(eq(vehicleHistory.vehicleId, vehicleInContext.id))
+          .orderBy(vehicleHistory.movedAt);
 
-          if (history.length > 0) {
-            // Calcular dias em cada localização
-            const locationData: { [key: string]: { startDate: Date; days: number } } = {};
-            for (let i = 0; i < history.length; i++) {
-              const current = history[i];
-              const next = history[i + 1];
-              const location = current.toPhysicalLocation || "Sem localização";
-              const startDate = new Date(current.movedAt);
-              const endDate = next ? new Date(next.movedAt) : new Date();
-              const days = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-              
-              if (!locationData[location]) {
-                locationData[location] = { startDate, days: 0 };
-              }
-              locationData[location].days += days;
+        if (history.length > 0) {
+          // Calcular dias em cada localização
+          const locationData: { [key: string]: { days: number; entries: number } } = {};
+          for (let i = 0; i < history.length; i++) {
+            const current = history[i];
+            const next = history[i + 1];
+            const location = current.toPhysicalLocation || current.toStatus || "Sem localização";
+            const startDate = new Date(current.movedAt);
+            const endDate = next ? new Date(next.movedAt) : new Date();
+            const days = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+            
+            if (!locationData[location]) {
+              locationData[location] = { days: 0, entries: 0 };
             }
+            locationData[location].days += days;
+            locationData[location].entries += 1;
+          }
 
-            // Formatar histórico de reparos
-            const repairDetails = Object.entries(locationData)
-              .map(([location, data]) => `${location}: ${data.days} dias`)
-              .join(" | ");
+          // Formatar histórico de reparos com tempo em cada local
+          const repairDetails = Object.entries(locationData)
+            .filter(([location]) => location !== "Sem localização")
+            .map(([location, data]) => `${location}: ${data.days} dias`)
+            .join(" | ");
 
-            repairHistoryContext = `\n## HISTÓRICO DE REPAROS DO ${vehicleInContext.brand.toUpperCase()} ${vehicleInContext.model.toUpperCase()}:\n${repairDetails}`;
+          if (repairDetails) {
+            repairHistoryContext = `\n## TEMPO EM CADA ETAPA (${vehicleInContext.brand.toUpperCase()} ${vehicleInContext.model.toUpperCase()}):\n${repairDetails}`;
           }
         }
       }
 
-      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${vehicleContextInfo}${repairHistoryContext}`;
+      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${followUpsContext}${remindersContext}${costApprovalsContext}${operationalExpensesContext}${sellersMetricsContext}${vehicleContextInfo}${repairHistoryContext}${documentsContext}`;
 
       const contextSummary = `CONTEXTO DA CONVERSA:\n- Tópico: ${conversationTopic}${vehicleInContext ? `\n- Veículo em foco: ${vehicleInContext.brand} ${vehicleInContext.model} ${vehicleInContext.year}` : ""}`;
 
