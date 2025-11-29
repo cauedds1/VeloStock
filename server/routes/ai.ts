@@ -739,7 +739,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
           // Calcular dias no estoque
           const entryDate = vehicleData.createdAt ? new Date(vehicleData.createdAt) : new Date();
           const daysInStock = Math.floor((Date.now() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
-          vehicleContextInfo = `\n## VEÍCULO EM DISCUSSÃO: ${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}\nPlaca: ${vehicleData.plate}\nStatus: ${vehicleData.status}\nLocalização: ${vehicleData.physicalLocation || "N/A"}\nPreço de Venda: R$ ${vehicleData.salePrice || "N/A"}\nDias no estoque: ${daysInStock} dias\nData de Entrada: ${entryDate.toLocaleDateString('pt-BR')}`;
+          vehicleContextInfo = `\n## VEÍCULO EM DISCUSSÃO: ${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}\nPlaca: ${vehicleData.plate}\nStatus: ${vehicleData.status}\nLocalização: ${vehicleData.location || "N/A"}\nPreço de Venda: R$ ${vehicleData.salePrice || "N/A"}\nDias no estoque: ${daysInStock} dias\nData de Entrada: ${entryDate.toLocaleDateString('pt-BR')}`;
         }
 
         // Montar histórico completo e cronológico
@@ -778,18 +778,18 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
         // 3. Histórico de custos
         const costHistory = await db.select({
-          categoria: vehicleCosts.categoria,
-          descricao: vehicleCosts.descricao,
-          valor: vehicleCosts.valor,
-          createdAt: vehicleCosts.createdAt,
+          category: vehicleCosts.category,
+          description: vehicleCosts.description,
+          value: vehicleCosts.value,
+          date: vehicleCosts.date,
         }).from(vehicleCosts)
           .where(eq(vehicleCosts.vehicleId, vehicleInContext.id));
 
         costHistory.forEach(cost => {
           completeHistory.push({
-            date: new Date(cost.createdAt),
+            date: new Date(cost.date),
             type: "CUSTO",
-            detail: `${cost.categoria}: ${cost.descricao} - R$ ${Number(cost.valor).toFixed(2)}`
+            detail: `${cost.category}: ${cost.description} - R$ ${Number(cost.value).toFixed(2)}`
           });
         });
 
@@ -808,28 +808,16 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
           });
         });
 
-        // 5. Histórico de observações do carro
-        const obsHistory = await db.select({
-          category: storeObservations.category,
-          description: storeObservations.description,
-          createdAt: storeObservations.createdAt,
-        }).from(storeObservations)
-          .where(eq(storeObservations.vehicleId, vehicleInContext.id));
-
-        obsHistory.forEach(obs => {
-          completeHistory.push({
-            date: new Date(obs.createdAt),
-            type: "OBSERVAÇÃO",
-            detail: `[${obs.category}] ${obs.description}`
-          });
-        });
+        // 5. Histórico de observações do carro (filtradas por empresa)
+        // Nota: storeObservations não tem vehicleId, então apenas mostramos no contexto geral
+        // Se necessário no futuro, adicione um campo vehicleId à tabela storeObservations
 
         // 6. Venda (se houver)
         if (vehicleData && vehicleData.status === "Vendido" && vehicleData.dataVenda) {
           completeHistory.push({
             date: new Date(vehicleData.dataVenda),
             type: "VENDA",
-            detail: `Vendido para: ${vehicleData.repassadoPara || "Cliente"} | Valor: R$ ${vehicleData.valorVenda ? Number(vehicleData.valorVenda).toFixed(2) : "N/A"} | Vendedor: ${vehicleData.vendedorNome || "N/A"}`
+            detail: `Vendido | Valor: R$ ${vehicleData.salePrice ? Number(vehicleData.salePrice).toFixed(2) : "N/A"} | Vendedor: ${vehicleData.vendedorNome || "N/A"}`
           });
         }
 
@@ -897,25 +885,155 @@ SE a conversa mudou para "localização":
 5. **Formato**: Respostas concisas, bem organizadas, sem fluff
 6. **Sem Recomendações**: Não ofereça ajuda extra ou pergunte "se precisar de mais", apenas responda o perguntado
 
+## REGRAS DE FORMATAÇÃO DE RESPOSTAS
+
+**IMPORTANTE**: Use SEMPRE estas regras para formatar TODA resposta qualitativa:
+
+1. **Respostas Quantitativas**: APENAS número/valor
+   - "Quantos carros?" → "5"
+   - "Quanto custou?" → "R$ 2.500"
+   - Sem explicação adicional
+
+2. **Respostas Qualitativas (Listas)**: SEMPRE com formatação estruturada
+   - SEMPRE quebras de linha entre itens
+   - SEMPRE usar marcadores (•, -, ou números)
+   - SEMPRE agrupar por categorias quando relevante
+   - SEMPRE incluir totais/resumos quando aplicável
+
+3. **Datas e Valores**:
+   - Datas: SEMPRE DD/MM/YYYY
+   - Valores: SEMPRE R$ X.XXX,XX
+   - Em linhas SEPARADAS quando múltiplos
+
+4. **Históricos/Timelines**:
+   - Ordem cronológica (do mais antigo ao mais novo)
+   - Formato: "DD/MM/YYYY - Evento/Descrição"
+   - Um evento por linha
+
+5. **Emojis**: Usar MODERADAMENTE apenas para:
+   - Destacar categorias: 🚗 (carros), 💰 (valores), 📅 (datas), ✅ (concluído)
+   - Status: 🔥 (quente/urgente), ❄️ (frio/atrasado)
+
+## EXEMPLOS DETALHADOS DE FORMATAÇÃO
+
+**EXEMPLO 1 - Lista de Veículos:**
+Usuário: "quais carros estão em preparação?"
+RESPOSTA:
+Carros em preparação (3 veículos):
+
+• Volkswagen Gol 2017 (Prata) - Placa OKG-0912
+• Fiat Palio 2019 (Branco) - Placa XYZ-1234
+• Chevrolet Onix 2020 (Preto) - Placa ABC-5678
+
+---
+
+**EXEMPLO 2 - Histórico de Custos (com categorias):**
+Usuário: "quais foram os custos do onix?"
+RESPOSTA:
+Custos do Chevrolet Onix 2020:
+
+Mecânica:
+• 15/01/2025 - Troca de óleo - R$ 250,00
+• 20/01/2025 - Pastilhas de freio - R$ 450,00
+
+Estética:
+• 22/01/2025 - Polimento - R$ 300,00
+
+Total investido: R$ 1.000,00
+
+---
+
+**EXEMPLO 3 - Timeline de Movimentação:**
+Usuário: "onde o gol passou?"
+RESPOSTA:
+Histórico de localização do Volkswagen Gol 2017:
+
+10/01/2025 - Entrada no estoque
+12/01/2025 - Enviado para Oficina Mecânica
+15/01/2025 - Retornou para Loja
+18/01/2025 - Enviado para Lavagem
+20/01/2025 - Pronto para venda
+
+---
+
+**EXEMPLO 4 - Contas com Priorização:**
+Usuário: "quais contas estão vencendo?"
+RESPOSTA:
+Contas a vencer nos próximos 7 dias:
+
+Vence hoje (25/01/2025):
+• Aluguel - R$ 5.000,00
+
+Vence amanhã (26/01/2025):
+• Fornecedor X - R$ 2.300,00
+• Conta de luz - R$ 800,00
+
+Total: R$ 8.100,00
+
+---
+
+**EXEMPLO 5 - Leads com Status:**
+Usuário: "quais leads estão negociando?"
+RESPOSTA:
+Leads em negociação (4 clientes):
+
+🔥 QUENTES (último contato < 2 dias):
+• João Silva - Interesse: Onix 2020
+• Maria Santos - Interesse: HB20 2019
+
+❄️ FRIOS (último contato > 7 dias):
+• Pedro Costa - Interesse: Gol 2018
+• Ana Lima - Interesse: Corolla 2021
+
+---
+
+**EXEMPLO 6 - Histórico Cronológico Completo:**
+Usuário: "qual é a história do compass 2017?"
+RESPOSTA:
+Histórico completo - Compass Sport 2017:
+
+15/01/2025 - Entrada no estoque
+18/01/2025 - Custo: Mecânica - Revisão completa - R$ 1.500,00
+20/01/2025 - Movimentação: Oficina Mecânica
+22/01/2025 - Documento: CRLV enviado
+25/01/2025 - Custo: Estética - Polimento - R$ 300,00
+27/01/2025 - Movimentação: Retornou para Loja
+28/01/2025 - Observação: Pronto para venda
+30/01/2025 - Venda: Vendido para Cliente | R$ 35.000,00
+
+---
+
+**EXEMPLO 7 - Respostas Quantitativas (simples):**
+Usuário: "quantos carros estão em estoque?"
+RESPOSTA:
+12
+
+Usuário: "quanto custou arrumar o gol?"
+RESPOSTA:
+R$ 2.800,00
+
+---
+
+**EXEMPLO 8 - Sem Permissão:**
+Usuário: "quais contas estão pendentes?" (vendedor sem acesso)
+RESPOSTA:
+Você não tem acesso aos dados financeiros. Apenas proprietários e gerentes podem visualizar essas informações.
+
 ## EXEMPLOS DE RESPOSTAS CORRETAS
 
 **PERGUNTA QUANTITATIVA - "Quantos carros estão em preparação?"**
 **RESPOSTA**:
 3
 
-(Apenas o número. Sem contexto, sem lista, sem formatação extra)
-
 ---
 
 **PERGUNTA QUALITATIVA - "Quais carros estão em preparação?"**
 **RESPOSTA**:
-Carros em preparação:
+Carros em preparação (3 veículos):
 
-🚗 Volkswagen Gol 2017 (Prata) - Placa OKG-0912
-🚗 Fiat Palio 2019 (Branco) - Placa XYZ-1234
-🚗 Chevrolet Onix 2020 (Preto) - Placa ABC-5678
-
-(Lista bem organizada com detalhes relevantes)
+• Volkswagen Gol 2017 (Prata) - Placa OKG-0912
+• Fiat Palio 2019 (Branco) - Placa XYZ-1234
+• Chevrolet Onix 2020 (Preto) - Placa ABC-5678
 
 ---
 
@@ -929,8 +1047,8 @@ Carros em preparação:
 **RESPOSTA**:
 Contas vencendo:
 
-💰 Aluguel - R$ 5.000 (Vence: 31/01/2025)
-💰 Fornecedor X - R$ 2.300 (Vence: 30/01/2025)
+• Aluguel - R$ 5.000 (Vence: 31/01/2025)
+• Fornecedor X - R$ 2.300 (Vence: 30/01/2025)
 
 ---
 
@@ -943,8 +1061,6 @@ R$ 7.500
 **PERGUNTA QUALITATIVA - "Quem vendeu mais?"**
 **RESPOSTA**:
 João Silva com 5 vendas
-
-(Se perguntarem detalhes: listar vendas; se apenas número, só número)
 
 ---
 
