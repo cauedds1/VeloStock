@@ -622,23 +622,23 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         
         const monthlyExpenses = await db.select({
           id: operationalExpenses.id,
-          description: operationalExpenses.description,
-          amount: operationalExpenses.amount,
-          category: operationalExpenses.category,
-          date: operationalExpenses.date,
+          descricao: operationalExpenses.descricao,
+          valor: operationalExpenses.valor,
+          categoria: operationalExpenses.categoria,
+          dataVencimento: operationalExpenses.dataVencimento,
         }).from(operationalExpenses).where(
           and(
             eq(operationalExpenses.empresaId, userCompany.empresaId),
-            gte(operationalExpenses.date, firstDayOfMonth)
+            gte(operationalExpenses.dataVencimento, firstDayOfMonth)
           )
         ).limit(30);
         
         if (monthlyExpenses.length > 0) {
-          const totalExpenses = monthlyExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+          const totalExpenses = monthlyExpenses.reduce((sum, e) => sum + Number(e.valor), 0);
           const byCategory: { [key: string]: number } = {};
           monthlyExpenses.forEach(e => {
-            const cat = e.category || 'Outros';
-            byCategory[cat] = (byCategory[cat] || 0) + Number(e.amount);
+            const cat = e.categoria || 'Outros';
+            byCategory[cat] = (byCategory[cat] || 0) + Number(e.valor);
           });
           
           const categoryBreakdown = Object.entries(byCategory)
@@ -698,7 +698,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         const vehicleDocs = await db.select({
           id: vehicleDocuments.id,
           documentType: vehicleDocuments.documentType,
-          fileName: vehicleDocuments.fileName,
+          originalFileName: vehicleDocuments.originalFileName,
         }).from(vehicleDocuments).where(eq(vehicleDocuments.vehicleId, vehicleInContext.id));
         
         const docTypes = ['crlv', 'recibo_compra', 'laudo_vistoria', 'contrato_venda', 'transferencia', 'outros'];
@@ -707,6 +707,26 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         
         if (missingTypes.length > 0 || vehicleDocs.length > 0) {
           documentsContext = `\n## DOCUMENTAÇÃO DO ${vehicleInContext.brand.toUpperCase()} ${vehicleInContext.model.toUpperCase()}:\nDocumentos presentes: ${vehicleDocs.length > 0 ? vehicleDocs.map(d => d.documentType).join(', ') : 'Nenhum'}\nDocumentos faltando: ${missingTypes.length > 0 ? missingTypes.join(', ') : 'Nenhum - Completo!'}`;
+        }
+      }
+
+      // 15. Activity Log (últimas atividades - apenas proprietário/gerente)
+      let activityLogContext = "";
+      if (hasRole(userRole, "proprietario", "gerente")) {
+        const recentActivities = await db.select({
+          id: activityLog.id,
+          activityType: activityLog.activityType,
+          description: activityLog.description,
+          createdAt: activityLog.createdAt,
+        }).from(activityLog).where(
+          eq(activityLog.empresaId, userCompany.empresaId)
+        ).orderBy(desc(activityLog.createdAt)).limit(15);
+        
+        if (recentActivities.length > 0) {
+          activityLogContext = `\n## ATIVIDADES RECENTES:\n${recentActivities.map(a => {
+            const date = new Date(a.createdAt).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' });
+            return `- ${a.activityType}: ${a.description} (${date})`;
+          }).join("\n")}`;
         }
       }
 
@@ -762,7 +782,7 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         }
       }
 
-      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${followUpsContext}${remindersContext}${costApprovalsContext}${operationalExpensesContext}${sellersMetricsContext}${vehicleContextInfo}${repairHistoryContext}${documentsContext}`;
+      const systemContext = `${vehiclesContext}${repairContext}${leadsContext}${observationsContext}${soldContext}${costsContext}${billsContext}${commissionsContext}${followUpsContext}${remindersContext}${costApprovalsContext}${operationalExpensesContext}${sellersMetricsContext}${activityLogContext}${vehicleContextInfo}${repairHistoryContext}${documentsContext}`;
 
       const contextSummary = `CONTEXTO DA CONVERSA:\n- Tópico: ${conversationTopic}${vehicleInContext ? `\n- Veículo em foco: ${vehicleInContext.brand} ${vehicleInContext.model} ${vehicleInContext.year}` : ""}`;
 

@@ -79,19 +79,32 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
     return filteredVehicles.slice(0, displayLimit);
   }, [filteredVehicles, displayLimit]);
 
-  const hasMoreVehicles = filteredVehicles.length > displayLimit;
-  const remainingCount = filteredVehicles.length - displayLimit;
+  const hasMoreVehicles = useMemo(() => {
+    return filteredVehicles.length > displayLimit;
+  }, [filteredVehicles.length, displayLimit]);
+
+  const remainingCount = useMemo(() => {
+    return filteredVehicles.length - displayLimit;
+  }, [filteredVehicles.length, displayLimit]);
 
   const handleLoadMore = useCallback(() => {
     setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
   }, []);
 
-  const getVehiclesByStatus = useCallback((status: string) => {
-    return limitedVehicles.filter((v) => (v as any).status === status);
+  const vehiclesByStatus = useMemo(() => {
+    const result: Record<string, VehicleCardProps[]> = {};
+    STATUS_COLUMNS.forEach(status => {
+      result[status] = limitedVehicles.filter((v) => (v as any).status === status);
+    });
+    return result;
   }, [limitedVehicles]);
 
-  const getTotalCountByStatus = useCallback((status: string) => {
-    return filteredVehicles.filter((v) => (v as any).status === status).length;
+  const totalCountByStatus = useMemo(() => {
+    const result: Record<string, number> = {};
+    STATUS_COLUMNS.forEach(status => {
+      result[status] = filteredVehicles.filter((v) => (v as any).status === status).length;
+    });
+    return result;
   }, [filteredVehicles]);
 
   return (
@@ -130,8 +143,8 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
       <div className="flex-1 overflow-x-auto">
         <div className="flex h-full gap-4 pb-4">
           {STATUS_COLUMNS.map((status) => {
-            const vehiclesInStatus = getVehiclesByStatus(status);
-            const totalInStatus = getTotalCountByStatus(status);
+            const vehiclesInStatus = vehiclesByStatus[status] || [];
+            const totalInStatus = totalCountByStatus[status] || 0;
             return (
               <KanbanColumn
                 key={status}

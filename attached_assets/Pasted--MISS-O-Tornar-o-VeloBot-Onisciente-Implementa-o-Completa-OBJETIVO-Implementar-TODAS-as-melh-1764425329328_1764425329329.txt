@@ -1,0 +1,150 @@
+🤖 MISSÃO: Tornar o VeloBot Onisciente - Implementação Completa
+OBJETIVO
+Implementar TODAS as melhorias no VeloBot para que ele tenha conhecimento COMPLETO e PROFUNDO de TUDO que acontece na loja, com respostas formatadas de forma limpa e organizada.
+
+CONTEXTO ATUAL
+O VeloBot já tem acesso a: veículos, leads, observações, contas a pagar, comissões e custos. Porém, faltam dados críticos e a formatação das respostas precisa melhorar.
+
+MELHORIAS A IMPLEMENTAR
+1. EXPANDIR DADOS DO CONTEXTO DO SISTEMA
+Adicione ao contexto do chatbot (server/routes/ai.ts, endpoint /api/chatbot/message) as seguintes queries:
+
+PRIORIDADE ALTA:
+
+ Follow-ups: Buscar todos os follow-ups pendentes e vencidos
+ Reminders: Buscar todos os lembretes ativos e pendentes
+ Aprovações de Custos: Buscar custos aguardando aprovação (cost_approvals)
+ Despesas Operacionais: Buscar despesas do mês (operational_expenses)
+ Vendedores com Métricas: Lista completa de vendedores com número de vendas, comissões, conversão de leads
+PRIORIDADE MÉDIA:
+
+ Documentos Faltantes: Verificar quais veículos não têm documentação completa
+ Log de Atividades: Últimas 50 atividades do sistema (activity_log)
+ Análise Temporal: Tempo médio de preparação, tempo médio de venda, veículos parados há mais de X dias
+2. MELHORAR CONSCIÊNCIA DE CONTEXTO
+O VeloBot deve entender quando a conversa é sobre um veículo específico e manter esse contexto:
+
+// Implementar:
+1. Detectar veículo mencionado no histórico (ex: "Compass", "Onix")
+2. Guardar referência ao veículo em contexto
+3. Quando perguntarem sobre custos/localização/tempo, responder APENAS sobre aquele veículo
+4. Detectar tópicos: custos, localização, vendas, comissões, status, follow-ups, documentação
+3. CALCULAR TEMPO EM OFICINAS/LOCAIS
+Para perguntas como "quanto tempo a Compass ficou na oficina do Aurélio?":
+
+// Buscar histórico de movimentação (vehicle_history)
+// Calcular dias entre cada mudança de localização
+// Agrupar por local físico (toPhysicalLocation)
+// Responder: "Compass Sport Branca: 3 dias na Oficina Aurélio, 8 dias no Paulo"
+4. MELHORAR FORMATAÇÃO DAS RESPOSTAS
+Atualizar o veloStockSystemPrompt para incluir regras de formatação:
+
+Para respostas quantitativas (Quantos/Quanto):
+
+Responda APENAS o número, nada mais.
+Exemplo: "3" ou "R$ 15.000"
+Para respostas qualitativas (Quais/Liste/Detalhes):
+
+Use formatação limpa:
+✅ FORMATO CORRETO:
+🚗 Veículos em preparação:
+• Volkswagen Gol 2017 (Prata) - Placa OKG-0912
+• Fiat Palio 2019 (Branco) - Placa XYZ-1234
+• Chevrolet Onix 2020 (Preto) - Placa ABC-5678
+❌ FORMATO ERRADO:
+"Você tem 3 veículos em preparação: Gol, Palio e Onix. Se precisar de mais informações..."
+5. RESPOSTAS COM INSIGHTS AUTOMÁTICOS
+Quando responder sobre métricas, adicionar contexto:
+
+Pergunta: "Quantos carros vendemos este mês?"
+Resposta: "15 vendas
+📊 Insights:
+• 75% da meta mensal atingida
+• 5 vendas acima do mês passado (+50%)
+• João Silva liderou com 6 vendas"
+6. PERGUNTAS COMPLEXAS QUE O VELOBOT DEVE RESPONDER
+Implemente capacidade de responder:
+
+✅ "Qual vendedor está performando melhor este mês?"
+✅ "Quantos follow-ups tenho pendentes?"
+✅ "Quais veículos estão sem documentação?"
+✅ "Qual foi meu lucro líquido no mês passado?"
+✅ "Quanto tempo em média leva para preparar um carro?"
+✅ "Quais despesas estão vencendo esta semana?"
+✅ "Quantos custos estão aguardando aprovação?"
+✅ "Quanto tempo a [marca modelo] ficou na oficina?"
+✅ "Quais carros estão parados há mais de 7 dias?"
+7. ESTRUTURA DO PROMPT DO SISTEMA
+Atualize o veloStockSystemPrompt com:
+
+## CONTEXTO COMPLETO DO SISTEMA:
+${vehiclesContext}
+${leadsContext}
+${observationsContext}
+${soldContext}
+${costsContext}
+${billsContext}
+${commissionsContext}
+${followUpsContext}           // NOVO
+${remindersContext}           // NOVO
+${costApprovalsContext}       // NOVO
+${operationalExpensesContext} // NOVO
+${sellersPerformanceContext}  // NOVO
+${documentsStatusContext}     // NOVO
+${activityLogContext}         // NOVO
+${repairHistoryContext}       // NOVO (quando contexto sobre reparos)
+## REGRAS DE FORMATAÇÃO:
+1. Perguntas quantitativas: responda APENAS o número
+2. Perguntas qualitativas: use listas organizadas com emojis
+3. Mantenha contexto da conversa (veículo/tópico em discussão)
+4. NÃO adicione "Se precisar de mais informações..."
+5. Seja CONCISO e DIRETO
+CHECKLIST DE IMPLEMENTAÇÃO
+Fase 1: Expandir Dados (Prioridade Alta)
+ Adicionar query de follow-ups pendentes
+ Adicionar query de reminders ativos
+ Adicionar query de aprovações de custos
+ Adicionar query de despesas operacionais
+ Adicionar query de vendedores com métricas
+Fase 2: Consciência de Contexto
+ Implementar detecção de veículo mencionado
+ Implementar detecção de tópico da conversa
+ Guardar veículo em contexto entre mensagens
+ Filtrar dados por contexto (ex: custos apenas do veículo em discussão)
+Fase 3: Histórico Temporal
+ Implementar cálculo de dias por localização
+ Formatar resposta de tempo em oficinas
+ Adicionar ao contexto quando tópico = preparação/reparos
+Fase 4: Formatação de Respostas
+ Atualizar prompt com regras de formatação
+ Adicionar exemplos de respostas corretas/incorretas
+ Implementar detecção de tipo de pergunta (quantitativa vs qualitativa)
+Fase 5: Insights Automáticos
+ Adicionar cálculos de tendências (comparação com mês anterior)
+ Adicionar análise de desempenho (% da meta)
+ Adicionar sugestões baseadas em dados
+EXEMPLO DE SAÍDA ESPERADA
+Antes:
+
+User: Quanto tempo a Compass ficou na oficina?
+VeloBot: A Compass passou por reparos e está em boas condições.
+Depois:
+
+User: Quanto tempo a Compass ficou na oficina?
+VeloBot: 🔧 Compass Sport Branca - Histórico de Reparos:
+• Oficina do Aurélio: 3 dias
+• Paulo (Estética): 8 dias
+• Total: 11 dias em preparação
+CRITÉRIOS DE SUCESSO
+✅ VeloBot responde TODAS as 10+ perguntas complexas listadas
+✅ Respostas formatadas de forma limpa (sem "fluff")
+✅ Mantém contexto entre mensagens
+✅ Fornece insights automáticos quando relevante
+✅ Calcula tempo em localizações específicas
+
+IMPORTANTE
+NÃO faça alterações em package.json, vite.config.ts ou .replit
+FOQUE apenas em server/routes/ai.ts e lógica do chatbot
+TESTE cada funcionalidade após implementar
+Use o token budget de 500-600 tokens para respostas completas
+IMPLEMENTE TUDO AGORA. O VeloBot precisa ser ONISCIENTE! 🚀
