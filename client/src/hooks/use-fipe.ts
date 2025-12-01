@@ -227,7 +227,7 @@ export function useFipeVehicleVersions() {
         throw new Error(`Modelo "${model}" nao encontrado para a marca ${matchedBrand.nome}`);
       }
 
-      const limitedModels = candidateModels.slice(0, 3);
+      const limitedModels = candidateModels.slice(0, 15);
       
       const allVersions: FipeVersion[] = [];
       
@@ -235,7 +235,7 @@ export function useFipeVehicleVersions() {
         const candidateModel = limitedModels[i];
         try {
           if (i > 0) {
-            await delay(800);
+            await delay(200);
           }
           
           const yearsResponse = await fetchWithRetry(
