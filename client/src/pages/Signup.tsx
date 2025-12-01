@@ -45,7 +45,9 @@ export default function Signup() {
         body: JSON.stringify({ firstName, lastName, email, password }),
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         toast({
           title: "Sucesso!",
           description: "Conta criada! Redirecionando para login...",
@@ -54,17 +56,17 @@ export default function Signup() {
           window.location.href = "/login";
         }, 1500);
       } else {
-        const error = await response.json();
         toast({
           title: "Erro ao criar conta",
-          description: error.message || "Ocorreu um erro. Tente novamente.",
+          description: data.message || "Ocorreu um erro. Tente novamente.",
           variant: "destructive",
         });
       }
     } catch (error) {
+      console.error("Erro no signup:", error);
       toast({
-        title: "Erro ao criar conta",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
         variant: "destructive",
       });
     } finally {
