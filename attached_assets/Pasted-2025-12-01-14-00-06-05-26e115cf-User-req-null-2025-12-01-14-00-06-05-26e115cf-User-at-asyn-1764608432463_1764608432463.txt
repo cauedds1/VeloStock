@@ -1,0 +1,132 @@
+2025-12-01 14:00:06.05
+26e115cf
+User
+_req: null,
+2025-12-01 14:00:06.05
+26e115cf
+User
+at async DatabaseStorage.getUserByEmail (file:///home/runner/workspace/dist/index.js:1151:20)
+2025-12-01 14:00:06.05
+26e115cf
+User
+_socket: null,
+2025-12-01 14:00:06.05
+26e115cf
+User
+_readyState: 3,
+2025-12-01 14:00:06.05
+26e115cf
+User
+_paused: false,
+2025-12-01 14:00:06.05
+26e115cf
+User
+[Symbol(shapeMode)]: false,
+2025-12-01 14:00:06.05
+26e115cf
+User
+errno: -3001,
+2025-12-01 14:00:06.05
+26e115cf
+User
+},
+2025-12-01 14:00:06.05
+26e115cf
+User
+syscall: 'getaddrinfo',
+2025-12-01 14:00:06.05
+26e115cf
+User
+_autoPong: true,
+2025-12-01 14:00:06.05
+26e115cf
+User
+[Signup] Erro no signup: ErrorEvent {
+2025-12-01 14:00:06.05
+26e115cf
+User
+_redirects: 0,
+2025-12-01 14:00:06.05
+26e115cf
+User
+_closeMessage: ,
+2025-12-01 14:00:06.05
+26e115cf
+User
+at async file:///home/runner/workspace/dist/index.js:1667:28
+2025-12-01 14:00:06.05
+26e115cf
+User
+error: [Function],
+2025-12-01 14:00:06.05
+26e115cf
+User
+close: [Function],
+2025-12-01 14:00:06.05
+26e115cf
+User
+[Symbol(kType)]: 'error',
+2025-12-01 14:00:06.05
+26e115cf
+User
+_closeFrameSent: false,
+2025-12-01 14:00:06.05
+26e115cf
+User
+_protocol: '',
+2025-12-01 14:00:06.05
+26e115cf
+User
+at async NeonPreparedQuery.execute (file:///home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.js:76:20)
+2025-12-01 14:00:06.05
+26e115cf
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-01 14:00:06.05
+26e115cf
+User
+},
+2025-12-01 14:00:06.05
+26e115cf
+User
+open: [Function]
+2025-12-01 14:00:06.05
+26e115cf
+User
+_closeTimer: null,
+2025-12-01 14:00:06.05
+26e115cf
+User
+_extensions: {},
+2025-12-01 14:00:06.05
+26e115cf
+User
+},
+2025-12-01 14:00:06.05
+26e115cf
+User
+_eventsCount: 4,
+2025-12-01 14:00:06.05
+26e115cf
+User
+_url: 'wss://helium/v2',
+2025-12-01 14:00:06.05
+26e115cf
+User
+_closeFrameReceived: false,
+2025-12-01 14:00:06.05
+26e115cf
+User
+[Symbol(kMessage)]: 'getaddrinfo EAI_AGAIN helium'
+2025-12-01 14:00:06.05
+26e115cf
+User
+5:00:06 PM [express] POST /api/auth/signup-step1 500 in 8ms :: {"message":"Erro ao criar conta","det…
+2025-12-01 14:00:06.05
+26e115cf
+User
+5:00:06 PM [express] POST /api/auth/signup-step1 500 in 8ms :: {"message":"Erro ao criar conta","det…
+2025-12-01 14:00:06.05
+26e115cf
+User
+5:00:06 PM [express] POST /api/auth/signup-step1 500 in 8ms :: {"message":"Erro ao criar conta","det…
