@@ -27,20 +27,28 @@ export function getDatabaseUrl(): string {
     console.warn('[Database] Could not read /tmp/replitdb, falling back to env var');
   }
 
-  // 2. Fallback para variável de ambiente (DESENVOLVIMENTO)
-  if (!databaseUrl) {
+  // 2. Fallback para variável de ambiente DATABASE_URL (prioridade máxima após /tmp/replitdb)
+  if (!databaseUrl && process.env.DATABASE_URL) {
     databaseUrl = process.env.DATABASE_URL;
+    console.log('[Database] ✓ Using DATABASE_URL from environment variable');
   }
   
-  // 3. Tentar construir a URL a partir das variáveis PG* (Replit provisioned DB)
+  // 3. Tentar construir a URL a partir das variáveis PG* (apenas se DATABASE_URL não existir)
+  // IMPORTANTE: Só usar PG* se o host NÃO for "helium" (que é interno do Replit dev)
   if (!databaseUrl && process.env.PGHOST && process.env.PGUSER && process.env.PGPASSWORD && process.env.PGDATABASE) {
     const host = process.env.PGHOST;
-    const port = process.env.PGPORT || '5432';
-    const user = process.env.PGUSER;
-    const password = process.env.PGPASSWORD;
-    const database = process.env.PGDATABASE;
-    databaseUrl = `postgresql://${user}:${password}@${host}:${port}/${database}`;
-    console.log('[Database] ✓ Built DATABASE_URL from PG* environment variables');
+    
+    // Ignorar "helium" - é um hostname interno que só funciona em dev
+    if (host === 'helium') {
+      console.log('[Database] ⚠ Skipping internal "helium" host - requires external DATABASE_URL for production');
+    } else {
+      const port = process.env.PGPORT || '5432';
+      const user = process.env.PGUSER;
+      const password = process.env.PGPASSWORD;
+      const database = process.env.PGDATABASE;
+      databaseUrl = `postgresql://${user}:${password}@${host}:${port}/${database}`;
+      console.log('[Database] ✓ Built DATABASE_URL from PG* environment variables');
+    }
   }
   
   if (!databaseUrl) {
