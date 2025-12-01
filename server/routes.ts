@@ -609,6 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         physicalLocation: req.body.physicalLocation || null,
         physicalLocationDetail: req.body.physicalLocationDetail || null,
         purchasePrice: req.body.purchasePrice != null && req.body.purchasePrice !== "" ? req.body.purchasePrice : null,
+        salePrice: req.body.salePrice != null && req.body.salePrice !== "" ? req.body.salePrice : null,
         kmOdometer: req.body.kmOdometer != null && req.body.kmOdometer !== "" ? req.body.kmOdometer : null,
         fuelType: req.body.fuelType || null,
         fipeReferencePrice: req.body.fipeReferencePrice || null,
