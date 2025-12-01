@@ -24,31 +24,33 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-full flex-col bg-gradient-to-br from-background to-muted/20">
-      {/* Header com gradiente e ação */}
-      <div className="border-b bg-gradient-to-r from-primary/5 to-secondary/5 px-8 py-6">
-        <div className="flex items-center justify-between">
+      <div className="border-b bg-gradient-to-r from-primary/5 to-secondary/5 px-4 sm:px-8 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Dashboard
             </h1>
-            <p className="mt-2 text-muted-foreground flex items-center gap-2">
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground flex items-center gap-2">
               <TrendingUp 
                 className="h-4 w-4"
                 style={changeIconColors ? { color: primaryColor } : undefined}
               />
-              Visão geral completa do estoque e operações
+              <span className="hidden sm:inline">Visao geral completa do estoque e operacoes</span>
+              <span className="sm:hidden">Visao geral do estoque</span>
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {isVendedor && (
               <Button
                 onClick={() => setSetTargetOpen(true)}
                 variant="outline"
                 className="gap-2"
+                size="sm"
                 data-testid="button-set-target"
               >
                 <Target className="h-4 w-4" />
-                Definir Meta
+                <span className="hidden sm:inline">Definir Meta</span>
+                <span className="sm:hidden">Meta</span>
               </Button>
             )}
             <AddVehicleDialog onAdd={(data) => console.log("Novo veículo:", data)} />
@@ -59,9 +61,8 @@ export default function Dashboard() {
       {/* Dialog para definir meta */}
       <SetSalesTargetDialog open={setTargetOpen} onOpenChange={setSetTargetOpen} />
 
-      {/* Conteúdo principal */}
-      <div className="flex-1 overflow-auto p-8">
-        <div className="space-y-8 max-w-[1800px] mx-auto">
+      <div className="flex-1 overflow-auto p-4 sm:p-8">
+        <div className="space-y-6 sm:space-y-8 max-w-[1800px] mx-auto">
           {/* Dashboard de Vendedor */}
           {isVendedor && (
             <div className="animate-fade-in">

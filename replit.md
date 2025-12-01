@@ -115,6 +115,10 @@ The frontend utilizes React with TypeScript, Vite, Tailwind CSS, Radix UI primit
   - Price suggestions based on vehicle characteristics
   - Ad text generation in multiple styles
 - **FIPE API**: Free proxy integration (Parallelum API) for real-time vehicle pricing data.
+  - Rate limiting protection with retry logic (exponential backoff)
+  - Type-ahead search with Command component for filtering brands/models/years
+  - Automatic delay between API calls to prevent 429 errors
+  - Limited to 3 concurrent model searches for version lookup
 
 ### AI Components (November 2025)
 Frontend components for AI features:
@@ -156,3 +160,15 @@ Backend AI routes:
 - **date-fns**: Date manipulation utility.
 - **Tailwind CSS**: Utility-first CSS framework for styling.
 - **Lucide React**: Icon library.
+
+## Mobile Responsiveness (December 2025)
+Full mobile optimization across all screens:
+- **App.tsx**: Responsive header with compact buttons and logo visibility control
+- **Dashboard.tsx**: Responsive padding, flex-wrap for buttons, mobile-friendly text
+- **Vehicles.tsx**: Full-width selects on mobile, responsive grid (1→2→3→4 cols)
+- **DashboardMetricsEnhanced.tsx**: 2-column grid on mobile, compact padding
+- **FipeSearchDialog.tsx**: Responsive button text, 95vw dialog width on mobile
+- **AddVehicleDialog.tsx**: Responsive button text, responsive form grid
+- **KanbanBoard.tsx**: Horizontal scroll on mobile with min-width for columns
+
+Mobile breakpoint strategy: Use `sm:` prefix for 640px+ screens, default styles for mobile.

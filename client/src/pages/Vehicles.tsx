@@ -194,38 +194,34 @@ export default function Vehicles() {
     });
 
   return (
-    <div className="flex h-full flex-col p-8">
-      <div className="mb-8 flex items-start justify-between gap-3 flex-wrap">
+    <div className="flex h-full flex-col p-4 sm:p-8">
+      <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Veículos</h1>
-          <p className="mt-2 text-muted-foreground">
-            Gerencie todos os veículos do estoque
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Veiculos</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
+            Gerencie todos os veiculos do estoque
           </p>
         </div>
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
           <FipeSearchDialog />
           <AddVehicleDialog />
         </div>
       </div>
 
-      {/* Filtros reorganizados */}
-      <div className="mb-6 space-y-3">
-        {/* Busca */}
+      <div className="mb-4 sm:mb-6 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar veículo por marca, modelo ou placa..."
+            placeholder="Buscar veiculo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
         
-        {/* Linha de filtros */}
-        <div className="flex gap-3 flex-wrap items-center">
-          {/* Select principal de ordenação */}
+        <div className="flex gap-2 sm:gap-3 flex-wrap items-center">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-60">
+            <SelectTrigger className="w-full sm:w-60">
               <ArrowUpDown className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
@@ -238,11 +234,10 @@ export default function Vehicles() {
             </SelectContent>
           </Select>
           
-          {/* Dropdown de Localizações */}
           {sortBy === "location" && (
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="Todas as Localizações" />
+              <SelectTrigger className="w-full sm:w-52">
+                <SelectValue placeholder="Todas as Localizacoes" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Localizações</SelectItem>
@@ -256,10 +251,9 @@ export default function Vehicles() {
             </Select>
           )}
 
-          {/* Dropdown de Status */}
           {sortBy === "status" && (
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-52">
+              <SelectTrigger className="w-full sm:w-52">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -272,10 +266,9 @@ export default function Vehicles() {
             </Select>
           )}
 
-          {/* Dropdown de Marcas */}
           {sortBy === "brand" && (
             <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-              <SelectTrigger className="w-52">
+              <SelectTrigger className="w-full sm:w-52">
                 <SelectValue placeholder="Todas as Marcas" />
               </SelectTrigger>
               <SelectContent>
@@ -291,7 +284,7 @@ export default function Vehicles() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading ? (
           <p className="text-muted-foreground">Carregando...</p>
         ) : filteredVehicles.length === 0 ? (

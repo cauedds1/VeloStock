@@ -66,7 +66,8 @@ export default function VehicleDetails() {
     interior: [],
     somEletrica: [],
     lataria: [],
-    documentacao: []
+    documentacao: [],
+    equipamentos: []
   });
   const [observationDialog, setObservationDialog] = useState<{
     open: boolean;

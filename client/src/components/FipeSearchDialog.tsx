@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -18,9 +18,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Brand {
   codigo: string;
@@ -53,11 +67,21 @@ export function FipeSearchDialog() {
   const [open, setOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState("carros");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [selectedBrandName, setSelectedBrandName] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
+  const [selectedModelName, setSelectedModelName] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedYearName, setSelectedYearName] = useState<string>("");
   const [fipeResult, setFipeResult] = useState<FipeValue | null>(null);
+  
+  const [brandOpen, setBrandOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [yearOpen, setYearOpen] = useState(false);
+  
+  const [brandSearch, setBrandSearch] = useState("");
+  const [modelSearch, setModelSearch] = useState("");
+  const [yearSearch, setYearSearch] = useState("");
 
-  // Query para buscar marcas
   const { data: brands = [], isLoading: loadingBrands } = useQuery<Brand[]>({
     queryKey: ["/api/fipe/brands", vehicleType],
     queryFn: async () => {
@@ -68,7 +92,6 @@ export function FipeSearchDialog() {
     enabled: open,
   });
 
-  // Query para buscar modelos
   const { data: modelsData, isLoading: loadingModels } = useQuery<{ modelos: Model[] }>({
     queryKey: ["/api/fipe/models", vehicleType, selectedBrand],
     queryFn: async () => {
@@ -81,7 +104,6 @@ export function FipeSearchDialog() {
 
   const models = modelsData?.modelos || [];
 
-  // Query para buscar anos
   const { data: years = [], isLoading: loadingYears } = useQuery<Year[]>({
     queryKey: ["/api/fipe/years", vehicleType, selectedBrand, selectedModel],
     queryFn: async () => {
@@ -92,7 +114,6 @@ export function FipeSearchDialog() {
     enabled: open && !!selectedBrand && !!selectedModel,
   });
 
-  // Query para buscar valor FIPE
   const {
     data: fipeValue,
     isFetching: loadingValue,
@@ -105,8 +126,32 @@ export function FipeSearchDialog() {
       if (!response.ok) throw new Error("Erro ao buscar valor FIPE");
       return response.json();
     },
-    enabled: false, // Só busca quando clicar no botão
+    enabled: false,
   });
+
+  const filteredBrands = useMemo(() => {
+    if (!brandSearch) return brands;
+    const search = brandSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return brands.filter(brand => 
+      brand.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(search)
+    );
+  }, [brands, brandSearch]);
+
+  const filteredModels = useMemo(() => {
+    if (!modelSearch) return models;
+    const search = modelSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return models.filter(model => 
+      model.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(search)
+    );
+  }, [models, modelSearch]);
+
+  const filteredYears = useMemo(() => {
+    if (!yearSearch) return years;
+    const search = yearSearch.toLowerCase();
+    return years.filter(year => 
+      year.nome.toLowerCase().includes(search)
+    );
+  }, [years, yearSearch]);
 
   const handleSearch = async () => {
     if (selectedBrand && selectedModel && selectedYear) {
@@ -134,14 +179,18 @@ export function FipeSearchDialog() {
   const handleClose = () => {
     setOpen(false);
     setSelectedBrand("");
+    setSelectedBrandName("");
     setSelectedModel("");
+    setSelectedModelName("");
     setSelectedYear("");
+    setSelectedYearName("");
     setFipeResult(null);
+    setBrandSearch("");
+    setModelSearch("");
+    setYearSearch("");
   };
 
   const formatCurrency = (value: string) => {
-    // Remove "R$ " e converte para número
-    const numericValue = value.replace("R$ ", "").replace(".", "").replace(",", ".");
     return value;
   };
 
@@ -157,12 +206,13 @@ export function FipeSearchDialog() {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="lg" data-testid="button-search-fipe">
-          <Search className="mr-2 h-5 w-5" />
-          Buscar FIPE
+        <Button variant="outline" size="default" className="gap-2" data-testid="button-search-fipe">
+          <Search className="h-4 w-4" />
+          <span className="hidden sm:inline">Buscar FIPE</span>
+          <span className="sm:hidden">FIPE</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Consultar Tabela FIPE</DialogTitle>
           <DialogDescription>
@@ -171,16 +221,19 @@ export function FipeSearchDialog() {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Tipo de Veículo */}
           <div className="space-y-2">
-            <Label htmlFor="vehicleType">Tipo de Veículo</Label>
+            <Label htmlFor="vehicleType">Tipo de Veiculo</Label>
             <Select
               value={vehicleType}
               onValueChange={(value) => {
                 setVehicleType(value);
                 setSelectedBrand("");
+                setSelectedBrandName("");
                 setSelectedModel("");
+                setSelectedModelName("");
                 setSelectedYear("");
+                setSelectedYearName("");
+                setFipeResult(null);
               }}
             >
               <SelectTrigger data-testid="select-vehicle-type">
@@ -189,99 +242,203 @@ export function FipeSearchDialog() {
               <SelectContent>
                 <SelectItem value="carros">Carros</SelectItem>
                 <SelectItem value="motos">Motos</SelectItem>
-                <SelectItem value="caminhoes">Caminhões</SelectItem>
+                <SelectItem value="caminhoes">Caminhoes</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Marca */}
           <div className="space-y-2">
             <Label htmlFor="brand">Marca</Label>
             {loadingBrands ? (
               <Skeleton className="h-10 w-full" />
             ) : (
-              <Select
-                value={selectedBrand}
-                onValueChange={(value) => {
-                  setSelectedBrand(value);
-                  setSelectedModel("");
-                  setSelectedYear("");
-                  setFipeResult(null);
-                }}
-                disabled={brands.length === 0}
-              >
-                <SelectTrigger data-testid="select-brand">
-                  <SelectValue placeholder="Selecione a marca" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.codigo} value={brand.codigo}>
-                      {brand.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={brandOpen} onOpenChange={setBrandOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={brandOpen}
+                    className="w-full justify-between font-normal"
+                    data-testid="select-brand"
+                  >
+                    {selectedBrandName || "Digite para buscar a marca..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full min-w-[300px] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput 
+                      placeholder="Digite o nome da marca..." 
+                      value={brandSearch}
+                      onValueChange={setBrandSearch}
+                      data-testid="input-brand-search"
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhuma marca encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredBrands.slice(0, 50).map((brand) => (
+                          <CommandItem
+                            key={brand.codigo}
+                            value={brand.codigo}
+                            onSelect={() => {
+                              setSelectedBrand(brand.codigo);
+                              setSelectedBrandName(brand.nome);
+                              setSelectedModel("");
+                              setSelectedModelName("");
+                              setSelectedYear("");
+                              setSelectedYearName("");
+                              setFipeResult(null);
+                              setBrandOpen(false);
+                              setBrandSearch("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedBrand === brand.codigo ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {brand.nome}
+                          </CommandItem>
+                        ))}
+                        {filteredBrands.length > 50 && (
+                          <div className="py-2 px-2 text-xs text-muted-foreground text-center">
+                            Mostrando 50 de {filteredBrands.length} resultados. Digite mais para filtrar.
+                          </div>
+                        )}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 
-          {/* Modelo */}
           <div className="space-y-2">
             <Label htmlFor="model">Modelo</Label>
-            {loadingModels ? (
+            {loadingModels && selectedBrand ? (
               <Skeleton className="h-10 w-full" />
             ) : (
-              <Select
-                value={selectedModel}
-                onValueChange={(value) => {
-                  setSelectedModel(value);
-                  setSelectedYear("");
-                  setFipeResult(null);
-                }}
-                disabled={!selectedBrand || models.length === 0}
-              >
-                <SelectTrigger data-testid="select-model">
-                  <SelectValue placeholder="Selecione o modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model) => (
-                    <SelectItem key={model.codigo} value={String(model.codigo)}>
-                      {model.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={modelOpen}
+                    className="w-full justify-between font-normal"
+                    disabled={!selectedBrand}
+                    data-testid="select-model"
+                  >
+                    {selectedModelName || "Digite para buscar o modelo..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full min-w-[300px] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput 
+                      placeholder="Digite o nome do modelo..." 
+                      value={modelSearch}
+                      onValueChange={setModelSearch}
+                      data-testid="input-model-search"
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum modelo encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredModels.slice(0, 50).map((model) => (
+                          <CommandItem
+                            key={model.codigo}
+                            value={String(model.codigo)}
+                            onSelect={() => {
+                              setSelectedModel(String(model.codigo));
+                              setSelectedModelName(model.nome);
+                              setSelectedYear("");
+                              setSelectedYearName("");
+                              setFipeResult(null);
+                              setModelOpen(false);
+                              setModelSearch("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedModel === String(model.codigo) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {model.nome}
+                          </CommandItem>
+                        ))}
+                        {filteredModels.length > 50 && (
+                          <div className="py-2 px-2 text-xs text-muted-foreground text-center">
+                            Mostrando 50 de {filteredModels.length} resultados. Digite mais para filtrar.
+                          </div>
+                        )}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 
-          {/* Ano */}
           <div className="space-y-2">
             <Label htmlFor="year">Ano</Label>
-            {loadingYears ? (
+            {loadingYears && selectedModel ? (
               <Skeleton className="h-10 w-full" />
             ) : (
-              <Select
-                value={selectedYear}
-                onValueChange={(value) => {
-                  setSelectedYear(value);
-                  setFipeResult(null);
-                }}
-                disabled={!selectedModel || years.length === 0}
-              >
-                <SelectTrigger data-testid="select-year">
-                  <SelectValue placeholder="Selecione o ano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year.codigo} value={year.codigo}>
-                      {year.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={yearOpen} onOpenChange={setYearOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={yearOpen}
+                    className="w-full justify-between font-normal"
+                    disabled={!selectedModel}
+                    data-testid="select-year"
+                  >
+                    {selectedYearName || "Digite para buscar o ano..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full min-w-[300px] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput 
+                      placeholder="Digite o ano..." 
+                      value={yearSearch}
+                      onValueChange={setYearSearch}
+                      data-testid="input-year-search"
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum ano encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredYears.map((year) => (
+                          <CommandItem
+                            key={year.codigo}
+                            value={year.codigo}
+                            onSelect={() => {
+                              setSelectedYear(year.codigo);
+                              setSelectedYearName(year.nome);
+                              setFipeResult(null);
+                              setYearOpen(false);
+                              setYearSearch("");
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedYear === year.codigo ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {year.nome}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 
-          {/* Botão de Buscar */}
           <Button
             onClick={handleSearch}
             disabled={
@@ -303,7 +460,6 @@ export function FipeSearchDialog() {
             )}
           </Button>
 
-          {/* Resultado */}
           {fipeResult && (
             <Card>
               <CardHeader>
@@ -327,7 +483,7 @@ export function FipeSearchDialog() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
-                      Combustível
+                      Combustivel
                     </p>
                     <p className="text-base" data-testid="text-fuel">
                       {fipeResult.Combustivel}
@@ -335,7 +491,7 @@ export function FipeSearchDialog() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
-                      Código FIPE
+                      Codigo FIPE
                     </p>
                     <p className="text-base" data-testid="text-fipe-code">
                       {fipeResult.CodigoFipe}
@@ -354,7 +510,7 @@ export function FipeSearchDialog() {
                     {formatCurrency(fipeResult.Valor)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Referência: {fipeResult.MesReferencia}
+                    Referencia: {fipeResult.MesReferencia}
                   </p>
                 </div>
               </CardContent>

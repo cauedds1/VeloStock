@@ -123,7 +123,7 @@ export function DashboardMetricsEnhanced() {
   const metricsData = isVendedor ? baseMetricsData : [...baseMetricsData, ...financeMetricsData];
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
       {metricsData.map((metric, index) => (
         <Card 
           key={index} 
@@ -131,18 +131,18 @@ export function DashboardMetricsEnhanced() {
         >
           <div className="absolute inset-0 opacity-10" style={{ backgroundColor: metric.gradientBg }}></div>
           
-          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground/80">
+          <CardHeader className="relative flex flex-row items-center justify-between gap-1 space-y-0 pb-2 sm:pb-3 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-semibold text-foreground/80">
               {metric.title}
             </CardTitle>
-            <div className="p-3 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: metric.iconBg }}>
-              <metric.icon className="h-5 w-5" style={{ color: changeIconColors ? metric.gradientBg : "currentColor" }} />
+            <div className="p-2 sm:p-3 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: metric.iconBg }}>
+              <metric.icon className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: changeIconColors ? metric.gradientBg : "currentColor" }} />
             </div>
           </CardHeader>
           
-          <CardContent className="relative">
-            <div className="flex items-baseline gap-2">
-              <div className="text-4xl font-bold" style={{ color: changeIconColors ? metric.gradientBg : "inherit" }}>
+          <CardContent className="relative p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="flex items-baseline gap-1 sm:gap-2">
+              <div className="text-2xl sm:text-4xl font-bold" style={{ color: changeIconColors ? metric.gradientBg : "inherit" }}>
                 {metric.value}
               </div>
               {metric.trend && (
@@ -151,7 +151,7 @@ export function DashboardMetricsEnhanced() {
                 </div>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-2 font-medium">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2 font-medium truncate">
               {metric.description}
             </p>
           </CardContent>

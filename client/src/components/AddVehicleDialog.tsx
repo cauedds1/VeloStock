@@ -290,12 +290,13 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" data-testid="button-add-vehicle">
-          <Plus className="mr-2 h-5 w-5" />
-          Adicionar Veículo
+        <Button size="default" className="gap-2" data-testid="button-add-vehicle">
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Adicionar Veiculo</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full sm:max-w-[700px] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Adicionar Novo Veículo</DialogTitle>
           <DialogDescription>
@@ -304,8 +305,8 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="brand"

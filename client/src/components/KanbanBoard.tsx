@@ -109,11 +109,11 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar veículo..."
+            placeholder="Buscar veiculo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
@@ -121,7 +121,7 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-64" data-testid="select-status-filter">
+          <SelectTrigger className="w-full sm:w-48" data-testid="select-status-filter">
             <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>
           <SelectContent>
@@ -134,14 +134,14 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
           </SelectContent>
         </Select>
         {filteredVehicles.length > 0 && (
-          <span className="text-sm text-muted-foreground whitespace-nowrap" data-testid="text-vehicle-count">
-            {limitedVehicles.length} de {filteredVehicles.length} veículos
+          <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap" data-testid="text-vehicle-count">
+            {limitedVehicles.length}/{filteredVehicles.length}
           </span>
         )}
       </div>
 
-      <div className="flex-1 overflow-x-auto">
-        <div className="flex h-full gap-4 pb-4">
+      <div className="flex-1 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="flex h-full gap-3 sm:gap-4 pb-4 min-w-[800px] sm:min-w-0">
           {STATUS_COLUMNS.map((status) => {
             const vehiclesInStatus = vehiclesByStatus[status] || [];
             const totalInStatus = totalCountByStatus[status] || 0;

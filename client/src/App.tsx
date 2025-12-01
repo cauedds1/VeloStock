@@ -107,22 +107,22 @@ function AppContent() {
       <SidebarProvider style={style as React.CSSProperties}>
         <div className="flex h-screen w-full">
           <AppSidebar />
-          <div className="flex flex-1 flex-col">
-            <header className="flex h-14 items-center justify-between border-b border-border px-4">
+          <div className="flex flex-1 flex-col min-w-0">
+            <header className="flex h-14 items-center justify-between border-b border-border px-2 sm:px-4 gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 sm:gap-3 flex-wrap justify-end">
                 <NotificationCenter />
                 <ModeToggle />
                 <img 
                   src={logoUrl || "/velostock-logo.svg"} 
                   alt={companyName} 
-                  className="h-10 w-auto object-contain"
+                  className="h-6 sm:h-10 w-auto object-contain max-w-[80px] sm:max-w-none"
                 />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => window.location.href = '/api/logout'}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground text-xs sm:text-sm px-2 sm:px-3"
                 >
                   Sair
                 </Button>

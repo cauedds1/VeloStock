@@ -27,47 +27,94 @@ export interface FipePrice {
   SiglaCombustivel: string;
 }
 
-// Buscar marcas
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const fetchWithTimeout = async (url: string, timeout = 10000): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
+
+const fetchWithRetry = async (url: string, maxRetries = 3, baseDelay = 1000): Promise<Response> => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetchWithTimeout(url, 15000);
+      
+      if (response.ok) {
+        return response;
+      }
+      
+      const data = await response.clone().json().catch(() => ({}));
+      if (data.error && data.error.includes("limite de taxa")) {
+        await delay(baseDelay * (attempt + 1));
+        continue;
+      }
+      
+      return response;
+    } catch (error: any) {
+      lastError = error;
+      if (attempt < maxRetries - 1) {
+        await delay(baseDelay * (attempt + 1));
+      }
+    }
+  }
+  
+  throw lastError || new Error("Falha apos multiplas tentativas");
+};
+
 export function useFipeBrands(vehicleType: string = "carros") {
   return useQuery<FipeBrand[]>({
     queryKey: ["/api/fipe/brands", vehicleType],
     queryFn: async () => {
-      const response = await fetch(`/api/fipe/brands?type=${encodeURIComponent(vehicleType)}`);
+      const response = await fetchWithRetry(`/api/fipe/brands?type=${encodeURIComponent(vehicleType)}`);
       if (!response.ok) throw new Error("Erro ao buscar marcas FIPE");
       return response.json();
     },
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }
 
-// Buscar modelos por marca
 export function useFipeModels(brandId: string | null, vehicleType: string = "carros") {
   return useQuery<{ modelos: FipeModel[] }>({
     queryKey: ["/api/fipe/brands", brandId, "models", vehicleType],
     queryFn: async () => {
-      if (!brandId) throw new Error("Brand ID não fornecido");
-      const response = await fetch(`/api/fipe/brands/${brandId}/models?type=${encodeURIComponent(vehicleType)}`);
+      if (!brandId) throw new Error("Brand ID nao fornecido");
+      const response = await fetchWithRetry(`/api/fipe/brands/${brandId}/models?type=${encodeURIComponent(vehicleType)}`);
       if (!response.ok) throw new Error("Erro ao buscar modelos FIPE");
       return response.json();
     },
     enabled: !!brandId,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }
 
-// Buscar anos por modelo
 export function useFipeYears(brandId: string | null, modelId: string | null, vehicleType: string = "carros") {
   return useQuery<FipeYear[]>({
     queryKey: ["/api/fipe/brands", brandId, "models", modelId, "years", vehicleType],
     queryFn: async () => {
-      if (!brandId || !modelId) throw new Error("Brand ID ou Model ID não fornecido");
-      const response = await fetch(`/api/fipe/brands/${brandId}/models/${modelId}/years?type=${encodeURIComponent(vehicleType)}`);
+      if (!brandId || !modelId) throw new Error("Brand ID ou Model ID nao fornecido");
+      const response = await fetchWithRetry(`/api/fipe/brands/${brandId}/models/${modelId}/years?type=${encodeURIComponent(vehicleType)}`);
       if (!response.ok) throw new Error("Erro ao buscar anos FIPE");
       return response.json();
     },
     enabled: !!brandId && !!modelId,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }
 
-// Buscar preço
 export function useFipePrice(
   brandId: string | null,
   modelId: string | null,
@@ -78,27 +125,27 @@ export function useFipePrice(
     queryKey: ["/api/fipe/brands", brandId, "models", modelId, "years", year, "price", vehicleType],
     queryFn: async () => {
       if (!brandId || !modelId || !year) {
-        throw new Error("Parâmetros incompletos para consulta FIPE");
+        throw new Error("Parametros incompletos para consulta FIPE");
       }
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `/api/fipe/brands/${brandId}/models/${modelId}/years/${year}/price?type=${encodeURIComponent(vehicleType)}`
       );
-      if (!response.ok) throw new Error("Erro ao consultar preço FIPE");
+      if (!response.ok) throw new Error("Erro ao consultar preco FIPE");
       return response.json();
     },
     enabled: !!brandId && !!modelId && !!year,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }
 
-// Utilitário para normalizar strings (remover acentos e case-insensitive)
 function normalizeString(str: string): string {
   return str
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, ""); // Remove diacríticos/acentos
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
-// Aliases comuns de marcas (bidirecional: tanto a chave quanto os valores podem ser buscados)
 const BRAND_ALIASES: Record<string, string[]> = {
   "chevrolet": ["gm", "chevy", "general motors"],
   "volkswagen": ["vw", "volks"],
@@ -109,51 +156,40 @@ const BRAND_ALIASES: Record<string, string[]> = {
   "mercedes": ["mercedes-benz", "benz"],
 };
 
-// Interface para versão FIPE completa (modelo + ano + combustível)
 export interface FipeVersion {
-  label: string;          // Ex: "Fiesta 1.5 16V Flex Mec. 5p 2017 Gasolina"
-  modelId: number;        // Código do modelo FIPE
-  modelName: string;      // Nome completo do modelo
-  yearCode: string;       // Código do ano (usado para buscar preço)
-  yearLabel: string;      // Ex: "2017 Gasolina" ou "32000-1" 
+  label: string;
+  modelId: number;
+  modelName: string;
+  yearCode: string;
+  yearLabel: string;
 }
 
-// Hook para buscar TODAS as VERSÕES disponíveis baseado em marca/modelo/ano (texto)
-// Retorna lista completa de versões para o usuário selecionar a correta
 export function useFipeVehicleVersions() {
   return useMutation({
     mutationFn: async ({ brand, model, year, vehicleType = "carros" }: { brand: string; model: string; year: number; vehicleType?: string }) => {
       if (!brand || !model || !year) {
-        throw new Error("Marca, modelo ou ano não fornecidos");
+        throw new Error("Marca, modelo ou ano nao fornecidos");
       }
 
-      // 1. Buscar marcas
-      const brandsResponse = await fetch(`/api/fipe/brands?type=${encodeURIComponent(vehicleType)}`);
+      const brandsResponse = await fetchWithRetry(`/api/fipe/brands?type=${encodeURIComponent(vehicleType)}`);
       if (!brandsResponse.ok) throw new Error("Erro ao buscar marcas");
       const brands: FipeBrand[] = await brandsResponse.json();
 
-      // 2. Encontrar marca correspondente (fuzzy match com aliases e normalização)
       const normalizedBrand = normalizeString(brand);
       
       const matchedBrand = brands.find((b) => {
         const normalizedBrandName = normalizeString(b.nome);
         
-        // Match direto (bidirecional)
         if (normalizedBrandName.includes(normalizedBrand) || normalizedBrand.includes(normalizedBrandName)) {
           return true;
         }
         
-        // Match por aliases: verificar se input ou FIPE brand contém qualquer alias do mesmo grupo
         for (const [canonical, aliases] of Object.entries(BRAND_ALIASES)) {
           const allVariants = [canonical, ...aliases];
           
-          // Verificar se o input do usuário corresponde a algum variant
           const inputMatchesGroup = allVariants.some(v => normalizedBrand.includes(v) || v.includes(normalizedBrand));
-          
-          // Verificar se a marca FIPE corresponde a algum variant do mesmo grupo
           const fipeMatchesGroup = allVariants.some(v => normalizedBrandName.includes(v) || v.includes(normalizedBrandName));
           
-          // Se ambos pertencem ao mesmo grupo de aliases, é um match!
           if (inputMatchesGroup && fipeMatchesGroup) {
             return true;
           }
@@ -163,55 +199,55 @@ export function useFipeVehicleVersions() {
       });
 
       if (!matchedBrand) {
-        throw new Error(`Marca "${brand}" não encontrada na tabela FIPE`);
+        throw new Error(`Marca "${brand}" nao encontrada na tabela FIPE`);
       }
 
-      // 3. Buscar modelos da marca
-      const modelsResponse = await fetch(`/api/fipe/brands/${matchedBrand.codigo}/models?type=${encodeURIComponent(vehicleType)}`);
+      await delay(500);
+
+      const modelsResponse = await fetchWithRetry(`/api/fipe/brands/${matchedBrand.codigo}/models?type=${encodeURIComponent(vehicleType)}`);
       if (!modelsResponse.ok) throw new Error("Erro ao buscar modelos");
       const modelsData: { modelos: FipeModel[] } = await modelsResponse.json();
 
-      // 4. Encontrar TODOS os modelos correspondentes (não apenas 1)
       const normalizedModel = normalizeString(model);
       
       const candidateModels = modelsData.modelos.filter((m) => {
         const normalizedModelName = normalizeString(m.nome);
         
-        // Match exato
         if (normalizedModelName === normalizedModel) return true;
         
-        // Match por palavra completa (evita "polo" casar com "apolo")
         const words = normalizedModelName.split(/\s+/);
         if (words.some(word => word === normalizedModel)) return true;
         
-        // Match no início
         if (normalizedModelName.startsWith(normalizedModel)) return true;
         
         return false;
       });
 
       if (candidateModels.length === 0) {
-        throw new Error(`Modelo "${model}" não encontrado para a marca ${matchedBrand.nome}`);
+        throw new Error(`Modelo "${model}" nao encontrado para a marca ${matchedBrand.nome}`);
       }
 
-      // 5. Para cada modelo candidato, buscar anos disponíveis e filtrar pelo ano desejado
+      const limitedModels = candidateModels.slice(0, 3);
+      
       const allVersions: FipeVersion[] = [];
       
-      for (const candidateModel of candidateModels) {
+      for (let i = 0; i < limitedModels.length; i++) {
+        const candidateModel = limitedModels[i];
         try {
-          // Buscar anos disponíveis para este modelo
-          const yearsResponse = await fetch(
+          if (i > 0) {
+            await delay(800);
+          }
+          
+          const yearsResponse = await fetchWithRetry(
             `/api/fipe/brands/${matchedBrand.codigo}/models/${candidateModel.codigo}/years?type=${encodeURIComponent(vehicleType)}`
           );
           
-          if (!yearsResponse.ok) continue; // Skip se falhar
+          if (!yearsResponse.ok) continue;
           
           const years: FipeYear[] = await yearsResponse.json();
           
-          // Filtrar apenas os anos que correspondem ao ano desejado
           const matchingYears = years.filter(y => y.nome.includes(year.toString()));
           
-          // Adicionar cada combinação modelo+ano como uma versão
           for (const yearData of matchingYears) {
             allVersions.push({
               label: `${candidateModel.nome} ${yearData.nome}`,
@@ -222,19 +258,16 @@ export function useFipeVehicleVersions() {
             });
           }
         } catch (error) {
-          // Se falhar para um modelo específico, continua com os outros
           console.error(`Erro ao buscar anos para modelo ${candidateModel.nome}:`, error);
         }
       }
 
       if (allVersions.length === 0) {
-        throw new Error(`Nenhuma versão encontrada para ${matchedBrand.nome} ${model} ${year}`);
+        throw new Error(`Nenhuma versao encontrada para ${matchedBrand.nome} ${model} ${year}`);
       }
 
-      // Ordenar alfabeticamente por label
       allVersions.sort((a, b) => a.label.localeCompare(b.label));
 
-      // Retornar dados para seleção de versão
       return {
         brandId: matchedBrand.codigo,
         brandName: matchedBrand.nome,
@@ -245,22 +278,19 @@ export function useFipeVehicleVersions() {
   });
 }
 
-// Hook para consultar preço de uma versão específica
-// Uso: const mutation = useFipePriceByVersion(); const result = await mutation.mutateAsync({brandId, modelId, versionCode, vehicleType});
 export function useFipePriceByVersion() {
   return useMutation({
     mutationFn: async ({ brandId, modelId, versionCode, vehicleType = "carros" }: { brandId: string; modelId: string; versionCode: string; vehicleType?: string }) => {
-      const priceResponse = await fetch(
+      const priceResponse = await fetchWithRetry(
         `/api/fipe/brands/${brandId}/models/${modelId}/years/${versionCode}/price?type=${encodeURIComponent(vehicleType)}`
       );
-      if (!priceResponse.ok) throw new Error("Erro ao consultar preço FIPE");
+      if (!priceResponse.ok) throw new Error("Erro ao consultar preco FIPE");
       const priceData: FipePrice = await priceResponse.json();
       return priceData;
     },
   });
 }
 
-// DEPRECATED: Hook legado - use useFipeVehicleVersions + useFipePriceByVersion
 export function useFipePriceByVehicle() {
   return useFipeVehicleVersions();
 }
