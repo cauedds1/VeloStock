@@ -113,10 +113,44 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // SECURITY: Rate limiting para login - máximo 5 tentativas por 15 minutos por IP
+  const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
+  const MAX_LOGIN_ATTEMPTS = 5;
+  const BLOCK_DURATION = 15 * 60 * 1000; // 15 minutos
+  
+  // Limpar tentativas antigas periodicamente (a cada hora)
+  setInterval(() => {
+    const now = Date.now();
+    const entries = Array.from(loginAttempts.entries());
+    for (const [ip, data] of entries) {
+      if (now > data.blockedUntil + BLOCK_DURATION) {
+        loginAttempts.delete(ip);
+      }
+    }
+  }, 60 * 60 * 1000);
+
   // Local login endpoint
   app.post("/api/auth/login", (req, res, next) => {
-    // Server-side validation
+    const clientIp = req.ip || req.socket.remoteAddress || "unknown";
     const { email, password } = req.body;
+    
+    // SECURITY: Verificar rate limit
+    const attempts = loginAttempts.get(clientIp);
+    const now = Date.now();
+    
+    if (attempts) {
+      if (now < attempts.blockedUntil) {
+        const waitMinutes = Math.ceil((attempts.blockedUntil - now) / 60000);
+        console.log(`[SECURITY] IP ${clientIp} bloqueado por ${waitMinutes} min (tentativas: ${attempts.count})`);
+        return res.status(429).json({ 
+          message: `Muitas tentativas de login. Aguarde ${waitMinutes} minuto(s) antes de tentar novamente.` 
+        });
+      }
+      // Reset se o bloqueio expirou
+      if (now >= attempts.blockedUntil) {
+        loginAttempts.delete(clientIp);
+      }
+    }
     
     if (!email || !password) {
       return res.status(400).json({ message: "Email e senha são obrigatórios" });
@@ -127,12 +161,29 @@ export async function setupAuth(app: Express) {
         return res.status(500).json({ message: "Erro ao fazer login" });
       }
       if (!user) {
+        // SECURITY: Registrar tentativa falha
+        const currentAttempts = loginAttempts.get(clientIp) || { count: 0, blockedUntil: 0 };
+        currentAttempts.count++;
+        
+        if (currentAttempts.count >= MAX_LOGIN_ATTEMPTS) {
+          currentAttempts.blockedUntil = now + BLOCK_DURATION;
+          console.log(`[SECURITY] IP ${clientIp} BLOQUEADO após ${currentAttempts.count} tentativas falhas de login para: ${email}`);
+        } else {
+          console.log(`[SECURITY] Tentativa de login falha #${currentAttempts.count} de IP ${clientIp} para: ${email}`);
+        }
+        
+        loginAttempts.set(clientIp, currentAttempts);
         return res.status(401).json({ message: info?.message || "Email ou senha incorretos" });
       }
+      
+      // Login bem sucedido - limpar tentativas
+      loginAttempts.delete(clientIp);
+      
       req.logIn(user, (err) => {
         if (err) {
           return res.status(500).json({ message: "Erro ao fazer login" });
         }
+        console.log(`[SECURITY] Login bem sucedido: ${email} de IP ${clientIp}`);
         return res.json({ success: true });
       });
     })(req, res, next);
@@ -162,6 +213,27 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
   
-  // Local auth only - no token refresh needed
+  // SECURITY: Verificar se usuário ainda está ativo no banco
+  // Isso previne que ex-funcionários desativados continuem acessando o sistema
+  const userId = (req.user as any).claims?.id || (req.user as any).claims?.sub;
+  if (userId) {
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        // Usuário foi deletado - forçar logout
+        req.logout(() => {});
+        return res.status(401).json({ message: "Sessão inválida. Faça login novamente." });
+      }
+      if (user.isActive === "false") {
+        // Usuário foi desativado - forçar logout
+        req.logout(() => {});
+        return res.status(403).json({ message: "Sua conta foi desativada. Entre em contato com o administrador." });
+      }
+    } catch (error) {
+      console.error("[SECURITY] Erro ao verificar status do usuário:", error);
+      // Em caso de erro, permite continuar para não bloquear toda a aplicação
+    }
+  }
+  
   return next();
 };

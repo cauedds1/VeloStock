@@ -1885,12 +1885,16 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       const hashedPassword = await bcrypt.hash(newPassword, 12);
       await storage.updateUser(userId as string, { passwordHash: hashedPassword });
       
+      // SECURITY: Invalidar todas as outras sessões deste usuário
+      // Isso previne que sessões antigas continuem ativas após mudança de senha
+      await storage.invalidateUserSessions(userId as string);
+      
       // Limpar tentativas após sucesso
       passwordChangeAttempts.delete(userId);
       
       console.log(`[SECURITY] Senha alterada com sucesso para usuário ${userId}`);
       
-      res.json({ success: true, message: "Senha alterada com sucesso" });
+      res.json({ success: true, message: "Senha alterada com sucesso. Você será desconectado de outros dispositivos." });
     } catch (error) {
       console.error("Erro ao alterar senha:", error);
       res.status(500).json({ error: "Erro ao alterar senha" });
@@ -2580,6 +2584,13 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         return res.status(404).json({ error: "Erro ao atualizar usuário" });
       }
 
+      // SECURITY: Se o usuário foi desativado, invalidar todas as sessões dele
+      // Isso garante que ex-funcionários não continuem logados
+      if (isActive === "false" && targetUser.isActive !== "false") {
+        await storage.invalidateUserSessions(req.params.id);
+        console.log(`[SECURITY] Usuário ${req.params.id} desativado - todas as sessões invalidadas`);
+      }
+
       res.json({
         id: updatedUser.id,
         email: updatedUser.email,
@@ -2625,6 +2636,10 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       if (targetUser.role === "proprietario") {
         return res.status(400).json({ error: "Não é possível remover outro proprietário" });
       }
+
+      // SECURITY: Invalidar todas as sessões do usuário antes de deletar
+      await storage.invalidateUserSessions(req.params.id);
+      console.log(`[SECURITY] Usuário ${req.params.id} será deletado - sessões invalidadas`);
 
       // Deletar usuário do banco
       await db.delete(users).where(eq(users.id, req.params.id));

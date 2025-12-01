@@ -37,7 +37,7 @@ import {
   followUps,
   reminders,
 } from "@shared/schema";
-import { or } from "drizzle-orm";
+import { or, sql } from "drizzle-orm";
 import { normalizeChecklistData } from "@shared/checklistUtils";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -636,6 +636,39 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query.orderBy(followUps.dataAgendada);
+  }
+
+  // SECURITY: Invalidar todas as sessões de um usuário específico
+  // Usado quando: usuário é desativado, senha é alterada, etc.
+  async invalidateUserSessions(userId: string): Promise<number> {
+    try {
+      // Validar formato do userId para prevenir SQL injection
+      // UUIDs válidos têm formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(userId)) {
+        console.error(`[SECURITY] Tentativa de invalidar sessões com userId inválido: ${userId}`);
+        return 0;
+      }
+      
+      // A sessão do connect-pg-simple armazena dados no formato:
+      // sess: { passport: { user: { claims: { id: "...", sub: "..." } } } }
+      // Usando query parametrizada para prevenir SQL injection
+      const searchPatternId = `%"id":"${userId}"%`;
+      const searchPatternSub = `%"sub":"${userId}"%`;
+      
+      const result = await db.execute(
+        sql`DELETE FROM sessions 
+            WHERE sess::text LIKE ${searchPatternId} 
+            OR sess::text LIKE ${searchPatternSub}`
+      );
+      
+      const deletedCount = (result as any).rowCount || 0;
+      console.log(`[SECURITY] Invalidadas ${deletedCount} sessões do usuário ${userId}`);
+      return deletedCount;
+    } catch (error) {
+      console.error(`[SECURITY] Erro ao invalidar sessões do usuário ${userId}:`, error);
+      return 0;
+    }
   }
 }
 
