@@ -23,20 +23,22 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         window.location.href = "/";
       } else {
-        const error = await response.json();
         toast({
-          title: "Erro ao fazer login",
-          description: error.message || "Email ou senha incorretos",
+          title: "Login falhou",
+          description: data.message || "Email ou senha incorretos. Verifique seus dados.",
           variant: "destructive",
         });
       }
     } catch (error) {
+      console.error("Erro no login:", error);
       toast({
-        title: "Erro ao fazer login",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor. Verifique sua conexão.",
         variant: "destructive",
       });
     } finally {
