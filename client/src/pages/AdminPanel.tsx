@@ -1000,46 +1000,6 @@ export default function AdminPanel() {
     );
   }
 
-  // SEMPRE solicitar token primeiro ao acessar /admin
-  if (!tokenValidated) {
-    return (
-      <TokenGate
-        onValidToken={(token) => {
-          setAccessToken(token);
-          setTokenValidated(true);
-        }}
-      />
-    );
-  }
-
-  if (needsSetup || showAddAdmin) {
-    return (
-      <div className="relative">
-        {showAddAdmin && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-4 left-4 gap-2 text-white hover:bg-white/20 z-10"
-            onClick={() => setShowAddAdmin(false)}
-            data-testid="button-back-to-login"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar ao Login
-          </Button>
-        )}
-        <AdminSetup
-          accessToken={accessToken}
-          onSetupComplete={() => {
-            setNeedsSetup(false);
-            setShowAddAdmin(false);
-            setTokenValidated(false);
-            setAccessToken("");
-          }}
-        />
-      </div>
-    );
-  }
-
   if (!admin) {
     return <AdminLogin onLogin={setAdmin} />;
   }
