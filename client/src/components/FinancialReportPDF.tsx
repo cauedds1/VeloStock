@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Download, Loader2, Printer, TrendingUp, TrendingDown } from "lucide-react";
+import { FileText, Download, Loader2, Printer } from "lucide-react";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import html2pdf from "html2pdf.js";
@@ -25,8 +25,8 @@ type ReportData = {
   };
   vendas: { quantidade: number; receitaTotal: number; ticketMedio: number };
   comissoes: { total: number; pagas: number; aPagar: number };
-  contasPagar: { lista: any[]; total: number; vencidas: number; valorVencido: number };
-  contasReceber: { lista: any[]; total: number; vencidas: number; valorVencido: number };
+  contasPagar: { lista: any[]; total: number; quantidade?: number; vencidas: number; valorVencido: number };
+  contasReceber: { lista: any[]; total: number; quantidade?: number; vencidas: number; valorVencido: number };
   despesasOperacionais: { lista: any[]; total: number };
   custosPorCategoria: { categoria: string; total: number; quantidade: number }[];
   rankingVendedores: { nome: string; email: string; vendas: number; receita: number; comissao: number }[];
@@ -38,11 +38,6 @@ const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
-
-const VELOSTOCK_LOGO = `<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-  <rect width="60" height="60" fill="#7c3aed" rx="8"/>
-  <text x="50%" y="50%" font-size="32" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">V</text>
-</svg>`;
 
 export function FinancialReportPDF() {
   const [open, setOpen] = useState(false);
@@ -114,11 +109,11 @@ export function FinancialReportPDF() {
     
     const element = reportRef.current;
     const opt = {
-      margin: [10, 10, 10, 10] as [number, number, number, number],
-      filename: `Relatorio_Financeiro_${reportData?.empresa.nome || "Empresa"}_${format(new Date(), "yyyy-MM-dd")}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      margin: [8, 8, 8, 8] as [number, number, number, number],
+      filename: `Fluxo_Caixa_${reportData?.empresa.nome || "Empresa"}_${format(new Date(), "yyyy-MM-dd")}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
     
@@ -141,9 +136,9 @@ export function FinancialReportPDF() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Relatório Financeiro - ${reportData?.empresa.nome}</title>
+          <title>Fluxo de Caixa - ${reportData?.empresa.nome}</title>
           <style>
-            ${getPrintStyles()}
+            ${getReportStyles()}
           </style>
         </head>
         <body>
@@ -155,50 +150,244 @@ export function FinancialReportPDF() {
     printWindow.print();
   };
 
-  const getPrintStyles = () => `
-    @page { size: A4; margin: 12mm; }
-    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-    body { margin: 0; padding: 0; color: #1a1a1a; line-height: 1.5; }
-    .report-container { width: 100%; max-width: 210mm; margin: 0 auto; }
-    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #7c3aed; }
-    .logo { width: 50px; height: 50px; background: #7c3aed; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 24px; }
-    .header-info h1 { font-size: 20px; color: #1a1a1a; margin: 0 0 3px 0; font-weight: 700; }
-    .header-info p { color: #666; margin: 2px 0; font-size: 11px; }
-    .section { margin-bottom: 16px; page-break-inside: avoid; }
-    .section-title { font-size: 13px; font-weight: 700; color: #fff; background: #7c3aed; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; }
-    .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
-    .metric-card { background: #f9f7ff; border: 1px solid #e9d5ff; border-radius: 6px; padding: 10px; }
-    .metric-label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 3px; }
-    .metric-value { font-size: 16px; font-weight: 700; color: #1a1a1a; }
-    .metric-value.positive { color: #16a34a; }
-    .metric-value.negative { color: #dc2626; }
-    .highlight-box { background: linear-gradient(135deg, #f0e7ff, #e9d5ff); border: 2px solid #7c3aed; border-radius: 8px; padding: 15px; text-align: center; margin: 15px 0; }
-    .highlight-box .label { font-size: 12px; color: #5b21b6; font-weight: 600; margin-bottom: 5px; }
-    .highlight-box .value { font-size: 28px; font-weight: 700; color: #7c3aed; }
-    table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 8px; }
-    th, td { padding: 7px 8px; text-align: left; border-bottom: 1px solid #e5e5e5; }
-    th { background: #f0e7ff; font-weight: 700; color: #5b21b6; text-transform: uppercase; font-size: 9px; }
+  const getReportStyles = () => `
+    @page { size: A4 portrait; margin: 8mm; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', -apple-system, Arial, sans-serif; margin: 0; padding: 0; }
+    body { color: #1a1a1a; line-height: 1.3; font-size: 9px; }
+    
+    .report-page {
+      width: 194mm;
+      min-height: 277mm;
+      max-height: 277mm;
+      margin: 0 auto;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    /* HEADER - 18% */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #7c3aed;
+      margin-bottom: 8px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-box {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #7c3aed, #9333ea);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      font-size: 20px;
+    }
+    .header-title h1 {
+      font-size: 14px;
+      color: #1a1a1a;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .header-title .subtitle {
+      font-size: 10px;
+      color: #7c3aed;
+      font-weight: 600;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 9px;
+      color: #666;
+    }
+    .header-right .periodo {
+      font-size: 11px;
+      color: #1a1a1a;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    /* SALDO PRINCIPAL - 12% */
+    .saldo-box {
+      background: linear-gradient(135deg, #f8f5ff, #ede9fe);
+      border: 2px solid #7c3aed;
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .saldo-label {
+      font-size: 10px;
+      color: #5b21b6;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .saldo-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .saldo-value.positivo { color: #16a34a; }
+    .saldo-value.negativo { color: #dc2626; }
+    .saldo-subtitle {
+      font-size: 9px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    /* FLUXO DE CAIXA - GRID 2 COLUNAS - 28% */
+    .fluxo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .fluxo-col {
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .fluxo-col.entradas { border-left: 3px solid #16a34a; }
+    .fluxo-col.saidas { border-left: 3px solid #dc2626; }
+    
+    .fluxo-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .fluxo-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+    }
+    .fluxo-icon.entrada { background: #16a34a; }
+    .fluxo-icon.saida { background: #dc2626; }
+    .fluxo-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    
+    .fluxo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 9px;
+    }
+    .fluxo-item-label { color: #666; }
+    .fluxo-item-value { font-weight: 600; color: #1a1a1a; }
+    .fluxo-item-detail { font-size: 8px; color: #999; }
+    
+    .fluxo-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 2px solid #e5e5e5;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .fluxo-total.entrada { color: #16a34a; }
+    .fluxo-total.saida { color: #dc2626; }
+    
+    /* SEÇÕES DE TABELAS - 35% */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .section {
+      margin-bottom: 0;
+    }
+    .section-header {
+      background: #7c3aed;
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 4px 4px 0 0;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .section-content {
+      border: 1px solid #e5e5e5;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      background: white;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8px;
+    }
+    th {
+      background: #f5f3ff;
+      color: #5b21b6;
+      font-weight: 700;
+      padding: 5px 6px;
+      text-align: left;
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+    tr:last-child td { border-bottom: none; }
     tr:nth-child(even) { background: #fafaf8; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
-    .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e5e5; font-size: 9px; color: #999; text-align: center; }
-    .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .summary-box { background: #f9f7ff; border-radius: 6px; padding: 12px; }
-    .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #e9d5ff; }
-    .summary-item:last-child { border-bottom: none; }
-    .summary-label { font-size: 10px; color: #666; }
-    .summary-value { font-size: 11px; font-weight: 700; color: #1a1a1a; }
-    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-  `;
-
-  const generateYearOptions = () => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let i = currentYear; i >= currentYear - 5; i--) {
-      years.push(i);
+    .font-bold { font-weight: 700; }
+    .text-green { color: #16a34a; }
+    .text-red { color: #dc2626; }
+    
+    .empty-message {
+      padding: 12px;
+      text-align: center;
+      color: #999;
+      font-size: 8px;
+      font-style: italic;
     }
-    return years;
-  };
+    
+    /* RODAPÉ - 5% */
+    .footer {
+      margin-top: auto;
+      padding-top: 6px;
+      border-top: 1px solid #e5e5e5;
+      text-align: center;
+      font-size: 7px;
+      color: #999;
+    }
+    
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .report-page { width: 100%; min-height: auto; }
+    }
+  `;
 
   const generateMonthOptions = () => {
     const options = [];
@@ -213,19 +402,45 @@ export function FinancialReportPDF() {
     return options;
   };
 
+  // Calcular totais de fluxo de caixa
+  const calcularFluxo = () => {
+    if (!reportData) return { entradas: 0, saidas: 0, saldo: 0 };
+    
+    const entradas = 
+      reportData.vendas.receitaTotal + 
+      reportData.contasReceber.total;
+    
+    const saidas = 
+      reportData.resumoFinanceiro.custoAquisicao +
+      reportData.resumoFinanceiro.custoOperacional +
+      reportData.resumoFinanceiro.despesasOperacionais +
+      reportData.comissoes.pagas +
+      reportData.contasPagar.total;
+    
+    return {
+      entradas,
+      saidas,
+      saldo: entradas - saidas
+    };
+  };
+
+  const fluxo = calcularFluxo();
+  const top5Custos = reportData?.custosPorCategoria.slice(0, 5) || [];
+  const top3Vendedores = reportData?.rankingVendedores.slice(0, 3) || [];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" data-testid="button-export-pdf">
           <FileText className="h-4 w-4 mr-2" />
-          Exportar PDF
+          <span className="hidden sm:inline">Exportar PDF</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Gerar Relatório Financeiro
+            Relatório de Fluxo de Caixa
           </DialogTitle>
         </DialogHeader>
         
@@ -288,11 +503,11 @@ export function FinancialReportPDF() {
             <div className="flex items-end gap-2">
               <Button onClick={generatePDF} disabled={isGenerating || isLoading || !reportData} data-testid="button-download-pdf">
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                Baixar PDF
+                <span className="hidden sm:inline">Baixar PDF</span>
               </Button>
               <Button variant="outline" onClick={handlePrint} disabled={isLoading || !reportData} data-testid="button-print">
-                <Printer className="h-4 w-4 mr-2" />
-                Imprimir
+                <Printer className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Imprimir</span>
               </Button>
             </div>
           </div>
@@ -305,173 +520,175 @@ export function FinancialReportPDF() {
               <span className="ml-2">Carregando dados...</span>
             </div>
           ) : reportData ? (
-            <div ref={reportRef} className="p-8" style={{ backgroundColor: 'white', color: '#1a1a1a' }}>
-              <style>{getPrintStyles()}</style>
-              <div className="report-container">
-                {/* Header com Logo */}
-                <div className="header-top">
-                  <div className="logo">V</div>
-                  <div className="header-info">
-                    <h1>{reportData.empresa.nome}</h1>
-                    <p style={{ color: '#333', fontWeight: 500 }}>Relatório Financeiro Completo</p>
-                    <p style={{ color: '#333', fontWeight: 500 }}>Período: {getPeriodoLabel()}</p>
-                    <p style={{ color: '#999' }}>Gerado em: {format(new Date(reportData.dataGeracao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+            <div ref={reportRef} style={{ backgroundColor: 'white', color: '#1a1a1a', padding: '16px' }}>
+              <style>{getReportStyles()}</style>
+              <div className="report-page">
+                
+                {/* ========== HEADER - 18% ========== */}
+                <div className="header">
+                  <div className="header-left">
+                    <div className="logo-box">V</div>
+                    <div className="header-title">
+                      <h1>{reportData.empresa.nome}</h1>
+                      <div className="subtitle">Relatório de Fluxo de Caixa</div>
+                    </div>
+                  </div>
+                  <div className="header-right">
+                    <div className="periodo">{getPeriodoLabel()}</div>
+                    <div>Gerado em: {format(new Date(reportData.dataGeracao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
                   </div>
                 </div>
 
-                {/* Resultado Principal */}
-                <div className="highlight-box">
-                  <div className="label">Resultado do Período (Lucro Líquido)</div>
-                  <div className="value" style={{ color: reportData.resumoFinanceiro.lucroLiquido >= 0 ? '#16a34a' : '#dc2626' }}>
-                    {formatCurrency(reportData.resumoFinanceiro.lucroLiquido)}
+                {/* ========== SALDO DO PERÍODO - 12% ========== */}
+                <div className="saldo-box">
+                  <div className="saldo-label">Saldo do Período (Entradas - Saídas)</div>
+                  <div className={`saldo-value ${fluxo.saldo >= 0 ? 'positivo' : 'negativo'}`}>
+                    {formatCurrency(fluxo.saldo)}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
-                    Margem de Lucro: {reportData.resumoFinanceiro.margemLucro.toFixed(1)}% | {reportData.vendas.quantidade} veículos vendidos
-                  </div>
-                </div>
-
-                {/* Resumo Financeiro Executivo */}
-                <div className="section">
-                  <div className="section-title">Resumo Financeiro Executivo</div>
-                  <div className="metrics-grid">
-                    <div className="metric-card">
-                      <div className="metric-label">Receita Total</div>
-                      <div className="metric-value positive">{formatCurrency(reportData.resumoFinanceiro.receitaTotal)}</div>
-                    </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Custo Total</div>
-                      <div className="metric-value negative">{formatCurrency(reportData.resumoFinanceiro.custoTotal)}</div>
-                    </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Valor Gasto em Aquisição</div>
-                      <div className="metric-value">{formatCurrency(reportData.resumoFinanceiro.custoAquisicao)}</div>
-                    </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Lucro Bruto</div>
-                      <div className="metric-value positive">{formatCurrency(reportData.resumoFinanceiro.receitaTotal - reportData.resumoFinanceiro.custoAquisicao)}</div>
-                    </div>
+                  <div className="saldo-subtitle">
+                    {reportData.vendas.quantidade} veículo(s) vendido(s) no período
                   </div>
                 </div>
 
-                {/* Custos Detalhados */}
-                <div className="section">
-                  <div className="section-title">Custos Operacionais</div>
-                  <div className="metrics-grid">
-                    <div className="metric-card">
-                      <div className="metric-label">Custo Operacional</div>
-                      <div className="metric-value">{formatCurrency(reportData.resumoFinanceiro.custoOperacional)}</div>
+                {/* ========== FLUXO DE CAIXA - 28% ========== */}
+                <div className="fluxo-grid">
+                  {/* ENTRADAS */}
+                  <div className="fluxo-col entradas">
+                    <div className="fluxo-header">
+                      <div className="fluxo-icon entrada">+</div>
+                      <div className="fluxo-title">ENTRADAS</div>
                     </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Despesas Operacionais</div>
-                      <div className="metric-value">{formatCurrency(reportData.resumoFinanceiro.despesasOperacionais)}</div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Receitas de Vendas</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.vendas.receitaTotal)}</span>
                     </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Comissões (Total)</div>
-                      <div className="metric-value">{formatCurrency(reportData.comissoes.total)}</div>
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-detail">{reportData.vendas.quantidade} veículo(s)</span>
                     </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Comissões Pagas</div>
-                      <div className="metric-value positive">{formatCurrency(reportData.comissoes.pagas)}</div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Contas Recebidas</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.contasReceber.total)}</span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Vendas */}
-                <div className="section">
-                  <div className="section-title">Dados de Vendas</div>
-                  <div className="metrics-grid">
-                    <div className="metric-card">
-                      <div className="metric-label">Quantidade de Vendas</div>
-                      <div className="metric-value">{reportData.vendas.quantidade}</div>
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-detail">{reportData.contasReceber.lista?.length || 0} conta(s)</span>
                     </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Receita de Vendas</div>
-                      <div className="metric-value positive">{formatCurrency(reportData.vendas.receitaTotal)}</div>
-                    </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Ticket Médio</div>
-                      <div className="metric-value">{formatCurrency(reportData.vendas.ticketMedio)}</div>
-                    </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Comissões Pendentes</div>
-                      <div className="metric-value negative">{formatCurrency(reportData.comissoes.aPagar)}</div>
+                    
+                    <div className="fluxo-total entrada">
+                      <span>TOTAL DE ENTRADAS</span>
+                      <span>{formatCurrency(fluxo.entradas)}</span>
                     </div>
                   </div>
-                </div>
 
-                {/* Contas Financeiras */}
-                <div className="section">
-                  <div className="section-title">Contas Financeiras</div>
-                  <div className="metrics-grid">
-                    <div className="metric-card">
-                      <div className="metric-label">Contas Pagas (a Pagar)</div>
-                      <div className="metric-value negative">{formatCurrency(reportData.contasPagar.total)}</div>
-                      <div style={{ fontSize: '9px', color: '#666', marginTop: '3px' }}>{reportData.contasPagar.quantidade} contas</div>
+                  {/* SAÍDAS */}
+                  <div className="fluxo-col saidas">
+                    <div className="fluxo-header">
+                      <div className="fluxo-icon saida">-</div>
+                      <div className="fluxo-title">SAÍDAS</div>
                     </div>
-                    <div className="metric-card">
-                      <div className="metric-label">Contas Recebidas (a Receber)</div>
-                      <div className="metric-value positive">{formatCurrency(reportData.contasReceber.total)}</div>
-                      <div style={{ fontSize: '9px', color: '#666', marginTop: '3px' }}>{reportData.contasReceber.quantidade} contas</div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Custo de Aquisição</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.resumoFinanceiro.custoAquisicao)}</span>
+                    </div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Custos Operacionais</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.resumoFinanceiro.custoOperacional)}</span>
+                    </div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Despesas Operacionais</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.resumoFinanceiro.despesasOperacionais)}</span>
+                    </div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Comissões Pagas</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.comissoes.pagas)}</span>
+                    </div>
+                    
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-label">Contas Pagas</span>
+                      <span className="fluxo-item-value">{formatCurrency(reportData.contasPagar.total)}</span>
+                    </div>
+                    <div className="fluxo-item">
+                      <span className="fluxo-item-detail">{reportData.contasPagar.lista?.length || 0} conta(s)</span>
+                    </div>
+                    
+                    <div className="fluxo-total saida">
+                      <span>TOTAL DE SAÍDAS</span>
+                      <span>{formatCurrency(fluxo.saidas)}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Custos por Categoria */}
-                {reportData.custosPorCategoria.length > 0 && (
+                {/* ========== TABELAS - 35% ========== */}
+                <div className="tables-grid">
+                  {/* CUSTOS POR CATEGORIA */}
                   <div className="section">
-                    <div className="section-title">Custos por Categoria</div>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Categoria</th>
-                          <th className="text-right">Quantidade</th>
-                          <th className="text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {reportData.custosPorCategoria.map((cat, idx) => (
-                          <tr key={idx}>
-                            <td>{cat.categoria}</td>
-                            <td className="text-right">{cat.quantidade}</td>
-                            <td className="text-right">{formatCurrency(cat.total)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <div className="section-header">Detalhamento de Custos (Top 5)</div>
+                    <div className="section-content">
+                      {top5Custos.length > 0 ? (
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Categoria</th>
+                              <th className="text-center">Qtd</th>
+                              <th className="text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {top5Custos.map((cat, idx) => (
+                              <tr key={idx}>
+                                <td>{cat.categoria}</td>
+                                <td className="text-center">{cat.quantidade}</td>
+                                <td className="text-right font-bold">{formatCurrency(cat.total)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="empty-message">Nenhum custo registrado no período</div>
+                      )}
+                    </div>
                   </div>
-                )}
 
-                {/* Ranking de Vendedores */}
-                {reportData.rankingVendedores.length > 0 && (
+                  {/* RANKING DE VENDEDORES */}
                   <div className="section">
-                    <div className="section-title">Ranking de Vendedores</div>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Vendedor</th>
-                          <th className="text-right">Vendas</th>
-                          <th className="text-right">Receita</th>
-                          <th className="text-right">Comissão</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {reportData.rankingVendedores.map((vendor, idx) => (
-                          <tr key={idx}>
-                            <td>{vendor.nome}</td>
-                            <td className="text-right">{vendor.vendas}</td>
-                            <td className="text-right">{formatCurrency(vendor.receita)}</td>
-                            <td className="text-right">{formatCurrency(vendor.comissao)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <div className="section-header">Performance de Vendedores (Top 3)</div>
+                    <div className="section-content">
+                      {top3Vendedores.length > 0 ? (
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Vendedor</th>
+                              <th className="text-center">Vendas</th>
+                              <th className="text-right">Receita</th>
+                              <th className="text-right">Comissão</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {top3Vendedores.map((vendor, idx) => (
+                              <tr key={idx}>
+                                <td>{vendor.nome}</td>
+                                <td className="text-center">{vendor.vendas}</td>
+                                <td className="text-right text-green">{formatCurrency(vendor.receita)}</td>
+                                <td className="text-right">{formatCurrency(vendor.comissao)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="empty-message">Nenhuma venda registrada no período</div>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
 
-                {/* Footer */}
+                {/* ========== RODAPÉ - 5% ========== */}
                 <div className="footer">
-                  <p>Relatório confidencial - VeloStock Sistema de Gestão de Revenda</p>
-                  <p>Este documento foi gerado automaticamente pelo sistema</p>
+                  Relatório gerado pelo VeloStock em {format(new Date(reportData.dataGeracao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </div>
               </div>
             </div>

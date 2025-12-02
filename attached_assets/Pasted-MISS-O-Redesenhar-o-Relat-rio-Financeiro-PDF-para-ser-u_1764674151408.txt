@@ -1,0 +1,94 @@
+MISSÃO: Redesenhar o Relatório Financeiro PDF para ser um Relatório de Fluxo de Caixa Profissional
+CONTEXTO:
+- O relatório atual em client/src/components/FinancialReportPDF.tsx precisa ser reformulado
+- Deve focar EXCLUSIVAMENTE em fluxo de caixa (cash flow) - dinheiro que entrou e saiu
+- DEVE caber em 1 única página A4 (210mm x 297mm)
+- É usado pelo endpoint /api/financial/report/complete (server/routes/financial.ts)
+OBJETIVO:
+Transformar o relatório em um dashboard financeiro compacto e profissional que mostre:
+1. CABEÇALHO COMPACTO (20% da página):
+   - Logo da empresa (lado esquerdo)
+   - Nome da empresa + "Relatório de Fluxo de Caixa"
+   - Período (ex: "Janeiro 2024" ou "01/12/2024 a 31/12/2024")
+   - Data de geração
+2. SEÇÃO PRINCIPAL - SALDO DO PERÍODO (15% da página):
+   - Box de destaque com:
+     * Saldo Final = Total Entradas - Total Saídas
+     * Verde se positivo, vermelho se negativo
+     * Fonte grande (32px) e bem visível
+3. FLUXO DE CAIXA - GRID 2 COLUNAS (30% da página):
+   COLUNA ESQUERDA - ENTRADAS 💰:
+   ├─ Receitas de Vendas: R$ XX.XXX,XX
+   ├─ Quantidade de veículos vendidos: XX
+   ├─ Contas Recebidas: R$ XX.XXX,XX (XX contas)
+   └─ TOTAL DE ENTRADAS: R$ XX.XXX,XX
+   COLUNA DIREITA - SAÍDAS 💸:
+   ├─ Custo de Aquisição: R$ XX.XXX,XX
+   ├─ Custos Operacionais: R$ XX.XXX,XX
+   ├─ Despesas Operacionais: R$ XX.XXX,XX
+   ├─ Comissões Pagas: R$ XX.XXX,XX
+   ├─ Contas Pagas: R$ XX.XXX,XX (XX contas)
+   └─ TOTAL DE SAÍDAS: R$ XX.XXX,XX
+4. DETALHAMENTO DE CUSTOS - TABELA COMPACTA (20% da página):
+   Mostrar custos por categoria (mecânica, estética, documentação, etc.):
+   
+   | Categoria          | Qtd | Valor Total |
+   |--------------------|-----|-------------|
+   | Mecânica           | 15  | R$ 8.500,00 |
+   | Estética           | 12  | R$ 3.200,00 |
+   | Documentação       | 8   | R$ 1.800,00 |
+   
+   Máximo 5 categorias (top 5 maiores gastos)
+5. PERFORMANCE DE VENDEDORES - TABELA COMPACTA (10% da página):
+   
+   | Vendedor        | Vendas | Receita      | Comissão    |
+   |-----------------|--------|--------------|-------------|
+   | João Silva      | 5      | R$ 85.000,00 | R$ 4.250,00 |
+   | Maria Santos    | 3      | R$ 52.000,00 | R$ 2.600,00 |
+   
+   Máximo 3 vendedores (top 3)
+6. RODAPÉ COMPACTO (5% da página):
+   - "Relatório gerado pelo VeloStock em DD/MM/YYYY às HH:MM"
+   - Fonte pequena (8px)
+REQUISITOS TÉCNICOS OBRIGATÓRIOS:
+✅ Layout responsivo que CAIBA em A4:
+   - Usar grid CSS compacto
+   - Fonte base: 9px-10px
+   - Margens: 10mm (todas as laterais)
+   - Espaçamento entre seções: 8px-10px
+   - Sem quebras de página (tudo em 1 página)
+✅ Estilização profissional:
+   - Cores: Verde (#16a34a) para positivo, Vermelho (#dc2626) para negativo
+   - Bordas sutis (#e5e5e5)
+   - Background alternado em tabelas (#fafaf8)
+   - Destaque roxo (#7c3aed) para headers de seção
+✅ Dados do backend já disponíveis (não precisa modificar API):
+   - resumoFinanceiro (receita, custos, lucro)
+   - vendas (quantidade, receita)
+   - comissoes (total, pagas, aPagar)
+   - contasPagar (lista, total, quantidade)
+   - contasReceber (lista, total, quantidade)
+   - custosPorCategoria (categoria, total, quantidade)
+   - rankingVendedores (nome, vendas, receita, comissao)
+✅ Manter funcionalidades existentes:
+   - Geração de PDF com html2pdf.js
+   - Botão de impressão
+   - Filtros de período (mensal, trimestral, personalizado)
+ARQUIVOS A MODIFICAR:
+- client/src/components/FinancialReportPDF.tsx (componente principal)
+NÃO MODIFICAR:
+- server/routes/financial.ts (endpoint já está correto)
+- Qualquer outro arquivo
+IMPORTANTE:
+- Remover métricas de "lucro líquido" e "margem de lucro" (focar só em cash flow)
+- Usar formatação de moeda brasileira (R$ X.XXX,XX)
+- Tabelas devem ser compactas (máximo 5 linhas cada)
+- Testar que cabe em A4 portrait (210mm x 297mm)
+- CSS deve estar inline ou em <style> tag dentro do componente para funcionar no PDF
+VALIDAÇÃO DE SUCESSO:
+[ ] Relatório cabe em 1 página A4 sem scroll
+[ ] Mostra claramente: Entradas, Saídas e Saldo
+[ ] Tabelas limitadas a top 5 categorias e top 3 vendedores
+[ ] Valores monetários formatados corretamente
+[ ] PDF gerado sem erros
+[ ] Impressão funciona corretamente
