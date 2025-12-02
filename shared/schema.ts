@@ -1142,3 +1142,27 @@ export const adminCredentials = pgTable("admin_credentials", {
 });
 
 export type AdminCredential = typeof adminCredentials.$inferSelect;
+
+// ============================================
+// BUG REPORTS
+// ============================================
+
+export const bugReports = pgTable("bug_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  userName: text("user_name"),
+  userEmail: text("user_email"),
+  userPhotoUrl: text("user_photo_url"),
+  message: text("message").notNull(),
+  attachments: json("attachments").$type<Array<{ fileName: string; fileData: string; mimeType: string }>>().default([]),
+  status: varchar("status").default("novo"), // "novo", "em_analise", "resolvido"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBugReportSchema = createInsertSchema(bugReports).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertBugReport = z.infer<typeof insertBugReportSchema>;
+export type BugReport = typeof bugReports.$inferSelect;

@@ -21,6 +21,8 @@ import {
   type InsertCompany,
   type Reminder,
   type InsertReminder,
+  type BugReport,
+  type InsertBugReport,
   users,
   vehicles,
   vehicleImages,
@@ -36,6 +38,7 @@ import {
   leads,
   followUps,
   reminders,
+  bugReports,
 } from "@shared/schema";
 import { or, sql } from "drizzle-orm";
 import { normalizeChecklistData } from "@shared/checklistUtils";
@@ -96,6 +99,10 @@ export interface IStorage {
   updateReminder(id: string, updates: Partial<InsertReminder>): Promise<Reminder | undefined>;
   deleteReminder(id: string): Promise<boolean>;
   getUserReminders(userId: string, empresaId: string): Promise<Reminder[]>;
+
+  createBugReport(report: InsertBugReport): Promise<BugReport>;
+  getAllBugReports(): Promise<BugReport[]>;
+  updateBugReportStatus(id: string, status: string): Promise<BugReport | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -669,6 +676,19 @@ export class DatabaseStorage implements IStorage {
       console.error(`[SECURITY] Erro ao invalidar sessões do usuário ${userId}:`, error);
       return 0;
     }
+  }
+  async createBugReport(report: InsertBugReport): Promise<BugReport> {
+    const [created] = await db.insert(bugReports).values(report).returning();
+    return created;
+  }
+
+  async getAllBugReports(): Promise<BugReport[]> {
+    return await db.select().from(bugReports).orderBy(desc(bugReports.createdAt));
+  }
+
+  async updateBugReportStatus(id: string, status: string): Promise<BugReport | undefined> {
+    const [updated] = await db.update(bugReports).set({ status }).where(eq(bugReports.id, id)).returning();
+    return updated;
   }
 }
 
