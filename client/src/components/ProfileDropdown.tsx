@@ -44,7 +44,8 @@ import {
   X,
   Eye,
   EyeOff,
-  Loader2
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,9 +77,14 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const bugReportSchema = z.object({
+  message: z.string().min(10, "Descreva o problema com pelo menos 10 caracteres"),
+});
+
 type ProfileFormData = z.infer<typeof profileSchema>;
 type EmailFormData = z.infer<typeof emailSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
+type BugReportFormData = z.infer<typeof bugReportSchema>;
 
 export function ProfileDropdown() {
   const { user } = useAuth();
@@ -90,7 +96,10 @@ export function ProfileDropdown() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
+  const [supportFiles, setSupportFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supportFilesRef = useRef<HTMLInputElement>(null);
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -114,6 +123,13 @@ export function ProfileDropdown() {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    },
+  });
+
+  const bugReportForm = useForm<BugReportFormData>({
+    resolver: zodResolver(bugReportSchema),
+    defaultValues: {
+      message: "",
     },
   });
 
@@ -234,6 +250,45 @@ export function ProfileDropdown() {
     onError: (error: any) => {
       toast({
         title: "Erro ao remover foto",
+        description: error.message || "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const submitBugReportMutation = useMutation({
+    mutationFn: async (data: BugReportFormData) => {
+      const formData = new FormData();
+      formData.append("message", data.message);
+      supportFiles.forEach(file => {
+        formData.append("attachments", file);
+      });
+
+      const response = await fetch("/api/bug-reports", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao enviar relatório");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Relatório enviado",
+        description: "Obrigado pelo feedback! Nosso time analisará em breve.",
+      });
+      bugReportForm.reset();
+      setSupportFiles([]);
+      setIsSupportDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao enviar relatório",
         description: error.message || "Tente novamente mais tarde.",
         variant: "destructive",
       });
@@ -364,6 +419,14 @@ export function ProfileDropdown() {
           >
             <Lock className="mr-2 h-4 w-4" />
             Alterar Senha
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            onClick={() => setIsSupportDialogOpen(true)}
+            data-testid="menu-item-support"
+          >
+            <AlertCircle className="mr-2 h-4 w-4" />
+            Suporte
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
@@ -683,6 +746,113 @@ export function ProfileDropdown() {
               </Form>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bug Report Dialog */}
+      <Dialog open={isSupportDialogOpen} onOpenChange={setIsSupportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Reportar Problema</DialogTitle>
+            <DialogDescription>
+              Ajude-nos a melhorar! Descreva o problema que encontrou.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
+            <p className="text-xs text-amber-900 dark:text-amber-100">
+              <strong>Sistema em Beta:</strong> Bugs e falhas podem acontecer. Seus relatórios são essenciais para melhorar o VeloStock!
+            </p>
+          </div>
+
+          <Form {...bugReportForm}>
+            <form onSubmit={bugReportForm.handleSubmit((data) => submitBugReportMutation.mutate(data))} className="space-y-4">
+              <FormField
+                control={bugReportForm.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descreva o problema</FormLabel>
+                    <FormControl>
+                      <textarea 
+                        placeholder="Ex: O dashboard não carrega quando..."
+                        className="w-full min-h-32 px-3 py-2 border border-input rounded-md text-sm"
+                        {...field}
+                        data-testid="textarea-bug-message"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <Label>Anexar arquivos (até 5)</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition"
+                  onClick={() => supportFilesRef.current?.click()}
+                  data-testid="dropzone-bug-attachments"
+                >
+                  {supportFiles.length === 0 ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">Clique ou arraste arquivos aqui</p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG, PDF - máx 5MB cada</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-green-600">{supportFiles.length} arquivo(s) selecionado(s)</p>
+                  )}
+                </div>
+                <input
+                  ref={supportFilesRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []).slice(0, 5);
+                    setSupportFiles(files);
+                  }}
+                  data-testid="input-bug-attachments"
+                />
+                {supportFiles.length > 0 && (
+                  <div className="space-y-1">
+                    {supportFiles.map((file, idx) => (
+                      <div key={idx} className="text-xs text-muted-foreground flex justify-between items-center">
+                        <span>{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSupportFiles(supportFiles.filter((_, i) => i !== idx))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsSupportDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={submitBugReportMutation.isPending}
+                  data-testid="button-submit-bug-report"
+                >
+                  {submitBugReportMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Enviar Relatório
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </>

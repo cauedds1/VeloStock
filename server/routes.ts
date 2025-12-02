@@ -3863,5 +3863,87 @@ Retorne APENAS um JSON válido no formato:
     }
   });
 
+  // Bug Reports API
+  app.post("/api/bug-reports", isAuthenticated, upload.array("attachments", 5), async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.id || req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Não autenticado" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não encontrado" });
+      }
+
+      const { message } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: "Mensagem é obrigatória" });
+      }
+
+      // Converter arquivos base64
+      const attachments = (req.files || []).map((file: any) => ({
+        fileName: file.originalname,
+        fileData: file.buffer.toString("base64"),
+        mimeType: file.mimetype,
+      }));
+
+      const report = await storage.createBugReport({
+        userId,
+        userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+        userEmail: user.email,
+        userPhotoUrl: user.profileImageUrl || undefined,
+        message,
+        attachments,
+        status: "novo",
+      } as any);
+
+      res.json(report);
+    } catch (error) {
+      console.error("Erro ao criar bug report:", error);
+      res.status(500).json({ error: "Erro ao enviar relatório de bug" });
+    }
+  });
+
+  app.get("/api/bug-reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.id || req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      // Apenas admin pode ver todos os reports
+      if (user?.role !== "proprietario") {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const reports = await storage.getAllBugReports();
+      res.json(reports);
+    } catch (error) {
+      console.error("Erro ao buscar bug reports:", error);
+      res.status(500).json({ error: "Erro ao buscar relatórios" });
+    }
+  });
+
+  app.patch("/api/bug-reports/:id/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.id || req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== "proprietario") {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ error: "Status é obrigatório" });
+      }
+
+      const updated = await storage.updateBugReportStatus(req.params.id, status);
+      res.json(updated);
+    } catch (error) {
+      console.error("Erro ao atualizar status do bug report:", error);
+      res.status(500).json({ error: "Erro ao atualizar status" });
+    }
+  });
+
   return httpServer;
 }
