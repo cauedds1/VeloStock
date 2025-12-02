@@ -1125,3 +1125,20 @@ export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Payment = typeof payments.$inferSelect;
+
+// ============================================
+// ADMIN AUTHENTICATION
+// ============================================
+
+export const adminCredentials = pgTable("admin_credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique().notNull(),
+  passwordHash: varchar("password_hash").notNull(),
+  nome: varchar("nome").notNull(),
+  ativo: varchar("ativo").default("true"), // "true" ou "false"
+  ultimoLogin: timestamp("ultimo_login"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type AdminCredential = typeof adminCredentials.$inferSelect;

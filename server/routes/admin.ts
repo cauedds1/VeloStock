@@ -1,348 +1,270 @@
-import type { Express } from "express";
-import { db } from "../db";
-import { companies, users, subscriptions, payments, vehicles } from "@shared/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Building2, CreditCard, DollarSign, TrendingUp, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import AdminLogin from "./AdminLogin";
 
-export async function registerAdminRoutes(app: Express) {
-  // ============================================
-  // DASHBOARD - ESTATÍSTICAS GERAIS
-  // ============================================
-  app.get("/api/admin/dashboard", async (req: any, res) => {
+interface DashboardStats {
+  totalClientes: number;
+  clientesAtivos: number;
+  clientesTeste: number;
+  totalVeiculos: number;
+  totalUsuarios: number;
+  pagamentosPendentes: number;
+  valorPendente: number;
+}
+
+interface Cliente {
+  empresaId: string;
+  nomeFantasia: string;
+  cnpj: string;
+  telefone: string;
+  email: string;
+  subscriptionStatus: string;
+  plano: string;
+  dataInicio: string;
+  dataProximoPagamento: string;
+  valorMensal: string;
+}
+
+export default function AdminPanel() {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean | null>(null);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    fetch("/api/admin/me").then((res) => {
+      setIsAdminAuthenticated(res.ok);
+    }).catch(() => setIsAdminAuthenticated(false));
+  }, []);
+
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+    queryKey: ["/api/admin/dashboard"],
+    enabled: isAdminAuthenticated,
+  });
+
+  const { data: clientes = [], isLoading: clientesLoading } = useQuery<Cliente[]>({
+    queryKey: ["/api/admin/clientes", statusFilter],
+    queryFn: async () => {
+      const url = statusFilter === "all" ? "/api/admin/clientes" : `/api/admin/clientes?status=${statusFilter}`;
+      const res = await fetch(url);
+      return res.json();
+    },
+    enabled: isAdminAuthenticated,
+  });
+
+  if (isAdminAuthenticated === null) {
+    return <div className="flex h-screen items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
+  }
+
+  if (!isAdminAuthenticated) {
+    return <AdminLogin />;
+  }
+
+  const handleLogout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    setLocation("/");
+  };
+
+  const filteredClientes = clientes.filter(c =>
+    c.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.cnpj?.includes(searchTerm) ||
+    c.email?.includes(searchTerm)
+  );
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: any = {
+      ativo: { variant: "default", label: "Ativo" },
+      teste_gratis: { variant: "outline", label: "Teste Gratuito" },
+      suspenso: { variant: "destructive", label: "Suspenso" },
+      cancelado: { variant: "secondary", label: "Cancelado" },
+    };
+    const config = statusConfig[status] || statusConfig.ativo;
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const handleChangeStatus = async (empresaId: string, novoStatus: string) => {
     try {
-      // Verificar autenticação admin (por enquanto qualquer um com adminToken)
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      const totalCompanies = await db
-        .select({ count: sql`count(*)` })
-        .from(companies);
-
-      const activeSubscriptions = await db
-        .select({ count: sql`count(*)` })
-        .from(subscriptions)
-        .where(eq(subscriptions.status, "ativo"));
-
-      const testSubscriptions = await db
-        .select({ count: sql`count(*)` })
-        .from(subscriptions)
-        .where(eq(subscriptions.status, "teste_gratis"));
-
-      const totalVehicles = await db
-        .select({ count: sql`count(*)` })
-        .from(vehicles);
-
-      const totalUsers = await db
-        .select({ count: sql`count(*)` })
-        .from(users);
-
-      const pendingPayments = await db
-        .select({ count: sql`count(*)`, total: sql`sum(${payments.valor})` })
-        .from(payments)
-        .where(eq(payments.status, "pendente"));
-
-      res.json({
-        totalClientes: totalCompanies[0]?.count || 0,
-        clientesAtivos: activeSubscriptions[0]?.count || 0,
-        clientesTeste: testSubscriptions[0]?.count || 0,
-        totalVeiculos: totalVehicles[0]?.count || 0,
-        totalUsuarios: totalUsers[0]?.count || 0,
-        pagamentosPendentes: pendingPayments[0]?.count || 0,
-        valorPendente: pendingPayments[0]?.total || 0,
+      const res = await fetch(`/api/admin/clientes/${empresaId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: novoStatus }),
       });
-    } catch (error) {
-      console.error("Erro ao buscar dashboard:", error);
-      res.status(500).json({ error: "Erro ao buscar estatísticas" });
-    }
-  });
-
-  // ============================================
-  // LISTAR CLIENTES (EMPRESAS)
-  // ============================================
-  app.get("/api/admin/clientes", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/clientes"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/dashboard"] });
       }
-
-      const status = (req.query.status as string) || "all";
-
-      let baseQuery = db
-        .select({
-          empresaId: companies.id,
-          nomeFantasia: companies.nomeFantasia,
-          cnpj: companies.cnpj,
-          telefone: companies.telefone,
-          email: companies.email,
-          subscriptionStatus: subscriptions.status,
-          plano: subscriptions.plano,
-          dataInicio: subscriptions.dataInicio,
-          dataProximoPagamento: subscriptions.dataProximoPagamento,
-          valorMensal: subscriptions.valorMensalR$,
-        })
-        .from(companies)
-        .leftJoin(subscriptions, eq(companies.id, subscriptions.companyId));
-
-      if (status !== "all") {
-        baseQuery = baseQuery.where(eq(subscriptions.status, status as any));
-      }
-
-      const clientes = await baseQuery.orderBy(desc(companies.createdAt));
-      res.json(clientes);
-    } catch (error) {
-      console.error("Erro ao listar clientes:", error);
-      res.status(500).json({ error: "Erro ao listar clientes" });
-    }
-  });
-
-  // ============================================
-  // CRIAR/ATUALIZAR SUBSCRIPTION DE CLIENTE
-  // ============================================
-  app.post("/api/admin/clientes/:companyId/subscription", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      const { companyId } = req.params;
-      const { status, plano, valorMensal, diasTestGratis, observacoes } = req.body;
-
-      const existing = await db
-        .select()
-        .from(subscriptions)
-        .where(eq(subscriptions.companyId, companyId))
-        .limit(1);
-
-      if (existing.length > 0) {
-        const updated = await db
-          .update(subscriptions)
-          .set({
-            status: status || existing[0].status,
-            plano: plano || existing[0].plano,
-            valorMensalR$: valorMensal || existing[0].valorMensalR$,
-            observacoes: observacoes || existing[0].observacoes,
-            updatedAt: new Date(),
-          })
-          .where(eq(subscriptions.companyId, companyId))
-          .returning();
-
-        return res.json(updated[0]);
-      }
-
-      const created = await db
-        .insert(subscriptions)
-        .values({
-          companyId,
-          status: status || "ativo",
-          plano: plano || "basico",
-          valorMensalR$: valorMensal,
-          diasTestGratis: diasTestGratis || 14,
-          observacoes,
-        })
-        .returning();
-
-      res.json(created[0]);
-    } catch (error) {
-      console.error("Erro ao atualizar subscription:", error);
-      res.status(500).json({ error: "Erro ao atualizar subscription" });
-    }
-  });
-
-  // ============================================
-  // LISTAR PAGAMENTOS DE CLIENTE
-  // ============================================
-  app.get("/api/admin/clientes/:companyId/pagamentos", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      const { companyId } = req.params;
-
-      const pagamentos = await db
-        .select()
-        .from(payments)
-        .where(eq(payments.companyId, companyId))
-        .orderBy(desc(payments.dataVencimento));
-
-      res.json(pagamentos);
-    } catch (error) {
-      console.error("Erro ao listar pagamentos:", error);
-      res.status(500).json({ error: "Erro ao listar pagamentos" });
-    }
-  });
-
-  // ============================================
-  // REGISTRAR PAGAMENTO
-  // ============================================
-  app.post("/api/admin/clientes/:companyId/pagamentos", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      const { companyId } = req.params;
-      const { valor, status, dataPagamento, dataVencimento, metodo, descricao } = req.body;
-
-      const subscription = await db
-        .select()
-        .from(subscriptions)
-        .where(eq(subscriptions.companyId, companyId))
-        .limit(1);
-
-      if (subscription.length === 0) {
-        return res.status(404).json({ error: "Subscription não encontrada" });
-      }
-
-      const created = await db
-        .insert(payments)
-        .values({
-          subscriptionId: subscription[0].id as string,
-          companyId,
-          valor: String(valor),
-          status: (status || "pendente") as any,
-          dataPagamento: dataPagamento ? new Date(dataPagamento) : undefined,
-          dataVencimento: new Date(dataVencimento),
-          metodo,
-          descricao,
-        })
-        .returning();
-
-      res.json(created[0]);
-    } catch (error) {
-      console.error("Erro ao registrar pagamento:", error);
-      res.status(500).json({ error: "Erro ao registrar pagamento" });
-    }
-  });
-
-  // ============================================
-  // BLOQUEAR/DESBLOQUEAR CLIENTE
-  // ============================================
-  app.patch("/api/admin/clientes/:companyId/status", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      const { companyId } = req.params;
-      const { status } = req.body;
-
-      if (!["ativo", "teste_gratis", "suspenso", "cancelado"].includes(status)) {
-        return res.status(400).json({ error: "Status inválido" });
-      }
-
-      const updated = await db
-        .update(subscriptions)
-        .set({
-          status: status as any,
-          updatedAt: new Date(),
-        })
-        .where(eq(subscriptions.companyId, companyId))
-        .returning();
-
-      res.json(updated[0]);
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
-      res.status(500).json({ error: "Erro ao atualizar status" });
     }
-  });
+  };
 
-  // ============================================
-  // CRIAR NOVA EMPRESA E CONTA PROPRIETÁRIO
-  // ============================================
-  app.post("/api/admin/clientes/criar", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
+  return (
+    <div className="min-h-screen bg-background p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold">Painel Administrativo VeloStock</h1>
+            <p className="text-muted-foreground">Gestão completa de clientes, pagamentos e assinaturas</p>
+          </div>
+          <Button onClick={handleLogout} variant="destructive" size="sm" className="gap-2" data-testid="button-logout-admin">
+            <LogOut className="w-4 h-4" />
+            Sair
+          </Button>
+        </div>
 
-      const {
-        nomeFantasia,
-        razaoSocial,
-        cnpj,
-        email,
-        telefone,
-        primeiroNome,
-        ultimoNome,
-        plano,
-        diasTestGratis,
-      } = req.body;
+        {statsLoading ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-32 bg-muted rounded-lg" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalClientes || 0}</div>
+                <p className="text-xs text-muted-foreground">{stats?.clientesAtivos || 0} ativos</p>
+              </CardContent>
+            </Card>
 
-      // Criar empresa
-      const novaEmpresa = await db
-        .insert(companies)
-        .values({
-          nomeFantasia,
-          razaoSocial,
-          cnpj,
-          email,
-          telefone,
-        })
-        .returning();
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Teste Gratuito</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.clientesTeste || 0}</div>
+              </CardContent>
+            </Card>
 
-      const companyId = novaEmpresa[0].id;
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.pagamentosPendentes || 0}</div>
+              </CardContent>
+            </Card>
 
-      // Criar subscription
-      await db.insert(subscriptions).values({
-        companyId,
-        plano: plano || "basico",
-        status: "teste_gratis",
-        diasTestGratis: diasTestGratis || 14,
-      });
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Valor em Aberto</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">R$ {(Number(stats?.valorPendente) / 100).toFixed(2)}</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-      res.json({
-        sucesso: true,
-        empresaId: companyId,
-        empresa: novaEmpresa[0],
-      });
-    } catch (error) {
-      console.error("Erro ao criar empresa:", error);
-      res.status(500).json({ error: "Erro ao criar empresa" });
-    }
-  });
+        <Card>
+          <CardHeader>
+            <CardTitle>Clientes</CardTitle>
+            <CardDescription>Gerenciar todas as empresas e suas assinaturas</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <Input
+                placeholder="Buscar por nome, CNPJ ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                data-testid="input-search-clientes"
+              />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48" data-testid="select-status-filter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="teste_gratis">Teste Gratuito</SelectItem>
+                  <SelectItem value="suspenso">Suspenso</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-  // ============================================
-  // BUSCAR ESTATÍSTICAS DE CLIENTE
-  // ============================================
-  app.get("/api/admin/clientes/:companyId/stats", async (req: any, res) => {
-    try {
-      if (req.user?.role !== "proprietario" || req.user?.isAdmin !== true) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
+            {clientesLoading ? (
+              <div className="animate-pulse space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-muted rounded" />
+                ))}
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted border-b">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium">Empresa</th>
+                        <th className="px-4 py-3 text-left font-medium">CNPJ</th>
+                        <th className="px-4 py-3 text-left font-medium">Email</th>
+                        <th className="px-4 py-3 text-left font-medium">Plano</th>
+                        <th className="px-4 py-3 text-left font-medium">Status</th>
+                        <th className="px-4 py-3 text-left font-medium">Próx. Vencimento</th>
+                        <th className="px-4 py-3 text-left font-medium">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredClientes.map((cliente) => (
+                        <tr key={cliente.empresaId} className="border-b hover:bg-muted/50">
+                          <td className="px-4 py-3 font-medium" data-testid={`text-empresa-${cliente.empresaId}`}>
+                            {cliente.nomeFantasia}
+                          </td>
+                          <td className="px-4 py-3">{cliente.cnpj || "-"}</td>
+                          <td className="px-4 py-3">{cliente.email || "-"}</td>
+                          <td className="px-4 py-3 capitalize">{cliente.plano}</td>
+                          <td className="px-4 py-3">{getStatusBadge(cliente.subscriptionStatus)}</td>
+                          <td className="px-4 py-3">
+                            {cliente.dataProximoPagamento
+                              ? new Date(cliente.dataProximoPagamento).toLocaleDateString("pt-BR")
+                              : "-"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Select
+                              defaultValue={cliente.subscriptionStatus}
+                              onValueChange={(novoStatus) =>
+                                handleChangeStatus(cliente.empresaId, novoStatus)
+                              }
+                            >
+                              <SelectTrigger className="w-32" data-testid={`select-status-${cliente.empresaId}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ativo">Ativar</SelectItem>
+                                <SelectItem value="suspenso">Suspender</SelectItem>
+                                <SelectItem value="cancelado">Cancelar</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
-      const { companyId } = req.params;
-
-      const totalVeiculos = await db
-        .select({ count: sql`count(*)` })
-        .from(vehicles)
-        .where(eq(vehicles.empresaId, companyId));
-
-      const totalUsuarios = await db
-        .select({ count: sql`count(*)` })
-        .from(users)
-        .where(eq(users.empresaId, companyId));
-
-      const subscription = await db
-        .select()
-        .from(subscriptions)
-        .where(eq(subscriptions.companyId, companyId))
-        .limit(1);
-
-      const totalPagamentos = await db
-        .select({ count: sql`count(*)`, total: sql`sum(${payments.valor})` })
-        .from(payments)
-        .where(eq(payments.companyId, companyId));
-
-      res.json({
-        totalVeiculos: totalVeiculos[0]?.count || 0,
-        totalUsuarios: totalUsuarios[0]?.count || 0,
-        subscription: subscription[0] || null,
-        totalPagamentos: totalPagamentos[0]?.count || 0,
-        valorTotalPago: totalPagamentos[0]?.total || 0,
-      });
-    } catch (error) {
-      console.error("Erro ao buscar stats:", error);
-      res.status(500).json({ error: "Erro ao buscar estatísticas" });
-    }
-  });
+            {filteredClientes.length === 0 && !clientesLoading && (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum cliente encontrado
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
