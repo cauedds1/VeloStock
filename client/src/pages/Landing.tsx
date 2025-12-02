@@ -120,13 +120,6 @@ export default function Landing() {
         style={{ width: `${scrollProgress}%` }}
       />
 
-      {/* Beta Warning Banner */}
-      <div className="fixed bottom-4 right-4 z-30 bg-amber-50 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-800 rounded-lg p-3 max-w-xs shadow-lg">
-        <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">
-          Sistema em Beta: Bugs podem acontecer. Reporte-os em seu perfil!
-        </p>
-      </div>
-
       {/* Header */}
       <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

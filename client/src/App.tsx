@@ -35,6 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { BetaBanner } from "@/components/BetaBanner";
 
 function MainAppRouter() {
   const { isMotorista, can } = usePermissions();
@@ -156,6 +157,7 @@ function AppContent() {
         </div>
       </SidebarProvider>
       <ChatbotWidget />
+      <BetaBanner />
     </>
   );
 }
