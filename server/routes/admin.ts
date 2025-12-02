@@ -499,11 +499,37 @@ export async function registerAdminRoutes(app: Express) {
         cnpj,
         email,
         telefone,
-        primeiroNome,
-        ultimoNome,
+        senhaTemporaria,
         plano,
         diasTestGratis,
       } = req.body;
+
+      // Validar senha temporária
+      if (!senhaTemporaria || senhaTemporaria.length < 6) {
+        return res.status(400).json({ error: "Senha temporária deve ter no mínimo 6 caracteres" });
+      }
+
+      // Verificar se já existe empresa com esse email
+      const empresaExistente = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.email, email))
+        .limit(1);
+
+      if (empresaExistente.length > 0) {
+        return res.status(400).json({ error: "Já existe uma empresa com esse email" });
+      }
+
+      // Verificar se já existe usuário com esse email
+      const usuarioExistente = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (usuarioExistente.length > 0) {
+        return res.status(400).json({ error: "Já existe um usuário com esse email" });
+      }
 
       // Criar empresa
       const novaEmpresa = await db
@@ -527,10 +553,26 @@ export async function registerAdminRoutes(app: Express) {
         diasTestGratis: diasTestGratis || 14,
       });
 
+      // Criar usuário proprietário com senha temporária
+      const passwordHash = await bcrypt.hash(senhaTemporaria, 10);
+      
+      await db.insert(users).values({
+        empresaId: companyId,
+        email,
+        firstName: nomeFantasia, // Usa nome fantasia como primeiro nome
+        lastName: "",
+        passwordHash,
+        role: "proprietario",
+        isActive: "true",
+        emailVerified: "true", // Já verificado pelo admin
+        authProvider: "local",
+      });
+
       res.json({
         sucesso: true,
         empresaId: companyId,
         empresa: novaEmpresa[0],
+        mensagem: `Empresa criada com sucesso! O usuário ${email} pode fazer login com a senha temporária fornecida.`,
       });
     } catch (error) {
       console.error("Erro ao criar empresa:", error);

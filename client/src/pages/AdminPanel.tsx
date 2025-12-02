@@ -365,6 +365,7 @@ function NovaEmpresaDialog({ onSuccess }: { onSuccess: () => void }) {
     cnpj: "",
     email: "",
     telefone: "",
+    senhaTemporaria: "",
     plano: "basico",
     diasTestGratis: "14",
   });
@@ -398,6 +399,7 @@ function NovaEmpresaDialog({ onSuccess }: { onSuccess: () => void }) {
         cnpj: "",
         email: "",
         telefone: "",
+        senhaTemporaria: "",
         plano: "basico",
         diasTestGratis: "14",
       });
@@ -470,16 +472,31 @@ function NovaEmpresaDialog({ onSuccess }: { onSuccess: () => void }) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-              data-testid="input-email-empresa"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                data-testid="input-email-empresa"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="senhaTemporaria">Senha Temporária *</Label>
+              <Input
+                id="senhaTemporaria"
+                type="password"
+                value={formData.senhaTemporaria}
+                onChange={(e) => setFormData({ ...formData, senhaTemporaria: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
+                data-testid="input-senha-temporaria"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
