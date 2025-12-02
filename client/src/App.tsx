@@ -26,6 +26,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/not-found";
 import Leads from "@/pages/Leads";
 import Bills from "@/pages/Bills";
+import AdminPanel from "@/pages/AdminPanel";
 import { useSettings } from "@/hooks/use-settings";
 import { useEffect } from "react";
 import { useCurrentCompany } from "@/hooks/use-company";
@@ -71,6 +72,7 @@ function MainAppRouter() {
           <Settings />
         </ProtectedRoute>
       </Route>
+      <Route path="/admin" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -98,6 +100,11 @@ function AppContent() {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
+
+  // Show admin panel without sidebar (independent interface)
+  if (location.startsWith("/admin")) {
+    return isAuthenticated ? <AdminPanel /> : <Login />;
+  }
 
   // Show login/signup/password recovery pages without auth check
   if (location === "/login") {

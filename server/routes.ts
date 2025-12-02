@@ -21,6 +21,7 @@ import activityLogRoutes from "./routes/activityLog";
 import costApprovalsRoutes from "./routes/costApprovals";
 import billsRoutes from "./routes/bills";
 import { registerAIRoutes } from "./routes/ai";
+import { registerAdminRoutes } from "./routes/admin";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import { generateVerificationCode, getVerificationCodeExpiry } from "./utils/verificationCode";
@@ -3782,6 +3783,9 @@ Retorne APENAS um JSON válido no formato:
 
   // AI Routes
   registerAIRoutes(app);
+
+  // Admin Routes
+  registerAdminRoutes(app);
 
   // ============================================
   // GERENCIAR ACESSOS (Permissões Customizadas - Proprietário apenas)
