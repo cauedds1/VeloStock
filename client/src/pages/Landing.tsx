@@ -5,6 +5,9 @@ import {
   ChevronRight, Activity, DollarSign, CheckCircle2, Zap
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import dashboardImg from "@assets/image_1764685751623.png";
+import metricsImg from "@assets/image_1764685752441.png";
+import reportsImg from "@assets/image_1764685874050.png";
 
 export default function Landing() {
   const [activeFeature, setActiveFeature] = useState(0);
@@ -108,7 +111,6 @@ export default function Landing() {
             <Button 
               variant="ghost"
               onClick={() => window.location.href = '/login'}
-              data-testid="button-fazer-login"
               className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Entrar
@@ -134,58 +136,60 @@ export default function Landing() {
         </div>
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          {/* Main Headline */}
-          <div className="text-center space-y-6 mb-16">
-            <div className="inline-block px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full border border-green-300 dark:border-green-700">
-              <span className="text-green-700 dark:text-green-300 text-sm font-semibold flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                Transforme sua revenda automotiva
-              </span>
-            </div>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Text */}
+            <div className="space-y-8">
+              <div className="inline-block px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full border border-green-300 dark:border-green-700">
+                <span className="text-green-700 dark:text-green-300 text-sm font-semibold flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Transforme sua revenda automotiva
+                </span>
+              </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight">
-              <span className="block text-gray-900 dark:text-white mb-2">Gestão Completa</span>
-              <span className="block bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                para Revenda de Veículos
-              </span>
-            </h1>
+              <h1 className="text-5xl sm:text-6xl font-black tracking-tight">
+                <span className="block text-gray-900 dark:text-white mb-2">Gestão Completa</span>
+                <span className="block bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+                  para Revenda de Veículos
+                </span>
+              </h1>
 
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-              Controle total do estoque, preparação, custos e vendas em uma plataforma inteligente. 
-              De spreadsheets caóticos para sistema profissional em minutos.
-            </p>
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
+                Controle total do estoque, preparação, custos e vendas em uma plataforma inteligente. 
+                De spreadsheets caóticos para sistema profissional em minutos.
+              </p>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto py-8">
-              {stats.map((stat, idx) => (
-                <div key={idx} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800">
-                  <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                    {stat.value}
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                {stats.map((stat, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800">
+                    <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                      {stat.value}
+                    </div>
+                    <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1">{stat.label}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{stat.subtext}</div>
                   </div>
-                  <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1">{stat.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{stat.subtext}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* CTA */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              {/* CTA */}
               <Button 
                 size="lg"
                 onClick={() => window.open('https://wa.me/5548999186426', '_blank')}
                 data-testid="button-solicitar-demonstracao-hero"
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white text-lg px-8 py-6 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all"
+                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white text-lg px-8 py-6 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all w-full"
               >
                 Comece Seu Teste Grátis <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button 
-                size="lg"
-                variant="outline"
-                onClick={() => window.location.href = '/login'}
-                className="text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 text-lg px-8 py-6 rounded-xl font-semibold"
-              >
-                Já tenho conta
-              </Button>
+            </div>
+
+            {/* Right side - Dashboard Image */}
+            <div className="relative h-96 lg:h-full min-h-96">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-2xl blur-3xl" />
+              <img 
+                src={dashboardImg}
+                alt="Dashboard VeloStock"
+                className="relative z-10 w-full h-full object-contain animate-float-slow filter drop-shadow-2xl rounded-xl"
+              />
             </div>
           </div>
         </div>
@@ -248,8 +252,51 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Automation Features Grid */}
+      {/* Metrics Section with Image */}
       <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Image */}
+            <div className="relative h-96 lg:h-full min-h-96 order-2 lg:order-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-2xl blur-3xl" />
+              <img 
+                src={metricsImg}
+                alt="Métricas e Dashboard"
+                className="relative z-10 w-full h-full object-contain animate-float filter drop-shadow-2xl rounded-xl"
+              />
+            </div>
+
+            {/* Content */}
+            <div className="space-y-8 order-1 lg:order-2">
+              <div>
+                <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                  Visualize Tudo em Tempo Real
+                </h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Acompanhe métricas importantes do seu estoque com dashboards intuitivos e atualizados constantemente.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  "Prontos para venda, em preparação e em reparos",
+                  "Margem média e lucratividade por veículo",
+                  "Dias médios em estoque e rotatividade",
+                  "Resumo financeiro com receitas vs despesas"
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+                    <span className="text-gray-700 dark:text-gray-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Automation Features Grid */}
+      <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
@@ -276,6 +323,49 @@ export default function Landing() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Reports Section with Image */}
+      <section className="relative w-full py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Content */}
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                  Relatórios Completos
+                </h2>
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Análises detalhadas sobre seu negócio com gráficos, estatísticas e comparações.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  "Receitas, lucro liquido e margem de lucro",
+                  "Análise de custos por veículo e categoria",
+                  "Contas a pagar e receber com status atualizado",
+                  "Exportar relatórios em PDF para compartilhar"
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
+                    <span className="text-gray-700 dark:text-gray-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Image */}
+            <div className="relative h-96 lg:h-full min-h-96">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-green-400/20 rounded-2xl blur-3xl" />
+              <img 
+                src={reportsImg}
+                alt="Relatórios e Análises"
+                className="relative z-10 w-full h-full object-contain animate-float-slow-reverse filter drop-shadow-2xl rounded-xl"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -318,24 +408,14 @@ export default function Landing() {
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
             Teste o VeloStock gratuitamente. Sem cartão de crédito. Sem compromisso.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg"
-              onClick={() => window.open('https://wa.me/5548999186426', '_blank')}
-              data-testid="button-demo-final"
-              className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white text-lg px-8 py-6 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all"
-            >
-              Solicitar Demonstração <ChevronRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              onClick={() => window.location.href = '/login'}
-              className="text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 text-lg px-8 py-6 rounded-xl font-semibold"
-            >
-              Fazer Login
-            </Button>
-          </div>
+          <Button 
+            size="lg"
+            onClick={() => window.open('https://wa.me/5548999186426', '_blank')}
+            data-testid="button-demo-final"
+            className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white text-lg px-8 py-6 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all"
+          >
+            Solicitar Demonstração <ChevronRight className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </section>
 

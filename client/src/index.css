@@ -642,3 +642,43 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Float animations for images */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotateX(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotateX(2deg);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotateZ(-2deg);
+  }
+  50% {
+    transform: translateY(-15px) rotateZ(2deg);
+  }
+}
+
+@keyframes float-slow-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotateZ(2deg);
+  }
+  50% {
+    transform: translateY(-15px) rotateZ(-2deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-float-slow-reverse {
+  animation: float-slow-reverse 8s ease-in-out infinite;
+}
