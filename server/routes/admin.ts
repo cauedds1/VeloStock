@@ -226,6 +226,42 @@ export async function registerAdminRoutes(app: Express) {
     res.json({ needsSetup, setupTokenConfigured });
   });
 
+  const tokenValidationAttempts = new Map<string, { count: number; lastAttempt: number }>();
+  const MAX_TOKEN_ATTEMPTS = 3;
+  const TOKEN_LOCKOUT_TIME = 30 * 60 * 1000;
+
+  app.post("/api/admin/validate-token", async (req: any, res) => {
+    const clientIp = req.ip || req.connection.remoteAddress || "unknown";
+    const { token } = req.body;
+
+    const attempts = tokenValidationAttempts.get(clientIp);
+    if (attempts && attempts.count >= MAX_TOKEN_ATTEMPTS) {
+      const timeSinceLastAttempt = Date.now() - attempts.lastAttempt;
+      if (timeSinceLastAttempt < TOKEN_LOCKOUT_TIME) {
+        const minutesLeft = Math.ceil((TOKEN_LOCKOUT_TIME - timeSinceLastAttempt) / 60000);
+        console.warn(`[SECURITY] Token validation bloqueado - IP: ${clientIp}`);
+        return res.status(429).json({ error: `Muitas tentativas. Tente em ${minutesLeft} minutos.` });
+      } else {
+        tokenValidationAttempts.delete(clientIp);
+      }
+    }
+
+    const SETUP_TOKEN = process.env.ADMIN_SETUP_TOKEN;
+    if (!SETUP_TOKEN) {
+      return res.status(503).json({ error: "Token não configurado no servidor" });
+    }
+
+    if (!token || token !== SETUP_TOKEN) {
+      const current = tokenValidationAttempts.get(clientIp) || { count: 0, lastAttempt: 0 };
+      tokenValidationAttempts.set(clientIp, { count: current.count + 1, lastAttempt: Date.now() });
+      console.warn(`[SECURITY] Token inválido - IP: ${clientIp}, Tentativas: ${current.count + 1}`);
+      return res.status(403).json({ error: "Token inválido" });
+    }
+
+    tokenValidationAttempts.delete(clientIp);
+    res.json({ valid: true });
+  });
+
   // ============================================
   // DASHBOARD - ESTATÍSTICAS GERAIS
   // ============================================

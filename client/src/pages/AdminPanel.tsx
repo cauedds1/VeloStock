@@ -448,8 +448,34 @@ export default function AdminPanel() {
     );
   }
 
+  // Precisa de setup - primeiro mostra tela de token
+  if (needsSetup) {
+    if (!tokenValidated) {
+      return (
+        <TokenGate
+          onValidToken={(token) => {
+            setAccessToken(token);
+            setTokenValidated(true);
+          }}
+        />
+      );
+    }
+    // Token validado, mostra tela de setup
+    return (
+      <AdminSetup
+        accessToken={accessToken}
+        onSetupComplete={() => {
+          setNeedsSetup(false);
+          setTokenValidated(false);
+          setAccessToken("");
+        }}
+      />
+    );
+  }
+
+  // Já tem admin configurado, mostra login
   if (!admin) {
-    return <AdminLogin onLogin={setAdmin} needsSetup={needsSetup} setupTokenConfigured={setupTokenConfigured} />;
+    return <AdminLogin onLogin={setAdmin} />;
   }
 
   return (
