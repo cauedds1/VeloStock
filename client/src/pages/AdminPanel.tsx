@@ -858,8 +858,11 @@ export default function AdminPanel() {
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-green-500">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent" />
+          <p className="text-white font-medium">Carregando...</p>
+        </div>
       </div>
     );
   }
