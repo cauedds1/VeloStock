@@ -1061,3 +1061,67 @@ export const insertReminderSchema = createInsertSchema(reminders, {
 
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
 export type Reminder = typeof reminders.$inferSelect;
+
+// ============================================
+// PAINEL ADMINISTRATIVO - GESTÃO DE CLIENTES
+// ============================================
+
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "ativo",
+  "teste_gratis",
+  "suspenso",
+  "cancelado"
+]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pendente",
+  "pago",
+  "atrasado",
+  "cancelado"
+]);
+
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id").notNull().unique(), // FK para companies
+  plano: text("plano").default("basico"), // "basico", "profissional", "premium"
+  status: subscriptionStatusEnum("status").notNull().default("ativo"),
+  dataInicio: timestamp("data_inicio").defaultNow().notNull(),
+  dataProximoPagamento: timestamp("data_proximo_pagamento"),
+  dataCancelamento: timestamp("data_cancelamento"),
+  diasTestGratis: integer("dias_test_gratis").default(14),
+  valorMensalR$: numeric("valor_mensal_reais", { precision: 10, scale: 2 }),
+  observacoes: text("observacoes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  subscriptionId: varchar("subscription_id").notNull(), // FK
+  companyId: varchar("company_id").notNull(), // FK para companies
+  valor: numeric("valor", { precision: 10, scale: 2 }).notNull(),
+  status: paymentStatusEnum("status").notNull().default("pendente"),
+  dataPagamento: timestamp("data_pagamento"),
+  dataVencimento: timestamp("data_vencimento").notNull(),
+  metodo: text("metodo"), // "cartao", "pix", "boleto", "transferencia"
+  descricao: text("descricao"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
