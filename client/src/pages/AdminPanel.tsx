@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Users, Building2, CreditCard, DollarSign, TrendingUp, LogOut, Lock, Mail, User, Shield, KeyRound,
-  Plus, Eye, Edit, Check, X, Calendar, Wallet, BarChart3, Settings, Clock, AlertTriangle, CheckCircle
+  Plus, Eye, Edit, Check, X, Calendar, Wallet, BarChart3, Settings, Clock, AlertTriangle, CheckCircle, Bug, Download
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -64,6 +64,22 @@ interface Admin {
   id: string;
   email: string;
   nome: string;
+}
+
+interface BugReport {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhotoUrl?: string;
+  message: string;
+  status: string;
+  createdAt: string;
+  attachments?: Array<{
+    fileName: string;
+    fileData: string;
+    mimeType: string;
+  }>;
 }
 
 function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) {
@@ -797,6 +813,20 @@ export default function AdminPanel() {
     retry: false,
   });
 
+  const { data: bugs = [], isLoading: bugsLoading } = useQuery<BugReport[]>({
+    queryKey: ["/api/bug-reports"],
+    queryFn: async () => {
+      const res = await fetch("/api/bug-reports");
+      if (res.status === 401) {
+        handleSessionExpired();
+        throw new Error("Sessão expirada");
+      }
+      return res.json();
+    },
+    enabled: !!admin,
+    retry: false,
+  });
+
   const filteredClientes = clientes.filter(c =>
     c.nomeFantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.cnpj?.includes(searchTerm) ||
@@ -868,6 +898,22 @@ export default function AdminPanel() {
       }
     } catch (error) {
       console.error("Erro ao atualizar pagamento:", error);
+    }
+  };
+
+  const handleChangeBugStatus = async (bugId: string, novoStatus: string) => {
+    try {
+      const res = await fetch(`/api/bug-reports/${bugId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: novoStatus }),
+      });
+
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ["/api/bug-reports"] });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status do bug:", error);
     }
   };
 
@@ -950,6 +996,10 @@ export default function AdminPanel() {
             <TabsTrigger value="config" className="gap-2" data-testid="tab-config">
               <Settings className="h-4 w-4 hidden sm:inline" />
               Config
+            </TabsTrigger>
+            <TabsTrigger value="bugs" className="gap-2" data-testid="tab-bugs">
+              <Bug className="h-4 w-4 hidden sm:inline" />
+              Bugs
             </TabsTrigger>
           </TabsList>
 
@@ -1370,6 +1420,86 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="bugs" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatórios de Bugs</CardTitle>
+                <CardDescription>
+                  Acompanhe os bugs reportados pelos usuários do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {bugsLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-24 bg-muted rounded-lg" />
+                    ))}
+                  </div>
+                ) : bugs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bug className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>Nenhum bug reportado ainda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bugs.map((bug) => (
+                      <Card key={bug.id} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                                  {bug.userName.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm">{bug.userName}</p>
+                                  <p className="text-xs text-muted-foreground">{bug.userEmail}</p>
+                                </div>
+                              </div>
+                              <p className="text-sm mt-2 leading-relaxed">{bug.message}</p>
+                            </div>
+                            <div className="flex flex-col gap-2 items-end">
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(bug.createdAt).toLocaleDateString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                })}
+                              </div>
+                              {bug.attachments && bug.attachments.length > 0 && (
+                                <div className="text-xs bg-muted px-2 py-1 rounded">
+                                  {bug.attachments.length} anexo(s)
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <Badge variant={bug.status === "novo" ? "destructive" : bug.status === "em_analise" ? "outline" : "default"}>
+                              {bug.status === "novo" ? "Novo" : bug.status === "em_analise" ? "Em Análise" : "Resolvido"}
+                            </Badge>
+                            <Select value={bug.status} onValueChange={(value) => handleChangeBugStatus(bug.id, value)}>
+                              <SelectTrigger className="w-32 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="novo">Novo</SelectItem>
+                                <SelectItem value="em_analise">Em Análise</SelectItem>
+                                <SelectItem value="resolvido">Resolvido</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
