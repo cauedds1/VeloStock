@@ -578,4 +578,281 @@ export async function registerAdminRoutes(app: Express) {
       res.status(500).json({ error: "Erro ao buscar estatísticas" });
     }
   });
+
+  // ============================================
+  // LISTAR TODOS OS PAGAMENTOS
+  // ============================================
+  app.get("/api/admin/pagamentos", requireAdminAuth, async (req: any, res) => {
+    try {
+      const status = req.query.status as string;
+      const limit = parseInt(req.query.limit as string) || 50;
+
+      let query = db
+        .select({
+          id: payments.id,
+          companyId: payments.companyId,
+          nomeEmpresa: companies.nomeFantasia,
+          valor: payments.valor,
+          status: payments.status,
+          dataVencimento: payments.dataVencimento,
+          dataPagamento: payments.dataPagamento,
+          metodoPagamento: payments.metodoPagamento,
+          referencia: payments.referencia,
+          createdAt: payments.createdAt,
+        })
+        .from(payments)
+        .leftJoin(companies, eq(payments.companyId, companies.id))
+        .orderBy(desc(payments.createdAt))
+        .limit(limit);
+
+      if (status && status !== "all") {
+        const pagamentos = await db
+          .select({
+            id: payments.id,
+            companyId: payments.companyId,
+            nomeEmpresa: companies.nomeFantasia,
+            valor: payments.valor,
+            status: payments.status,
+            dataVencimento: payments.dataVencimento,
+            dataPagamento: payments.dataPagamento,
+            metodoPagamento: payments.metodoPagamento,
+            referencia: payments.referencia,
+            createdAt: payments.createdAt,
+          })
+          .from(payments)
+          .leftJoin(companies, eq(payments.companyId, companies.id))
+          .where(eq(payments.status, status as "pendente" | "pago" | "atrasado" | "cancelado"))
+          .orderBy(desc(payments.createdAt))
+          .limit(limit);
+        return res.json(pagamentos);
+      }
+
+      const pagamentos = await query;
+      res.json(pagamentos);
+    } catch (error) {
+      console.error("Erro ao listar pagamentos:", error);
+      res.status(500).json({ error: "Erro ao listar pagamentos" });
+    }
+  });
+
+  // ============================================
+  // CRIAR PAGAMENTO MANUAL
+  // ============================================
+  app.post("/api/admin/pagamentos", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { companyId, valor, dataVencimento, referencia, observacoes } = req.body;
+
+      if (!companyId || !valor || !dataVencimento) {
+        return res.status(400).json({ error: "Empresa, valor e data de vencimento são obrigatórios" });
+      }
+
+      const novoPagamento = await db
+        .insert(payments)
+        .values({
+          companyId,
+          valor: String(valor),
+          status: "pendente",
+          dataVencimento: new Date(dataVencimento),
+          referencia: referencia || `FAT-${Date.now()}`,
+          observacoes,
+        })
+        .returning();
+
+      res.json(novoPagamento[0]);
+    } catch (error) {
+      console.error("Erro ao criar pagamento:", error);
+      res.status(500).json({ error: "Erro ao criar pagamento" });
+    }
+  });
+
+  // ============================================
+  // ATUALIZAR STATUS DO PAGAMENTO
+  // ============================================
+  app.patch("/api/admin/pagamentos/:paymentId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { paymentId } = req.params;
+      const { status, dataPagamento, metodoPagamento, observacoes } = req.body;
+
+      const updates: any = { updatedAt: new Date() };
+      if (status) updates.status = status;
+      if (dataPagamento) updates.dataPagamento = new Date(dataPagamento);
+      if (metodoPagamento) updates.metodoPagamento = metodoPagamento;
+      if (observacoes !== undefined) updates.observacoes = observacoes;
+
+      const atualizado = await db
+        .update(payments)
+        .set(updates)
+        .where(eq(payments.id, paymentId))
+        .returning();
+
+      if (atualizado.length === 0) {
+        return res.status(404).json({ error: "Pagamento não encontrado" });
+      }
+
+      res.json(atualizado[0]);
+    } catch (error) {
+      console.error("Erro ao atualizar pagamento:", error);
+      res.status(500).json({ error: "Erro ao atualizar pagamento" });
+    }
+  });
+
+  // ============================================
+  // ESTATÍSTICAS FINANCEIRAS
+  // ============================================
+  app.get("/api/admin/financeiro/stats", requireAdminAuth, async (req: any, res) => {
+    try {
+      const totalRecebido = await db
+        .select({ total: sql`COALESCE(sum(CAST(${payments.valor} AS DECIMAL)), 0)` })
+        .from(payments)
+        .where(eq(payments.status, "pago"));
+
+      const totalPendente = await db
+        .select({ total: sql`COALESCE(sum(CAST(${payments.valor} AS DECIMAL)), 0)` })
+        .from(payments)
+        .where(eq(payments.status, "pendente"));
+
+      const totalAtrasado = await db
+        .select({ total: sql`COALESCE(sum(CAST(${payments.valor} AS DECIMAL)), 0)` })
+        .from(payments)
+        .where(eq(payments.status, "atrasado"));
+
+      const receitaMesAtual = await db
+        .select({ total: sql`COALESCE(sum(CAST(${payments.valor} AS DECIMAL)), 0)` })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.status, "pago"),
+            sql`EXTRACT(MONTH FROM ${payments.dataPagamento}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+            sql`EXTRACT(YEAR FROM ${payments.dataPagamento}) = EXTRACT(YEAR FROM CURRENT_DATE)`
+          )
+        );
+
+      const countPagos = await db
+        .select({ count: sql`count(*)` })
+        .from(payments)
+        .where(eq(payments.status, "pago"));
+
+      const countPendentes = await db
+        .select({ count: sql`count(*)` })
+        .from(payments)
+        .where(eq(payments.status, "pendente"));
+
+      const countAtrasados = await db
+        .select({ count: sql`count(*)` })
+        .from(payments)
+        .where(eq(payments.status, "atrasado"));
+
+      res.json({
+        totalRecebido: Number(totalRecebido[0]?.total) || 0,
+        totalPendente: Number(totalPendente[0]?.total) || 0,
+        totalAtrasado: Number(totalAtrasado[0]?.total) || 0,
+        receitaMesAtual: Number(receitaMesAtual[0]?.total) || 0,
+        countPagos: Number(countPagos[0]?.count) || 0,
+        countPendentes: Number(countPendentes[0]?.count) || 0,
+        countAtrasados: Number(countAtrasados[0]?.count) || 0,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar stats financeiras:", error);
+      res.status(500).json({ error: "Erro ao buscar estatísticas financeiras" });
+    }
+  });
+
+  // ============================================
+  // DETALHES DE UMA EMPRESA
+  // ============================================
+  app.get("/api/admin/clientes/:companyId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+
+      const empresa = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+
+      if (empresa.length === 0) {
+        return res.status(404).json({ error: "Empresa não encontrada" });
+      }
+
+      const subscription = await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.companyId, companyId))
+        .limit(1);
+
+      const usuarios = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          nome: users.nome,
+          role: users.role,
+          ativo: users.ativo,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.empresaId, companyId));
+
+      const veiculosCount = await db
+        .select({ count: sql`count(*)` })
+        .from(vehicles)
+        .where(eq(vehicles.empresaId, companyId));
+
+      const pagamentosRecentes = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.companyId, companyId))
+        .orderBy(desc(payments.createdAt))
+        .limit(10);
+
+      res.json({
+        empresa: empresa[0],
+        subscription: subscription[0] || null,
+        usuarios,
+        totalVeiculos: Number(veiculosCount[0]?.count) || 0,
+        pagamentosRecentes,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar empresa:", error);
+      res.status(500).json({ error: "Erro ao buscar empresa" });
+    }
+  });
+
+  // ============================================
+  // ATUALIZAR EMPRESA
+  // ============================================
+  app.patch("/api/admin/clientes/:companyId", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+      const { nomeFantasia, razaoSocial, cnpj, email, telefone, endereco, cidade, estado, cep, logoUrl, corPrimaria, corSecundaria } = req.body;
+
+      const updates: any = { updatedAt: new Date() };
+      if (nomeFantasia) updates.nomeFantasia = nomeFantasia;
+      if (razaoSocial) updates.razaoSocial = razaoSocial;
+      if (cnpj) updates.cnpj = cnpj;
+      if (email) updates.email = email;
+      if (telefone) updates.telefone = telefone;
+      if (endereco) updates.endereco = endereco;
+      if (cidade) updates.cidade = cidade;
+      if (estado) updates.estado = estado;
+      if (cep) updates.cep = cep;
+      if (logoUrl) updates.logoUrl = logoUrl;
+      if (corPrimaria) updates.corPrimaria = corPrimaria;
+      if (corSecundaria) updates.corSecundaria = corSecundaria;
+
+      const atualizado = await db
+        .update(companies)
+        .set(updates)
+        .where(eq(companies.id, companyId))
+        .returning();
+
+      if (atualizado.length === 0) {
+        return res.status(404).json({ error: "Empresa não encontrada" });
+      }
+
+      res.json(atualizado[0]);
+    } catch (error) {
+      console.error("Erro ao atualizar empresa:", error);
+      res.status(500).json({ error: "Erro ao atualizar empresa" });
+    }
+  });
 }
