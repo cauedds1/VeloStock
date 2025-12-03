@@ -1113,7 +1113,7 @@ export default function Reports() {
                       </div>
                       <p className="text-2xl font-bold text-purple-600 transition-all">
                         R$ {filteredCosts.length > 0 
-                          ? (filteredCosts.reduce((sum, c) => sum + Number(c.value), 0) / filteredCosts.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                          ? (filteredCosts.reduce((sum, c) => sum + Number(c.value), 0) / filteredCosts.length).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                           : '0,00'
                         }
                       </p>
