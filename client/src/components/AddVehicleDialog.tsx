@@ -270,6 +270,7 @@ export function AddVehicleDialog({ onAdd }: AddVehicleDialogProps) {
 
       const response = await fetch("/api/vehicles", {
         method: "POST",
+        credentials: "include",
         body: formData,
       });
 
