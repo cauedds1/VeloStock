@@ -2,9 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   Car, TrendingUp, BarChart, Sparkles, Wrench, Gauge, Shield,
-  ChevronRight, Activity, DollarSign, CheckCircle2, Zap, MessageCircle, Brain, Lightbulb
+  ChevronRight, Activity, DollarSign, CheckCircle2, Zap, MessageCircle, Brain, Lightbulb,
+  Sun, Moon
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useThemeMode } from "@/components/theme-provider";
 import dashboardImg from "@assets/image_1764685751623.png";
 import metricsImg from "@assets/image_1764685752441.png";
 import reportsImg from "@assets/image_1764685874050.png";
@@ -13,6 +15,11 @@ import veloBotImg from "@assets/image_1764686690039.png";
 export default function Landing() {
   const [activeFeature, setActiveFeature] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const { theme, setTheme } = useThemeMode();
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
