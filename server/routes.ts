@@ -1707,14 +1707,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Formatar valor em reais (padrão brasileiro)
+      const formatCurrency = (value: number): string => {
+        return value.toLocaleString('pt-BR', { 
+          style: 'currency', 
+          currency: 'BRL',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      };
+      
       res.json({
         totalVehicles,
         readyForSale,
         inProcess,
         avgTime: `${avgTime} dias`,
         avgCost: avgCostCurrentMonth >= 1000 
-          ? `R$ ${(avgCostCurrentMonth / 1000).toFixed(1)}K`
-          : `R$ ${avgCostCurrentMonth.toFixed(2)}`,
+          ? `R$ ${(avgCostCurrentMonth / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`
+          : formatCurrency(avgCostCurrentMonth),
         resultados: {
           margemLucro: Math.max(margemLucro, 0), // Nunca retorna valor negativo em exibição
         }
