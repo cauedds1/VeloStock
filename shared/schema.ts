@@ -1176,3 +1176,23 @@ export const insertBugReportSchema = createInsertSchema(bugReports).omit({
 
 export type InsertBugReport = z.infer<typeof insertBugReportSchema>;
 export type BugReport = typeof bugReports.$inferSelect;
+
+// ============================================
+// FIPE CACHE - Cache de dados da tabela FIPE
+// ============================================
+
+export const fipeCache = pgTable("fipe_cache", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  cacheKey: varchar("cache_key").notNull().unique(),
+  cacheType: varchar("cache_type").notNull(),
+  vehicleType: varchar("vehicle_type").notNull(),
+  data: json("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (table) => [
+  index("idx_fipe_cache_key").on(table.cacheKey),
+  index("idx_fipe_cache_type").on(table.cacheType),
+  index("idx_fipe_cache_expires").on(table.expiresAt),
+]);
+
+export type FipeCache = typeof fipeCache.$inferSelect;

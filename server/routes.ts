@@ -5,8 +5,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import multer from "multer";
 import { z } from "zod";
-import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema, insertCommissionPaymentSchema, insertReminderSchema, commissionsConfig, commissionPayments, users, companies, storeObservations, operationalExpenses } from "@shared/schema";
-import { isNotNull } from "drizzle-orm";
+import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema, insertCommissionPaymentSchema, insertReminderSchema, commissionsConfig, commissionPayments, users, companies, storeObservations, operationalExpenses, fipeCache } from "@shared/schema";
+import { isNotNull, sql } from "drizzle-orm";
 import OpenAI from "openai";
 import path from "path";
 import fs from "fs/promises";
@@ -3263,71 +3263,6 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
     }
   });
 
-  // FIPE API Routes
-  const FIPE_BASE_URL = "https://parallelum.com.br/fipe/api/v1";
-
-  // Helper para normalizar tipo de veículo
-  const normalizeVehicleType = (type?: string): string => {
-    const normalized = (type || "carros").toLowerCase();
-    if (normalized === "motos" || normalized === "moto") return "motos";
-    if (normalized === "caminhoes" || normalized === "caminhao") return "caminhoes";
-    return "carros"; // Default
-  };
-
-  // GET /api/fipe/brands - Listar marcas
-  app.get("/api/fipe/brands", async (req, res) => {
-    try {
-      const vehicleType = normalizeVehicleType(req.query.type as string);
-      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas`);
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error("Erro ao buscar marcas FIPE:", error);
-      res.status(500).json({ error: "Erro ao buscar marcas" });
-    }
-  });
-
-  // GET /api/fipe/brands/:brandId/models - Listar modelos por marca
-  app.get("/api/fipe/brands/:brandId/models", async (req, res) => {
-    try {
-      const { brandId } = req.params;
-      const vehicleType = normalizeVehicleType(req.query.type as string);
-      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas/${brandId}/modelos`);
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error("Erro ao buscar modelos FIPE:", error);
-      res.status(500).json({ error: "Erro ao buscar modelos" });
-    }
-  });
-
-  // GET /api/fipe/brands/:brandId/models/:modelId/years - Listar anos por modelo
-  app.get("/api/fipe/brands/:brandId/models/:modelId/years", async (req, res) => {
-    try {
-      const { brandId, modelId } = req.params;
-      const vehicleType = normalizeVehicleType(req.query.type as string);
-      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas/${brandId}/modelos/${modelId}/anos`);
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error("Erro ao buscar anos FIPE:", error);
-      res.status(500).json({ error: "Erro ao buscar anos" });
-    }
-  });
-
-  // GET /api/fipe/brands/:brandId/models/:modelId/years/:year/price - Consultar preço FIPE
-  app.get("/api/fipe/brands/:brandId/models/:modelId/years/:year/price", async (req, res) => {
-    try {
-      const { brandId, modelId, year } = req.params;
-      const vehicleType = normalizeVehicleType(req.query.type as string);
-      const response = await fetch(`${FIPE_BASE_URL}/${vehicleType}/marcas/${brandId}/modelos/${modelId}/anos/${year}`);
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error("Erro ao consultar preço FIPE:", error);
-      res.status(500).json({ error: "Erro ao consultar preço" });
-    }
-  });
 
   // POST /api/vehicles/:id/suggest-price - Sugerir preço de venda com IA
   app.post("/api/vehicles/:id/suggest-price", isAuthenticated, async (req: any, res) => {
@@ -3604,50 +3539,167 @@ Retorne APENAS um JSON válido no formato:
   });
 
   // ============================================
-  // BUSCA FIPE GRATUITA - API Pública Parallelum
+  // BUSCA FIPE - Cache Persistente + Retry Inteligente
   // ============================================
   
-  // Cache simples em memória (1 hora)
-  const fipeCache = new Map<string, { data: any; timestamp: number }>();
-  const CACHE_TTL = 60 * 60 * 1000; // 1 hora
-
-  function getCachedData(key: string) {
-    const cached = fipeCache.get(key);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return cached.data;
+  const FIPE_BASE_URL = "https://parallelum.com.br/fipe/api/v1";
+  
+  // TTLs em milissegundos
+  const CACHE_TTL_BRANDS = 7 * 24 * 60 * 60 * 1000;  // 7 dias para marcas
+  const CACHE_TTL_MODELS = 7 * 24 * 60 * 60 * 1000;  // 7 dias para modelos
+  const CACHE_TTL_YEARS = 7 * 24 * 60 * 60 * 1000;   // 7 dias para anos
+  const CACHE_TTL_VALUES = 24 * 60 * 60 * 1000;      // 1 dia para preços
+  
+  // Cache em memória para acesso rápido (fallback)
+  const fipeMemoryCache = new Map<string, { data: any; expiresAt: number }>();
+  
+  // Semáforo para evitar múltiplas requisições simultâneas ao mesmo recurso
+  const fipePendingRequests = new Map<string, Promise<any>>();
+  
+  // Buscar do cache (banco + memória)
+  async function getFipeFromCache(cacheKey: string): Promise<any | null> {
+    // Primeiro: verificar cache em memória
+    const memCached = fipeMemoryCache.get(cacheKey);
+    if (memCached && Date.now() < memCached.expiresAt) {
+      return memCached.data;
     }
+    
+    // Segundo: verificar cache no banco de dados
+    try {
+      const cached = await db
+        .select()
+        .from(fipeCache)
+        .where(eq(fipeCache.cacheKey, cacheKey))
+        .limit(1);
+      
+      if (cached.length > 0 && new Date(cached[0].expiresAt) > new Date()) {
+        // Atualizar cache em memória
+        fipeMemoryCache.set(cacheKey, {
+          data: cached[0].data,
+          expiresAt: new Date(cached[0].expiresAt).getTime()
+        });
+        return cached[0].data;
+      }
+    } catch (error) {
+      console.error("[FIPE Cache] Erro ao buscar do banco:", error);
+    }
+    
     return null;
   }
-
-  function setCachedData(key: string, data: any) {
-    fipeCache.set(key, { data, timestamp: Date.now() });
+  
+  // Salvar no cache (banco + memória)
+  async function setFipeCache(cacheKey: string, cacheType: string, vehicleType: string, data: any, ttl: number) {
+    const expiresAt = new Date(Date.now() + ttl);
+    
+    // Salvar em memória
+    fipeMemoryCache.set(cacheKey, { data, expiresAt: expiresAt.getTime() });
+    
+    // Salvar no banco de dados
+    try {
+      await db.insert(fipeCache).values({
+        cacheKey,
+        cacheType,
+        vehicleType,
+        data,
+        expiresAt,
+      }).onConflictDoUpdate({
+        target: fipeCache.cacheKey,
+        set: { data, expiresAt, createdAt: new Date() }
+      });
+    } catch (error) {
+      console.error("[FIPE Cache] Erro ao salvar no banco:", error);
+    }
+  }
+  
+  // Fetch com retry e backoff exponencial
+  async function fetchFipeWithRetry(url: string, maxRetries = 3): Promise<Response> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          headers: { 
+            "User-Agent": "VeloStock/1.0",
+            "Accept": "application/json"
+          }
+        });
+        
+        if (response.ok) {
+          return response;
+        }
+        
+        // Se rate limited (429), esperar mais tempo
+        if (response.status === 429) {
+          const waitTime = Math.pow(2, attempt + 2) * 1000; // 4s, 8s, 16s
+          console.log(`[FIPE] Rate limited, aguardando ${waitTime/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        // Outros erros
+        throw new Error(`FIPE API retornou status ${response.status}`);
+      } catch (error: any) {
+        lastError = error;
+        
+        // Backoff exponencial: 1s, 2s, 4s
+        const waitTime = Math.pow(2, attempt) * 1000;
+        console.log(`[FIPE] Tentativa ${attempt + 1} falhou, aguardando ${waitTime/1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+    
+    throw lastError || new Error("Falha ao conectar com API FIPE");
+  }
+  
+  // Função genérica para buscar dados FIPE com deduplicação de requisições
+  async function fetchFipeData(cacheKey: string, cacheType: string, vehicleType: string, url: string, ttl: number): Promise<any> {
+    // Verificar cache primeiro
+    const cached = await getFipeFromCache(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
+    // Verificar se já existe uma requisição pendente para este recurso
+    const pending = fipePendingRequests.get(cacheKey);
+    if (pending) {
+      return pending;
+    }
+    
+    // Criar nova requisição
+    const requestPromise = (async () => {
+      try {
+        const response = await fetchFipeWithRetry(url);
+        const data = await response.json();
+        
+        // Salvar no cache
+        await setFipeCache(cacheKey, cacheType, vehicleType, data, ttl);
+        
+        return data;
+      } finally {
+        // Limpar requisição pendente
+        fipePendingRequests.delete(cacheKey);
+      }
+    })();
+    
+    fipePendingRequests.set(cacheKey, requestPromise);
+    return requestPromise;
   }
 
   // GET /api/fipe/brands - Lista de marcas
   app.get("/api/fipe/brands", isAuthenticated, async (req: any, res) => {
     try {
-      const vehicleType = req.query.type || "carros"; // carros, motos, caminhoes
+      const vehicleType = req.query.type || "carros";
       const cacheKey = `brands-${vehicleType}`;
+      const url = `${FIPE_BASE_URL}/${vehicleType}/marcas`;
       
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        return res.json(cached);
-      }
-
-      const response = await fetch(
-        `https://parallelum.com.br/fipe/api/v1/${vehicleType}/marcas`
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar marcas");
-      }
-
-      const data = await response.json();
-      setCachedData(cacheKey, data);
+      const data = await fetchFipeData(cacheKey, "brands", vehicleType, url, CACHE_TTL_BRANDS);
       res.json(data);
     } catch (error: any) {
-      console.error("Erro ao buscar marcas FIPE:", error);
-      res.status(500).json({ message: "Erro ao buscar marcas" });
+      console.error("[FIPE] Erro ao buscar marcas:", error.message);
+      res.status(503).json({ 
+        message: "Serviço FIPE temporariamente indisponível. Tente novamente em alguns minutos.",
+        cached: false
+      });
     }
   });
 
@@ -3662,25 +3714,16 @@ Retorne APENAS um JSON válido no formato:
       }
 
       const cacheKey = `models-${vehicleType}-${brandCode}`;
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        return res.json(cached);
-      }
-
-      const response = await fetch(
-        `https://parallelum.com.br/fipe/api/v1/${vehicleType}/marcas/${brandCode}/modelos`
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar modelos");
-      }
-
-      const data = await response.json();
-      setCachedData(cacheKey, data);
+      const url = `${FIPE_BASE_URL}/${vehicleType}/marcas/${brandCode}/modelos`;
+      
+      const data = await fetchFipeData(cacheKey, "models", vehicleType, url, CACHE_TTL_MODELS);
       res.json(data);
     } catch (error: any) {
-      console.error("Erro ao buscar modelos FIPE:", error);
-      res.status(500).json({ message: "Erro ao buscar modelos" });
+      console.error("[FIPE] Erro ao buscar modelos:", error.message);
+      res.status(503).json({ 
+        message: "Serviço FIPE temporariamente indisponível. Tente novamente em alguns minutos.",
+        cached: false
+      });
     }
   });
 
@@ -3698,25 +3741,16 @@ Retorne APENAS um JSON válido no formato:
       }
 
       const cacheKey = `years-${vehicleType}-${brandCode}-${modelCode}`;
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        return res.json(cached);
-      }
-
-      const response = await fetch(
-        `https://parallelum.com.br/fipe/api/v1/${vehicleType}/marcas/${brandCode}/modelos/${modelCode}/anos`
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar anos");
-      }
-
-      const data = await response.json();
-      setCachedData(cacheKey, data);
+      const url = `${FIPE_BASE_URL}/${vehicleType}/marcas/${brandCode}/modelos/${modelCode}/anos`;
+      
+      const data = await fetchFipeData(cacheKey, "years", vehicleType, url, CACHE_TTL_YEARS);
       res.json(data);
     } catch (error: any) {
-      console.error("Erro ao buscar anos FIPE:", error);
-      res.status(500).json({ message: "Erro ao buscar anos" });
+      console.error("[FIPE] Erro ao buscar anos:", error.message);
+      res.status(503).json({ 
+        message: "Serviço FIPE temporariamente indisponível. Tente novamente em alguns minutos.",
+        cached: false
+      });
     }
   });
 
@@ -3735,25 +3769,38 @@ Retorne APENAS um JSON válido no formato:
       }
 
       const cacheKey = `value-${vehicleType}-${brandCode}-${modelCode}-${yearCode}`;
-      const cached = getCachedData(cacheKey);
-      if (cached) {
-        return res.json(cached);
-      }
-
-      const response = await fetch(
-        `https://parallelum.com.br/fipe/api/v1/${vehicleType}/marcas/${brandCode}/modelos/${modelCode}/anos/${yearCode}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Erro ao buscar valor FIPE");
-      }
-
-      const data = await response.json();
-      setCachedData(cacheKey, data);
+      const url = `${FIPE_BASE_URL}/${vehicleType}/marcas/${brandCode}/modelos/${modelCode}/anos/${yearCode}`;
+      
+      const data = await fetchFipeData(cacheKey, "value", vehicleType, url, CACHE_TTL_VALUES);
       res.json(data);
     } catch (error: any) {
-      console.error("Erro ao buscar valor FIPE:", error);
-      res.status(500).json({ message: "Erro ao buscar valor FIPE" });
+      console.error("[FIPE] Erro ao buscar valor:", error.message);
+      res.status(503).json({ 
+        message: "Serviço FIPE temporariamente indisponível. Tente novamente em alguns minutos.",
+        cached: false
+      });
+    }
+  });
+  
+  // GET /api/fipe/cache-stats - Estatísticas do cache (debug)
+  app.get("/api/fipe/cache-stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const stats = await db
+        .select({
+          cacheType: fipeCache.cacheType,
+          count: sql<number>`count(*)`,
+        })
+        .from(fipeCache)
+        .where(sql`${fipeCache.expiresAt} > NOW()`)
+        .groupBy(fipeCache.cacheType);
+      
+      res.json({
+        memoryEntries: fipeMemoryCache.size,
+        dbStats: stats,
+        pendingRequests: fipePendingRequests.size
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar estatísticas" });
     }
   });
 
