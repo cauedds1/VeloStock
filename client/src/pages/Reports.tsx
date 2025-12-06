@@ -336,7 +336,7 @@ export default function Reports() {
                   <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium">Veículos</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("reports.vehicles")}</p>
                   <p className="text-2xl font-bold text-foreground">{filteredVehicles.length}</p>
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function Reports() {
                   <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium">Prontos p/ Venda</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("reports.readyForSale")}</p>
                   <p className="text-2xl font-bold text-foreground">
                     {filteredVehicles.filter(v => v.status === "Pronto para Venda").length}
                   </p>
@@ -362,7 +362,7 @@ export default function Reports() {
                   <DollarSign className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground font-medium">Custos Totais</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("reports.totalCosts")}</p>
                   <p className="text-2xl font-bold text-foreground">R$ {totalCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export default function Reports() {
                   <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm text-muted-foreground font-medium">Média de Dias</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("reports.avgDays")}</p>
                   <p className="text-2xl font-bold text-foreground">
                     {avgTimePerStage.length > 0
                       ? Math.round(avgTimePerStage.reduce((sum, s) => sum + s.dias, 0) / avgTimePerStage.length)
@@ -393,7 +393,7 @@ export default function Reports() {
           <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
             <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
               <BarChart className="h-5 w-5 text-primary" />
-              Movimentação de Veículos por Status
+              {t("reports.vehicleMovement")}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={vehiclesByStatus}>
@@ -402,7 +402,7 @@ export default function Reports() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="value" fill="#3b82f6" name="Veículos" />
+                <Bar dataKey="value" fill="#3b82f6" name={t("reports.vehicles")} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -411,7 +411,7 @@ export default function Reports() {
             <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
               <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
                 <Clock className="h-5 w-5 text-primary" />
-                Tempo Médio por Etapa
+                {t("reports.avgTimePerStage")}
               </h3>
               {avgTimePerStage.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
@@ -421,12 +421,12 @@ export default function Reports() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="dias" stroke="#8b5cf6" name="Dias" strokeWidth={2} />
+                    <Line type="monotone" dataKey="dias" stroke="#8b5cf6" name={t("reports.days")} strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
                 <p className="text-center text-sm text-muted-foreground py-12">
-                  Nenhum dado disponível
+                  {t("reports.noDataAvailable")}
                 </p>
               )}
             </Card>
@@ -434,7 +434,7 @@ export default function Reports() {
             <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
               <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
                 <DollarSign className="h-5 w-5 text-primary" />
-                Análise de Custos por Categoria
+                {t("reports.costAnalysis")}
               </h3>
               {costsByCategory.length > 0 ? (
                 <div className="flex flex-col md:flex-row gap-6">
@@ -472,7 +472,7 @@ export default function Reports() {
                 </div>
               ) : (
                 <p className="text-center text-sm text-muted-foreground py-12">
-                  Nenhum custo registrado
+                  {t("reports.noCostsRegistered")}
                 </p>
               )}
             </Card>
@@ -481,17 +481,17 @@ export default function Reports() {
           <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
             <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
               <Clock className="h-5 w-5 text-primary" />
-              Veículos com Maior Tempo em Status Atual
+              {t("reports.vehiclesLongestTime")}
             </h3>
             {vehiclesWithLongestTime.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-3 font-semibold text-sm">Veículo</th>
-                      <th className="text-left p-3 font-semibold text-sm">Placa</th>
-                      <th className="text-left p-3 font-semibold text-sm">Status Atual</th>
-                      <th className="text-right p-3 font-semibold text-sm">Dias no Status</th>
+                      <th className="text-left p-3 font-semibold text-sm">{t("reports.vehicle")}</th>
+                      <th className="text-left p-3 font-semibold text-sm">{t("reports.plate")}</th>
+                      <th className="text-left p-3 font-semibold text-sm">{t("reports.currentStatus")}</th>
+                      <th className="text-right p-3 font-semibold text-sm">{t("reports.daysInStatus")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -505,7 +505,7 @@ export default function Reports() {
                           </span>
                         </td>
                         <td className="p-3 text-sm text-right font-bold text-foreground">
-                          {vehicle.days} {vehicle.days === 1 ? 'dia' : 'dias'}
+                          {vehicle.days} {vehicle.days === 1 ? t("reports.day") : t("reports.days")}
                         </td>
                       </tr>
                     ))}
@@ -514,7 +514,7 @@ export default function Reports() {
               </div>
             ) : (
               <p className="text-center text-sm text-muted-foreground py-8">
-                Nenhum veículo encontrado
+                {t("reports.noVehiclesFound")}
               </p>
             )}
           </Card>
@@ -523,7 +523,7 @@ export default function Reports() {
             <Card className="p-6 transition-all duration-300 hover:shadow-lg border-muted/40">
               <h3 className="mb-6 text-lg font-semibold flex items-center gap-2 text-foreground">
                 <Package className="h-5 w-5 text-primary" />
-                Status do Checklist dos Veículos
+                {t("reports.checklistStatus")}
               </h3>
               <div className="space-y-4">
                 {(() => {
@@ -558,7 +558,7 @@ export default function Reports() {
                   return (
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Taxa de Conclusão Geral</span>
+                        <span className="text-sm font-medium">{t("reports.checklistCompletionRate")}</span>
                         <span className="text-2xl font-bold text-primary">{completionRate}%</span>
                       </div>
                       <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -569,7 +569,7 @@ export default function Reports() {
                       </div>
                       <div className="grid grid-cols-3 gap-3 pt-4">
                         <div className="text-center p-3 bg-muted/50 rounded-lg">
-                          <p className="text-xs text-muted-foreground mb-1">Total de Carros</p>
+                          <p className="text-xs text-muted-foreground mb-1">{t("reports.totalCars")}</p>
                           <p className="text-2xl font-bold">{totalVehicles}</p>
                         </div>
                         <Button
@@ -580,7 +580,7 @@ export default function Reports() {
                             setChecklistDialogOpen(true);
                           }}
                         >
-                          <p className="text-xs text-muted-foreground">Concluídos</p>
+                          <p className="text-xs text-muted-foreground">{t("reports.completed")}</p>
                           <p className="text-2xl font-bold text-green-600">{completedVehicles}</p>
                         </Button>
                         <Button
@@ -591,7 +591,7 @@ export default function Reports() {
                             setChecklistDialogOpen(true);
                           }}
                         >
-                          <p className="text-xs text-muted-foreground">Faltando</p>
+                          <p className="text-xs text-muted-foreground">{t("reports.missing")}</p>
                           <p className="text-2xl font-bold text-red-600">{missingVehicles}</p>
                         </Button>
                       </div>
@@ -604,12 +604,12 @@ export default function Reports() {
                               {checklistDialogType === "completed" ? (
                                 <>
                                   <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                  Carros com Checklist Concluído ({completedVehicles})
+                                  {t("reports.carsWithCompletedChecklist")} ({completedVehicles})
                                 </>
                               ) : (
                                 <>
                                   <AlertCircle className="h-5 w-5 text-red-600" />
-                                  Carros com Checklist Faltando ({missingVehicles})
+                                  {t("reports.carsWithMissingChecklist")} ({missingVehicles})
                                 </>
                               )}
                             </DialogTitle>
@@ -629,7 +629,7 @@ export default function Reports() {
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-center text-muted-foreground py-8">Nenhum carro com checklist concluído</p>
+                                <p className="text-center text-muted-foreground py-8">{t("reports.noCarWithCompletedChecklist")}</p>
                               )
                             ) : (
                               (vehiclesWithoutChecklist.length + vehiclesWithIncompleteChecklist.length) > 0 ? (
@@ -639,7 +639,7 @@ export default function Reports() {
                                       <div>
                                         <p className="font-medium">{v.brand} {v.model}</p>
                                         <p className="text-sm text-muted-foreground">{v.plate} • {v.status}</p>
-                                        <p className="text-xs text-red-600 mt-1">Sem checklist iniciado</p>
+                                        <p className="text-xs text-red-600 mt-1">{t("reports.noChecklistStarted")}</p>
                                       </div>
                                       <AlertCircle className="h-5 w-5 text-red-600" />
                                     </div>
@@ -653,7 +653,7 @@ export default function Reports() {
                                         <div>
                                           <p className="font-medium">{v.brand} {v.model}</p>
                                           <p className="text-sm text-muted-foreground">{v.plate} • {v.status}</p>
-                                          <p className="text-xs text-yellow-600 mt-1">{pending} {pending === 1 ? 'item pendente' : 'itens pendentes'}</p>
+                                          <p className="text-xs text-yellow-600 mt-1">{pending} {pending === 1 ? t("reports.pendingItem") : t("reports.pendingItems")}</p>
                                         </div>
                                         <AlertCircle className="h-5 w-5 text-yellow-600" />
                                       </div>
@@ -661,7 +661,7 @@ export default function Reports() {
                                   })}
                                 </div>
                               ) : (
-                                <p className="text-center text-muted-foreground py-8">Todos os carros têm checklist concluído</p>
+                                <p className="text-center text-muted-foreground py-8">{t("reports.allCarsHaveChecklist")}</p>
                               )
                             )}
                           </div>
@@ -676,7 +676,7 @@ export default function Reports() {
             <Card className="p-6">
               <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Observações Gerais da Loja
+                {t("reports.storeObservations")}
               </h3>
               <div className="space-y-4">
                 {(() => {
@@ -691,7 +691,7 @@ export default function Reports() {
                   return (
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Taxa de Resolução</span>
+                        <span className="text-sm font-medium">{t("reports.resolutionRate")}</span>
                         <span className="text-2xl font-bold text-primary">{resolutionRate}%</span>
                       </div>
                       <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -702,7 +702,7 @@ export default function Reports() {
                       </div>
                       <div className="grid grid-cols-3 gap-3 pt-4">
                         <div className="text-center p-3 bg-muted/50 rounded-lg">
-                          <p className="text-xs text-muted-foreground mb-1">Total de Observações</p>
+                          <p className="text-xs text-muted-foreground mb-1">{t("reports.totalObservations")}</p>
                           <p className="text-2xl font-bold">{totalObs}</p>
                         </div>
                         <Button
@@ -713,7 +713,7 @@ export default function Reports() {
                             setObservationsDialogOpen(true);
                           }}
                         >
-                          <p className="text-xs text-muted-foreground">Pendentes</p>
+                          <p className="text-xs text-muted-foreground">{t("reports.pending")}</p>
                           <p className="text-2xl font-bold text-yellow-600">{pendingObs.length}</p>
                         </Button>
                         <Button
@@ -724,7 +724,7 @@ export default function Reports() {
                             setObservationsDialogOpen(true);
                           }}
                         >
-                          <p className="text-xs text-muted-foreground">Resolvidas</p>
+                          <p className="text-xs text-muted-foreground">{t("reports.resolved")}</p>
                           <p className="text-2xl font-bold text-green-600">{resolvedObs.length}</p>
                         </Button>
                       </div>
@@ -737,12 +737,12 @@ export default function Reports() {
                               {observationsDialogType === "pending" ? (
                                 <>
                                   <AlertCircle className="h-5 w-5 text-yellow-600" />
-                                  Observações Pendentes ({pendingObs.length})
+                                  {t("reports.pendingObservations")} ({pendingObs.length})
                                 </>
                               ) : (
                                 <>
                                   <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                  Observações Resolvidas ({resolvedObs.length})
+                                  {t("reports.resolvedObservations")} ({resolvedObs.length})
                                 </>
                               )}
                             </DialogTitle>
@@ -761,7 +761,7 @@ export default function Reports() {
                                           )}
                                           <div className="flex items-center gap-2 mt-2">
                                             <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-700">
-                                              {obs.category || "Sem categoria"}
+                                              {obs.category || t("reports.noCategory")}
                                             </span>
                                             <span className="text-xs text-muted-foreground">
                                               {new Date(obs.createdAt).toLocaleDateString('pt-BR')}
@@ -774,7 +774,7 @@ export default function Reports() {
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-center text-muted-foreground py-8">Nenhuma observação pendente</p>
+                                <p className="text-center text-muted-foreground py-8">{t("reports.noPendingObservations")}</p>
                               )
                             ) : (
                               resolvedObs.length > 0 ? (
@@ -789,7 +789,7 @@ export default function Reports() {
                                           )}
                                           <div className="flex items-center gap-2 mt-2">
                                             <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-700">
-                                              {obs.category || "Sem categoria"}
+                                              {obs.category || t("reports.noCategory")}
                                             </span>
                                             <span className="text-xs text-muted-foreground">
                                               {new Date(obs.createdAt).toLocaleDateString('pt-BR')}
@@ -802,7 +802,7 @@ export default function Reports() {
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-center text-muted-foreground py-8">Nenhuma observação resolvida</p>
+                                <p className="text-center text-muted-foreground py-8">{t("reports.noResolvedObservations")}</p>
                               )
                             )}
                           </div>
@@ -823,9 +823,9 @@ export default function Reports() {
     <div className="flex h-full flex-col p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Relatórios</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("reports.title")}</h1>
           <p className="mt-2 text-muted-foreground">
-            Análise e estatísticas do estoque
+            {t("reports.subtitle")}
           </p>
         </div>
         <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -833,11 +833,11 @@ export default function Reports() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os períodos</SelectItem>
-            <SelectItem value="current-month">Mês atual</SelectItem>
-            <SelectItem value="last-month">Mês passado</SelectItem>
-            <SelectItem value="last-3-months">Últimos 3 meses</SelectItem>
-            <SelectItem value="last-6-months">Últimos 6 meses</SelectItem>
+            <SelectItem value="all">{t("reports.allPeriods")}</SelectItem>
+            <SelectItem value="current-month">{t("reports.currentMonth")}</SelectItem>
+            <SelectItem value="last-month">{t("reports.lastMonth")}</SelectItem>
+            <SelectItem value="last-3-months">{t("reports.last3Months")}</SelectItem>
+            <SelectItem value="last-6-months">{t("reports.last6Months")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -846,9 +846,9 @@ export default function Reports() {
         <Tabs defaultValue="estoque" className="flex-1">
           <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
             <TabsList>
-              <TabsTrigger value="estoque">Estoque</TabsTrigger>
-              <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-              <TabsTrigger value="custos">Custos</TabsTrigger>
+              <TabsTrigger value="estoque">{t("reports.inventory")}</TabsTrigger>
+              <TabsTrigger value="financeiro">{t("reports.financial")}</TabsTrigger>
+              <TabsTrigger value="custos">{t("reports.costsTab")}</TabsTrigger>
             </TabsList>
             <FinancialReportPDF />
           </div>
@@ -881,14 +881,14 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 transition-colors">
                           <TrendingUp className="h-5 w-5 text-green-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Receita Total</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.totalRevenue")}</p>
                       </div>
                       <p className="text-2xl font-bold text-green-600 transition-all">
                         R$ {financialMetrics?.vendas.receita.toLocaleString('pt-BR')}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                         <Package className="h-3 w-3" />
-                        {financialMetrics?.vendas.quantidade} vendas
+                        {financialMetrics?.vendas.quantidade} {t("reports.sales")}
                       </p>
                     </Card>
                   </motion.div>
@@ -903,7 +903,7 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/10 transition-colors">
                           <DollarSign className="h-5 w-5 text-blue-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Lucro Líquido</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.netProfit")}</p>
                       </div>
                       <p className={`text-2xl font-bold transition-all ${(financialMetrics?.resultados.lucroLiquido ?? 0) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                         R$ {financialMetrics?.resultados.lucroLiquido.toLocaleString('pt-BR')}
@@ -921,7 +921,7 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-purple-500/10 transition-colors">
                           <TrendingUp className="h-5 w-5 text-purple-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Margem de Lucro</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.profitMargin")}</p>
                       </div>
                       <p className={`text-2xl font-bold transition-all ${(financialMetrics?.resultados.margemLucro ?? 0) >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
                         {financialMetrics?.resultados.margemLucro.toFixed(1)}%
@@ -944,7 +944,7 @@ export default function Reports() {
                     <div className="pt-4">
                       <h3 className="mb-4 text-lg font-semibold flex items-center gap-2">
                         <DollarSign className="h-5 w-5" />
-                        Contas a Pagar e Receber
+                        {t("reports.billsSummary")}
                       </h3>
                       <div className="grid gap-4 md:grid-cols-4">
                         <Card className="p-6">
@@ -952,10 +952,10 @@ export default function Reports() {
                             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                               <TrendingDown className="h-4 w-4 text-red-600" />
                             </div>
-                            <p className="text-sm text-muted-foreground">A Pagar (Pendente)</p>
+                            <p className="text-sm text-muted-foreground">{t("reports.toPayPending")}</p>
                           </div>
                           <p className="text-2xl font-bold text-red-600">R$ {parseFloat(billsDashboard.totalAPagar.valor).toLocaleString('pt-BR')}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{billsDashboard.totalAPagar.quantidade} contas</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t("reports.billsCount").replace("{count}", String(billsDashboard.totalAPagar.quantidade))}</p>
                         </Card>
                         
                         <Card className="p-6">
@@ -963,10 +963,10 @@ export default function Reports() {
                             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
                               <TrendingUp className="h-4 w-4 text-green-600" />
                             </div>
-                            <p className="text-sm text-muted-foreground">A Receber (Pendente)</p>
+                            <p className="text-sm text-muted-foreground">{t("reports.toReceivePending")}</p>
                           </div>
                           <p className="text-2xl font-bold text-green-600">R$ {parseFloat(billsDashboard.totalAReceber.valor).toLocaleString('pt-BR')}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{billsDashboard.totalAReceber.quantidade} contas</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t("reports.billsCount").replace("{count}", String(billsDashboard.totalAReceber.quantidade))}</p>
                         </Card>
                         
                         <Card className="p-6">
@@ -974,7 +974,7 @@ export default function Reports() {
                             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                               <DollarSign className="h-4 w-4 text-blue-600" />
                             </div>
-                            <p className="text-sm text-muted-foreground">Saldo Previsto</p>
+                            <p className="text-sm text-muted-foreground">{t("reports.expectedBalance")}</p>
                           </div>
                           <p className={`text-2xl font-bold ${parseFloat(billsDashboard.saldoPrevisto) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             R$ {parseFloat(billsDashboard.saldoPrevisto).toLocaleString('pt-BR')}
@@ -986,7 +986,7 @@ export default function Reports() {
                             <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
                               <AlertCircle className="h-4 w-4 text-orange-600" />
                             </div>
-                            <p className="text-sm text-muted-foreground">Contas Vencidas</p>
+                            <p className="text-sm text-muted-foreground">{t("reports.overdueBills")}</p>
                           </div>
                           <p className="text-2xl font-bold text-orange-600">{billsDashboard.vencidas.quantidade}</p>
                           <p className="text-xs text-muted-foreground mt-1">R$ {parseFloat(billsDashboard.vencidas.total).toLocaleString('pt-BR')}</p>
@@ -997,13 +997,13 @@ export default function Reports() {
                 )}
                 
                 <Card className="p-6">
-                  <h3 className="mb-6 text-lg font-semibold">Receitas vs Despesas</h3>
+                  <h3 className="mb-6 text-lg font-semibold">{t("reports.revenueVsExpenses")}</h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={[
-                      { name: 'Receita', valor: financialMetrics?.vendas.receita || 0 },
-                      { name: 'Custos Veículos', valor: financialMetrics?.custos.veiculos || 0 },
-                      { name: 'Despesas Operacionais', valor: financialMetrics?.custos.operacionais || 0 },
-                      { name: 'Comissões', valor: financialMetrics?.custos.comissoes || 0 },
+                      { name: t("reports.revenueLabel"), valor: financialMetrics?.vendas.receita || 0 },
+                      { name: t("reports.vehicleCostsLabel"), valor: financialMetrics?.custos.veiculos || 0 },
+                      { name: t("reports.operationalExpenses"), valor: financialMetrics?.custos.operacionais || 0 },
+                      { name: t("reports.commissionsLabel"), valor: financialMetrics?.custos.comissoes || 0 },
                     ]}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
@@ -1015,16 +1015,16 @@ export default function Reports() {
                 </Card>
                 
                 <Card className="p-6">
-                  <h3 className="mb-6 text-lg font-semibold">Ranking de Vendedores</h3>
+                  <h3 className="mb-6 text-lg font-semibold">{t("reports.sellersRanking")}</h3>
                   {sellersRanking.length > 0 ? (
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-3">Vendedor</th>
-                          <th className="text-right p-3">Vendas</th>
-                          <th className="text-right p-3">Receita</th>
-                          <th className="text-right p-3">Ticket Médio</th>
-                          <th className="text-right p-3">Comissão</th>
+                          <th className="text-left p-3">{t("reports.seller")}</th>
+                          <th className="text-right p-3">{t("reports.sales")}</th>
+                          <th className="text-right p-3">{t("reports.revenue")}</th>
+                          <th className="text-right p-3">{t("reports.avgTicket")}</th>
+                          <th className="text-right p-3">{t("reports.commission")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1040,7 +1040,7 @@ export default function Reports() {
                       </tbody>
                     </table>
                   ) : (
-                    <p className="text-center text-muted-foreground py-8">Nenhuma venda no período</p>
+                    <p className="text-center text-muted-foreground py-8">{t("reports.noSalesInPeriod")}</p>
                   )}
                 </Card>
               </div>
@@ -1072,14 +1072,14 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-red-500/10 transition-colors">
                           <Wallet className="h-5 w-5 text-red-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Total de Custos</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.totalOfCosts")}</p>
                       </div>
                       <p className="text-2xl font-bold text-red-600 transition-all">
                         R$ {filteredCosts.reduce((sum, c) => sum + Number(c.value), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                         <Package className="h-3 w-3" />
-                        {filteredCosts.length} custos registrados
+                        {filteredCosts.length} {t("reports.costsRegistered")}
                       </p>
                     </Card>
                   </motion.div>
@@ -1094,7 +1094,7 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/10 transition-colors">
                           <Car className="h-5 w-5 text-blue-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Veículos com Custos</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.vehiclesWithCosts")}</p>
                       </div>
                       <p className="text-2xl font-bold text-blue-600 transition-all">
                         {new Set(filteredCosts.map(c => c.vehicleId)).size}
@@ -1112,7 +1112,7 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-purple-500/10 transition-colors">
                           <DollarSign className="h-5 w-5 text-purple-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Custo Médio</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.avgCost")}</p>
                       </div>
                       <p className="text-2xl font-bold text-purple-600 transition-all">
                         R$ {filteredCosts.length > 0 
@@ -1133,7 +1133,7 @@ export default function Reports() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 transition-colors">
                           <Package className="h-5 w-5 text-green-600" />
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Categorias</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t("reports.categories")}</p>
                       </div>
                       <p className="text-2xl font-bold text-green-600 transition-all">
                         {new Set(filteredCosts.map(c => c.category)).size}
@@ -1146,7 +1146,7 @@ export default function Reports() {
                 <Card className="p-6">
                   <h3 className="mb-6 text-lg font-semibold flex items-center gap-2">
                     <Wallet className="h-5 w-5" />
-                    Custos por Categoria
+                    {t("reports.costsByCategory")}
                   </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={getCostsByCategoryData()}>
@@ -1163,7 +1163,7 @@ export default function Reports() {
                 <Card className="p-6">
                   <h3 className="mb-4 text-lg font-semibold flex items-center gap-2">
                     <Search className="h-5 w-5" />
-                    Custos Recentes
+                    {t("reports.recentCosts")}
                   </h3>
                   
                   {/* Filtros */}
@@ -1171,7 +1171,7 @@ export default function Reports() {
                     <div className="relative flex-1 min-w-[200px]">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Buscar por descrição, veículo..."
+                        placeholder={t("reports.searchCosts")}
                         value={costSearchTerm}
                         onChange={(e) => setCostSearchTerm(e.target.value)}
                         className="pl-10"
@@ -1184,7 +1184,7 @@ export default function Reports() {
                         <SelectValue placeholder="Categoria" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas Categorias</SelectItem>
+                        <SelectItem value="all">{t("reports.allCategories")}</SelectItem>
                         {Array.from(new Set(allCosts.map((c: any) => c.category))).map((cat: any) => (
                           <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                         ))}
@@ -1196,7 +1196,7 @@ export default function Reports() {
                         <SelectValue placeholder="Forma de Pagamento" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas Formas</SelectItem>
+                        <SelectItem value="all">{t("reports.allPaymentMethods")}</SelectItem>
                         {Array.from(new Set(allCosts.map((c: any) => c.paymentMethod))).filter(Boolean).map((pm: any) => (
                           <SelectItem key={pm} value={pm}>{pm}</SelectItem>
                         ))}
@@ -1209,13 +1209,13 @@ export default function Reports() {
                     <table className="w-full" data-testid="table-costs">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-3">Data</th>
-                          <th className="text-left p-3">Veículo</th>
-                          <th className="text-left p-3">Categoria</th>
-                          <th className="text-left p-3">Descrição</th>
-                          <th className="text-left p-3">Forma Pgto</th>
-                          <th className="text-left p-3">Quem Pagou</th>
-                          <th className="text-right p-3">Valor</th>
+                          <th className="text-left p-3">{t("common.date")}</th>
+                          <th className="text-left p-3">{t("reports.vehicle")}</th>
+                          <th className="text-left p-3">{t("common.category")}</th>
+                          <th className="text-left p-3">{t("common.description")}</th>
+                          <th className="text-left p-3">{t("reports.paymentMethod")}</th>
+                          <th className="text-left p-3">{t("reports.paidBy")}</th>
+                          <th className="text-right p-3">{t("common.value")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1280,7 +1280,7 @@ export default function Reports() {
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 font-semibold">
-                          <td colSpan={6} className="p-3 text-right">Total Filtrado:</td>
+                          <td colSpan={6} className="p-3 text-right">{t("reports.totalFiltered")}</td>
                           <td className="p-3 text-right text-red-600">
                             R$ {filteredCosts
                               .filter((cost: any) => {
@@ -1304,7 +1304,7 @@ export default function Reports() {
                   </div>
                   
                   {filteredCosts.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">Nenhum custo registrado no período</p>
+                    <p className="text-center text-muted-foreground py-8">{t("reports.noCostsInPeriod")}</p>
                   )}
                 </Card>
               </div>
@@ -1321,7 +1321,7 @@ export default function Reports() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Média de Dias por Localização
+              {t("reports.avgDaysByLocation")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
@@ -1335,20 +1335,20 @@ export default function Reports() {
                   <div>
                     <p className="font-medium text-sm">{item.location}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.veiculos} {item.veiculos === 1 ? 'veículo' : 'veículos'}
+                      {item.veiculos} {item.veiculos === 1 ? t("reports.vehicleCount").replace("{count}", "") : t("reports.vehiclesCount").replace("{count}", "")}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                       {item.dias}
                     </p>
-                    <p className="text-xs text-muted-foreground">dias</p>
+                    <p className="text-xs text-muted-foreground">{t("reports.days")}</p>
                   </div>
                 </div>
               ))
             ) : (
               <p className="text-center text-sm text-muted-foreground py-8">
-                Nenhuma localização registrada no período
+                {t("reports.noLocationRegistered")}
               </p>
             )}
           </div>
