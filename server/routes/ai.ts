@@ -266,9 +266,10 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
         return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
       }
 
-      const { message, conversationHistory = [] } = req.body;
+      const { message, conversationHistory = [], language = "pt-BR" } = req.body;
+      const isEnglish = language === "en-US";
       if (!message || typeof message !== 'string') {
-        return res.status(400).json({ error: "Mensagem é obrigatória" });
+        return res.status(400).json({ error: isEnglish ? "Message is required" : "Mensagem é obrigatória" });
       }
 
       // Sanitize and validate message length
@@ -844,7 +845,13 @@ Retorne um JSON com: { "analysis": "texto da análise", "recommendations": ["rec
 
 Responda de forma CONCISA e DIRETA, respondendo APENAS o que foi perguntado, sem adicionar informações extras ou irrelevantes.${vehicleInContext ? `\n\nIMPORTANTE: Você está conversando sobre ${conversationTopic} do ${vehicleInContext.brand} ${vehicleInContext.model}. SEMPRE que perguntarem sobre ${conversationTopic}, comissões, custos ou detalhes deste veículo, responda APENAS sobre ESTE VEÍCULO ESPECÍFICO (ID: ${vehicleInContext.id}), não sobre outros carros.` : ""}`;
 
-      const veloStockSystemPrompt = `Você é o assistente virtual especializado do VeloStock - um sistema completo de gestão de revenda de veículos da "${companyName}".
+      const languageInstruction = isEnglish 
+        ? `IMPORTANT: You MUST respond in ENGLISH (American English). The user is using the English language setting. All responses, explanations, lists, and data must be in English. Use USD formatting when showing monetary values if appropriate, but keep R$ for Brazilian data.`
+        : `IMPORTANTE: Você DEVE responder em PORTUGUÊS BRASILEIRO. Use formatação brasileira para datas (DD/MM/YYYY) e valores (R$ X.XXX,XX).`;
+
+      const veloStockSystemPrompt = `${languageInstruction}
+
+Você é o assistente virtual especializado do VeloStock - um sistema completo de gestão de revenda de veículos da "${companyName}".
 
 ## ${contextSummary}
 

@@ -1,0 +1,48 @@
+VeloStock – The most complete SaaS for car/motorcycle/truck dealerships in Brazil
+
+100% finished, mobile-first, multi-tenant SaaS with native GPT-4 integration.
+Public live demo already populated with 34 real vehicles (Civic, Corolla, BMW, Onix, Argo, etc.) including real photos, documents, checklists, costs and full history.
+
+ZERO paying customers = ZERO churn, ZERO legacy pricing or support tickets.
+Buyer starts completely clean and sets any pricing (R$179–399/month is the market sweet spot).
+
+Key features (all live)
+• Drag-and-drop Kanban pipeline (Intake → Prep → Ready → Sold)
+• Full financial module (purchase cost, prep, taxes, profit per vehicle, automatic commissions, P&L, accounts payable/receivable)
+• Lead CRM with automated follow-ups
+• VeloBot GPT-4 24/7: suggests FIPE + market price, generates 3-style ads, internal chat
+• Smart alerts (vehicle stopped >30 days, expiring documents, pending tasks)
+• True multi-tenant + theme customization per company
+• Granular RBAC (Owner, Manager, Salesperson, Driver)
+• Excel/CSV import, FIPE lookup, realtime notifications, dark mode
+• 100% automatic backups (DB + files + photos)
+
+Tech stack & costs
+• Frontend: React + TypeScript + Vite + Tailwind + shadcn/ui
+• Backend: Node.js + Express + Drizzle ORM + PostgreSQL
+• Current deploy: Replit (~$25/mo) → migration guide to Railway/Render/Vercel included (<2h)
+• Total monthly cost: only ~US$40 (includes GPT-4 usage)
+
+Market
+Brazilian used-car dealerships grew +12% in 2025 (Fenabrave). Competitors charge R$129–399/month with far fewer features.
+
+Conservative projection
+10 customers in 3–4 months → US$2,000–3,500 MRR
+20 customers → US$4,000–7,000 MRR
+Payback in 2–4 months.
+
+Included in the sale
+• Complete source code
+• Live database with 34 real vehicles + photos
+• Domain velostock.com.br (transferable)
+• Full migration guide
+• 30 days post-sale support (WhatsApp/call)
+
+Reason for sale
+Solo developer – product is finished but I don’t have marketing capital right now. Rather sell than let it sit.
+
+Rare opportunity: fully built, niche SaaS with real AI in a booming market.
+Buyer can start charging customers in January 2026.
+
+Ask anything – I reply in minutes and give full demo access instantly.
+

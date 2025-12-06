@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, X, Send, Loader2, Bot, User } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,6 +17,7 @@ export function ChatbotWidget() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { language, t } = useI18n();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -38,11 +40,12 @@ export function ChatbotWidget() {
         body: JSON.stringify({
           message: userMessage,
           conversationHistory: messages,
+          language: language,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao processar mensagem");
+        throw new Error(language === "en-US" ? "Error processing message" : "Erro ao processar mensagem");
       }
 
       const data = await response.json();
@@ -51,7 +54,9 @@ export function ChatbotWidget() {
       console.error("Erro no chatbot:", error);
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "Desculpe, ocorreu um erro. Por favor, tente novamente ou fale diretamente com um vendedor.",
+        content: language === "en-US" 
+          ? "Sorry, an error occurred. Please try again or speak directly with a seller."
+          : "Desculpe, ocorreu um erro. Por favor, tente novamente ou fale diretamente com um vendedor.",
       }]);
     } finally {
       setIsLoading(false);
@@ -64,6 +69,12 @@ export function ChatbotWidget() {
       handleSend();
     }
   };
+
+  const welcomeMessage = language === "en-US" 
+    ? { title: "Welcome to VeloBot!", subtitle: "I'm your virtual sales assistant. I can help with vehicle information, answer questions and more!" }
+    : { title: "Bem-vindo ao VeloBot!", subtitle: "Sou seu assistente virtual de vendas. Posso ajudar com informações sobre veículos, responder dúvidas e muito mais!" };
+
+  const placeholder = language === "en-US" ? "Type your message..." : "Digite sua mensagem...";
 
   if (!isOpen) {
     return (
@@ -103,8 +114,8 @@ export function ChatbotWidget() {
         <div className="space-y-3">
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground text-sm py-4 space-y-2">
-              <div className="font-semibold">Bem-vindo ao VeloBot!</div>
-              <div>Sou seu assistente virtual de vendas. Posso ajudar com informações sobre veículos, responder dúvidas e muito mais!</div>
+              <div className="font-semibold">{welcomeMessage.title}</div>
+              <div>{welcomeMessage.subtitle}</div>
             </div>
           )}
           {messages.map((message, index) => (
@@ -153,7 +164,7 @@ export function ChatbotWidget() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Digite sua mensagem..."
+            placeholder={placeholder}
             disabled={isLoading}
             className="flex-1"
             data-testid="input-chatbot-message"

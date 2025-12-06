@@ -8,6 +8,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { ModeToggle } from "@/components/ModeToggle";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { I18nProvider } from "@/lib/i18n";
 import Dashboard from "@/pages/Dashboard";
 import DriverDashboard from "@/pages/DriverDashboard";
 import VehicleDetails from "@/pages/VehicleDetails";
@@ -141,6 +143,7 @@ function AppContent() {
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <div className="flex items-center gap-1 sm:gap-3 flex-wrap justify-end">
                 <NotificationCenter />
+                <LanguageSelector />
                 <ModeToggle />
                 <img 
                   src={logoUrl || "/velostock-logo.svg"} 
@@ -165,14 +168,16 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="velo-theme">
-        <CompanyThemeProvider>
-          <TooltipProvider>
-            <AppContent />
-            <Toaster />
-          </TooltipProvider>
-        </CompanyThemeProvider>
-      </ThemeProvider>
+      <I18nProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="velo-theme">
+          <CompanyThemeProvider>
+            <TooltipProvider>
+              <AppContent />
+              <Toaster />
+            </TooltipProvider>
+          </CompanyThemeProvider>
+        </ThemeProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }
