@@ -14,11 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { checklistItems, getChecklistStats, normalizeChecklistData, hasChecklistStarted } from "@shared/checklistUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { Link } from "wouter";
+import { useI18n } from "@/lib/i18n";
 
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const { settings } = useSettings();
   const { data: alertsData } = useAlerts();
+  const { t } = useI18n();
 
   const { data: vehicles = [] } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
@@ -32,7 +34,6 @@ export function NotificationCenter() {
     queryKey: ["/api/reminders"],
   });
 
-  // Helper para calcular dias desde última atualização
   const getDaysSince = (dateStr: string): number => {
     if (!dateStr) return 0;
     const date = new Date(dateStr);
@@ -42,7 +43,6 @@ export function NotificationCenter() {
     return diffDays;
   };
 
-  // Helper para contar observações no checklist
   const countChecklistObservations = (checklist: any): number => {
     if (!checklist) return 0;
     let count = 0;
@@ -82,26 +82,21 @@ export function NotificationCenter() {
   }> = [];
 
   vehicles.forEach((vehicle: any) => {
-    // APENAS notificar checklist para veículos "Pronto para Venda"
-    // Outros status (Entrada, Em Preparação, Vendido, Arquivado) não devem aparecer
     if (vehicle.status !== "Pronto para Venda") {
       return;
     }
 
-    // Calcular dias desde que ficou "Pronto para Venda" usando a data do histórico
     const daysSince = vehicle.readyForSaleAt ? getDaysSince(vehicle.readyForSaleAt) : 0;
 
-    // Verificar se o veículo tem checklist iniciado usando a nova lógica de presence
     if (!hasChecklistStarted(vehicle.checklist, vehicle.vehicleType || "Carro")) {
       vehiclesWithoutChecklist.push({
         id: vehicle.id,
         name: `${vehicle.brand} ${vehicle.model}`,
         plate: vehicle.plate,
         daysSince,
-        isUrgent: daysSince > 7, // Urgente se faz mais de 7 dias
+        isUrgent: daysSince > 7,
       });
     } else {
-      // Se tem checklist iniciado, verificar itens pendentes
       const normalized = normalizeChecklistData(vehicle.checklist, vehicle.vehicleType || "Carro");
       const stats = getChecklistStats(normalized, vehicle.checklist, vehicle.vehicleType || "Carro");
       const pending = stats.totalItems - stats.checkedItems;
@@ -113,11 +108,10 @@ export function NotificationCenter() {
           name: `${vehicle.brand} ${vehicle.model}`,
           pending,
           daysPending: daysSince,
-          isUrgent: daysSince > 7, // Urgente se pendente há mais de 7 dias
+          isUrgent: daysSince > 7,
         });
       }
       
-      // Verificar se tem observações no checklist (problemas reportados)
       const observationsCount = countChecklistObservations(vehicle.checklist);
       if (observationsCount > 0) {
         vehiclesWithChecklistObservations.push({
@@ -131,7 +125,6 @@ export function NotificationCenter() {
     }
   });
 
-  // Processar observações com dias pendentes
   const pendingObservationsWithDays = observations
     .filter((obs: any) => obs.status === "Pendente")
     .map((obs: any) => {
@@ -145,38 +138,32 @@ export function NotificationCenter() {
   
   const pendingObservations = pendingObservationsWithDays;
 
-  // Processar lembretes vencidos
   const overdueReminders = reminders.filter((reminder: any) => {
     if (reminder.status !== "Pendente") return false;
     const daysUntil = Math.floor(
       (new Date(reminder.dataLimite).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
     );
-    return daysUntil < 0; // Vencido
+    return daysUntil < 0;
   });
 
-  // Aplicar filtros baseado nas configurações
   const showChecklistAlerts = settings.readyForSaleAlerts;
   const showTaskAlerts = settings.taskAlerts;
   
-  // Total de problemas reais (independente de estarem habilitados)
   const actualChecklistIssues = vehiclesWithoutChecklist.length + vehiclesWithPendingChecklist.length;
   const actualChecklistObservations = vehiclesWithChecklistObservations.length;
   const actualObservationIssues = pendingObservations.length;
   const actualOverdueReminders = overdueReminders.length;
   
-  // Problemas exibidos (filtrados pelas configurações)
   const totalVehiclesWithChecklistIssues = showChecklistAlerts ? actualChecklistIssues : 0;
   const totalChecklistObservations = showChecklistAlerts ? actualChecklistObservations : 0;
   const displayedObservations = showTaskAlerts ? actualObservationIssues : 0;
   const displayedOverdueReminders = showTaskAlerts ? actualOverdueReminders : 0;
   
-  // Adicionar alertas inteligentes
   const intelligentAlerts = alertsData?.alerts || [];
   const totalIntelligentAlerts = intelligentAlerts.length;
   
   const totalNotifications = totalVehiclesWithChecklistIssues + totalChecklistObservations + displayedObservations + totalIntelligentAlerts + displayedOverdueReminders;
 
-  // Contar tarefas urgentes (>7 dias) + lembretes vencidos
   const urgentCount = 
     vehiclesWithoutChecklist.filter(v => v.isUrgent).length +
     vehiclesWithPendingChecklist.filter(v => v.isUrgent).length +
@@ -206,21 +193,20 @@ export function NotificationCenter() {
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
         <div className="p-4 border-b">
-          <h3 className="font-semibold text-lg">Centro de Notificações</h3>
+          <h3 className="font-semibold text-lg">{t("notifications.title")}</h3>
           <p className="text-sm text-muted-foreground">
             {totalNotifications === 0 
               ? (actualChecklistIssues > 0 || actualObservationIssues > 0 
-                  ? "Alertas desabilitados nas configurações" 
-                  : "Tudo em dia!"
+                  ? t("notifications.alertsDisabled")
+                  : t("notifications.allCaughtUp")
                 )
-              : `${totalNotifications} ${totalNotifications === 1 ? 'categoria com pendências' : 'categorias com pendências'}`
+              : `${totalNotifications} ${totalNotifications === 1 ? t("notifications.categoryWithIssues") : t("notifications.categoriesWithIssues")}`
             }
           </p>
         </div>
 
         <ScrollArea className="h-[400px]">
           <div className="p-4 space-y-4">
-            {/* NOVOS ALERTAS INTELIGENTES */}
             {intelligentAlerts.length > 0 && (
               <>
                 <div className="space-y-3">
@@ -229,9 +215,9 @@ export function NotificationCenter() {
                       <Car className="h-4 w-4 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">Alertas do Sistema</h4>
+                      <h4 className="font-medium text-sm">{t("notifications.systemAlerts")}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {intelligentAlerts.length} {intelligentAlerts.length === 1 ? 'alerta' : 'alertas'} detectados
+                        {intelligentAlerts.length} {intelligentAlerts.length === 1 ? t("notifications.alert") : t("notifications.alerts")} {t("notifications.detected")}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-blue-600 border-blue-600">
@@ -262,14 +248,14 @@ export function NotificationCenter() {
                         </div>
                         {alert.severity === "high" && (
                           <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
-                            URGENTE
+                            {t("notifications.urgent")}
                           </Badge>
                         )}
                       </Link>
                     ))}
                     {intelligentAlerts.length > 5 && (
                       <p className="text-xs text-muted-foreground italic">
-                        + {intelligentAlerts.length - 5} alertas...
+                        + {intelligentAlerts.length - 5} {t("notifications.alerts")}...
                       </p>
                     )}
                   </div>
@@ -286,9 +272,9 @@ export function NotificationCenter() {
                       <Clock className="h-4 w-4 text-red-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">Lembretes Vencidos</h4>
+                      <h4 className="font-medium text-sm">{t("notifications.overdueReminders")}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {overdueReminders.length} {overdueReminders.length === 1 ? 'lembrete vencido' : 'lembretes vencidos'}
+                        {overdueReminders.length} {overdueReminders.length === 1 ? t("notifications.overdueReminder") : t("notifications.overdueRemindersCount")}
                       </p>
                     </div>
                     <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
@@ -313,18 +299,18 @@ export function NotificationCenter() {
                                 Math.floor(
                                   (new Date(reminder.dataLimite).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
                                 )
-                              )} dias vencido
+                              )} {t("notifications.daysOverdue")}
                             </div>
                           </div>
                         </span>
                         <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
-                          URGENTE
+                          {t("notifications.urgent")}
                         </Badge>
                       </Link>
                     ))}
                     {overdueReminders.length > 5 && (
                       <p className="text-xs text-muted-foreground italic">
-                        + {overdueReminders.length - 5} lembretes...
+                        + {overdueReminders.length - 5} {t("notifications.reminders")}...
                       </p>
                     )}
                   </div>
@@ -341,9 +327,9 @@ export function NotificationCenter() {
                       <AlertCircle className="h-4 w-4 text-red-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">Checklist Faltando</h4>
+                      <h4 className="font-medium text-sm">{t("notifications.missingChecklist")}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {vehiclesWithoutChecklist.length} {vehiclesWithoutChecklist.length === 1 ? 'veículo sem checklist' : 'veículos sem checklist'}
+                        {vehiclesWithoutChecklist.length} {vehiclesWithoutChecklist.length === 1 ? t("notifications.vehicleWithoutChecklist") : t("notifications.vehiclesWithoutChecklist")}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-red-600 border-red-600">
@@ -379,7 +365,7 @@ export function NotificationCenter() {
                     ))}
                     {vehiclesWithoutChecklist.length > 5 && (
                       <p className="text-xs text-muted-foreground italic">
-                        + {vehiclesWithoutChecklist.length - 5} veículos...
+                        + {vehiclesWithoutChecklist.length - 5} {t("notifications.vehicles")}...
                       </p>
                     )}
                   </div>
@@ -396,9 +382,9 @@ export function NotificationCenter() {
                       <ClipboardList className="h-4 w-4 text-yellow-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">Checklist Incompleto</h4>
+                      <h4 className="font-medium text-sm">{t("notifications.incompleteChecklist")}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {checklistPending} {checklistPending === 1 ? 'item pendente' : 'itens pendentes'} em {vehiclesWithPendingChecklist.length} {vehiclesWithPendingChecklist.length === 1 ? 'veículo' : 'veículos'}
+                        {checklistPending} {checklistPending === 1 ? t("notifications.pendingItem") : t("notifications.pendingItems")} {t("notifications.in")} {vehiclesWithPendingChecklist.length} {vehiclesWithPendingChecklist.length === 1 ? t("notifications.vehicle") : t("notifications.vehicles")}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-yellow-600 border-yellow-600">
@@ -420,7 +406,7 @@ export function NotificationCenter() {
                           <span>{v.name}</span>
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{v.pending} pendentes</span>
+                          <span className="font-medium">{v.pending} {t("notifications.pending")}</span>
                           {v.isUrgent && (
                             <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
                               <Clock className="h-2.5 w-2.5 mr-1" />
@@ -437,7 +423,7 @@ export function NotificationCenter() {
                     ))}
                     {vehiclesWithPendingChecklist.length > 5 && (
                       <p className="text-xs text-muted-foreground italic">
-                        + {vehiclesWithPendingChecklist.length - 5} veículos...
+                        + {vehiclesWithPendingChecklist.length - 5} {t("notifications.vehicles")}...
                       </p>
                     )}
                   </div>
@@ -454,9 +440,9 @@ export function NotificationCenter() {
                       <MessageSquare className="h-4 w-4 text-amber-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">Problemas Reportados</h4>
+                      <h4 className="font-medium text-sm">{t("notifications.reportedProblems")}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {vehiclesWithChecklistObservations.reduce((acc, v) => acc + v.observations, 0)} observações em {vehiclesWithChecklistObservations.length} {vehiclesWithChecklistObservations.length === 1 ? 'veículo' : 'veículos'}
+                        {vehiclesWithChecklistObservations.reduce((acc, v) => acc + v.observations, 0)} {t("notifications.observationsIn")} {vehiclesWithChecklistObservations.length} {vehiclesWithChecklistObservations.length === 1 ? t("notifications.vehicle") : t("notifications.vehicles")}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-amber-600 border-amber-600">
@@ -478,7 +464,7 @@ export function NotificationCenter() {
                           <span>{v.name}</span>
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{v.observations} {v.observations === 1 ? 'problema' : 'problemas'}</span>
+                          <span className="font-medium">{v.observations} {v.observations === 1 ? t("notifications.problem") : t("notifications.problems")}</span>
                           {v.isUrgent && (
                             <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse-urgent">
                               <Clock className="h-2.5 w-2.5 mr-1" />
@@ -495,7 +481,7 @@ export function NotificationCenter() {
                     ))}
                     {vehiclesWithChecklistObservations.length > 5 && (
                       <p className="text-xs text-muted-foreground italic">
-                        + {vehiclesWithChecklistObservations.length - 5} veículos...
+                        + {vehiclesWithChecklistObservations.length - 5} {t("notifications.vehicles")}...
                       </p>
                     )}
                   </div>
@@ -511,9 +497,9 @@ export function NotificationCenter() {
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">Checklist de Veículos</h4>
+                    <h4 className="font-medium text-sm">{t("notifications.vehicleChecklist")}</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Todos os checklists estão completos
+                      {t("notifications.allChecklistsComplete")}
                     </p>
                   </div>
                 </div>
@@ -528,9 +514,9 @@ export function NotificationCenter() {
                     <AlertCircle className="h-4 w-4 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">Observações Gerais</h4>
+                    <h4 className="font-medium text-sm">{t("notifications.generalObservations")}</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {pendingObservations.length} {pendingObservations.length === 1 ? 'observação pendente' : 'observações pendentes'}
+                      {pendingObservations.length} {pendingObservations.length === 1 ? t("notifications.pendingObservation") : t("notifications.pendingObservations")}
                     </p>
                   </div>
                   <Badge variant="outline" className="text-orange-600 border-orange-600">
@@ -566,7 +552,7 @@ export function NotificationCenter() {
                   ))}
                   {pendingObservations.length > 3 && (
                     <p className="text-xs text-muted-foreground italic">
-                      + {pendingObservations.length - 3} observações...
+                      + {pendingObservations.length - 3} {t("notifications.observations")}...
                     </p>
                   )}
                 </div>
@@ -579,9 +565,9 @@ export function NotificationCenter() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">Observações Gerais</h4>
+                  <h4 className="font-medium text-sm">{t("notifications.generalObservations")}</h4>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Todas as observações foram resolvidas
+                    {t("notifications.allObservationsResolved")}
                   </p>
                 </div>
               </div>
@@ -596,9 +582,9 @@ export function NotificationCenter() {
                       <CheckCircle2 className="h-6 w-6 text-green-600" />
                     </div>
                   </div>
-                  <h4 className="font-medium text-sm">Tudo em Dia!</h4>
+                  <h4 className="font-medium text-sm">{t("notifications.allCaughtUpTitle")}</h4>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Não há tarefas pendentes no momento
+                    {t("notifications.noPendingTasks")}
                   </p>
                 </div>
               </>
