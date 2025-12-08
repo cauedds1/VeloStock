@@ -837,6 +837,9 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.attachmentsFrom": "Anexos de",
     "admin.previewNotAvailable": "Visualização não disponível para este tipo de arquivo",
     "admin.downloadFile": "Baixar arquivo",
+    "admin.manageUsers": "Gerenciar Usuários",
+    "admin.noUsers": "Nenhum usuário encontrado",
+    "admin.newEmail": "Novo email",
 
     "alerts.vehicleStopped": "Veículo parado há {days} dias",
     "alerts.vehicleStoppedMessage": "{brand} {model} está no status \"{status}\" há {days} dias",
@@ -1682,6 +1685,9 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.attachmentsFrom": "Attachments from",
     "admin.previewNotAvailable": "Preview not available for this file type",
     "admin.downloadFile": "Download file",
+    "admin.manageUsers": "Manage Users",
+    "admin.noUsers": "No users found",
+    "admin.newEmail": "New email",
 
     "alerts.vehicleStopped": "Vehicle stopped for {days} days",
     "alerts.vehicleStoppedMessage": "{brand} {model} is in \"{status}\" status for {days} days",

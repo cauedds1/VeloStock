@@ -788,6 +788,22 @@ export default function AdminPanel() {
     attachments: Array<{ fileName: string; fileData: string; mimeType: string }>;
     userName: string;
   } | null>(null);
+  const [selectedCompanyUsers, setSelectedCompanyUsers] = useState<{
+    companyId: string;
+    companyName: string;
+  } | null>(null);
+  const [companyUsers, setCompanyUsers] = useState<Array<{
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    isActive: boolean;
+  }>>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [editingUserEmail, setEditingUserEmail] = useState<{ userId: string; currentEmail: string } | null>(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
   const justLoggedInRef = useRef(false);
 
   useEffect(() => {
@@ -1006,6 +1022,52 @@ export default function AdminPanel() {
       }
     } catch (error) {
       console.error("Erro ao atualizar status do bug:", error);
+    }
+  };
+
+  const handleOpenCompanyUsers = async (companyId: string, companyName: string) => {
+    setSelectedCompanyUsers({ companyId, companyName });
+    setLoadingUsers(true);
+    try {
+      const res = await fetch(`/api/admin/clientes/${companyId}/usuarios`, {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const users = await res.json();
+        setCompanyUsers(users);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    if (!editingUserEmail || !newEmail) return;
+    setSavingEmail(true);
+    try {
+      const res = await fetch(`/api/admin/usuarios/${editingUserEmail.userId}/email`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ novoEmail: newEmail }),
+      });
+
+      if (res.ok) {
+        setCompanyUsers(prev => prev.map(u => 
+          u.id === editingUserEmail.userId ? { ...u, email: newEmail } : u
+        ));
+        setEditingUserEmail(null);
+        setNewEmail("");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Erro ao alterar email");
+      }
+    } catch (error) {
+      console.error("Erro ao alterar email:", error);
+    } finally {
+      setSavingEmail(false);
     }
   };
 
@@ -1251,21 +1313,32 @@ export default function AdminPanel() {
                                   : "-"}
                               </td>
                               <td className="px-4 py-3">
-                                <Select
-                                  defaultValue={cliente.subscriptionStatus || "ativo"}
-                                  onValueChange={(novoStatus) =>
-                                    handleChangeStatus(cliente.empresaId, novoStatus)
-                                  }
-                                >
-                                  <SelectTrigger className="w-28 sm:w-32" data-testid={`select-status-${cliente.empresaId}`}>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="ativo">{t("admin.activate")}</SelectItem>
-                                    <SelectItem value="suspenso">{t("admin.suspend")}</SelectItem>
-                                    <SelectItem value="cancelado">{t("admin.cancel")}</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-2">
+                                  <Select
+                                    defaultValue={cliente.subscriptionStatus || "ativo"}
+                                    onValueChange={(novoStatus) =>
+                                      handleChangeStatus(cliente.empresaId, novoStatus)
+                                    }
+                                  >
+                                    <SelectTrigger className="w-28 sm:w-32" data-testid={`select-status-${cliente.empresaId}`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="ativo">{t("admin.activate")}</SelectItem>
+                                      <SelectItem value="suspenso">{t("admin.suspend")}</SelectItem>
+                                      <SelectItem value="cancelado">{t("admin.cancel")}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => handleOpenCompanyUsers(cliente.empresaId, cliente.nomeFantasia || "Empresa")}
+                                    title={t("admin.manageUsers")}
+                                    data-testid={`button-users-${cliente.empresaId}`}
+                                  >
+                                    <Users className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1641,6 +1714,108 @@ export default function AdminPanel() {
             </TabsContent>
           )}
         </Tabs>
+
+        {/* Dialog para gerenciar usuários da empresa */}
+        <Dialog open={!!selectedCompanyUsers} onOpenChange={(open) => {
+          if (!open) {
+            setSelectedCompanyUsers(null);
+            setCompanyUsers([]);
+            setEditingUserEmail(null);
+            setNewEmail("");
+          }
+        }}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {t("admin.manageUsers")}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedCompanyUsers?.companyName}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              {loadingUsers ? (
+                <div className="animate-pulse space-y-2">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-12 bg-muted rounded" />
+                  ))}
+                </div>
+              ) : companyUsers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {t("admin.noUsers")}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {companyUsers.map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{user.firstName} {user.lastName}</span>
+                            <Badge variant={user.isActive ? "default" : "secondary"} className="text-xs">
+                              {user.role}
+                            </Badge>
+                          </div>
+                          
+                          {editingUserEmail?.userId === user.id ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Input
+                                type="email"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                placeholder={t("admin.newEmail")}
+                                className="flex-1"
+                                data-testid={`input-new-email-${user.id}`}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={handleSaveEmail}
+                                disabled={savingEmail || !newEmail}
+                                data-testid={`button-save-email-${user.id}`}
+                              >
+                                {savingEmail ? "..." : <Check className="h-4 w-4" />}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingUserEmail(null);
+                                  setNewEmail("");
+                                }}
+                                data-testid={`button-cancel-email-${user.id}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              <span>{user.email}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2"
+                                onClick={() => {
+                                  setEditingUserEmail({ userId: user.id, currentEmail: user.email });
+                                  setNewEmail(user.email);
+                                }}
+                                data-testid={`button-edit-email-${user.id}`}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

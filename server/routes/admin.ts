@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "../db";
-import { companies, users, subscriptions, payments, vehicles, adminCredentials, bugReports } from "@shared/schema";
+import { companies, users, subscriptions, payments, vehicles, adminCredentials, bugReports, billsPayable } from "@shared/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -838,6 +838,97 @@ export async function registerAdminRoutes(app: Express) {
   });
 
   // ============================================
+  // LISTAR USUÁRIOS DE UMA EMPRESA
+  // ============================================
+  app.get("/api/admin/clientes/:companyId/usuarios", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+
+      const usuariosEmpresa = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+          isActive: users.isActive,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.empresaId, companyId))
+        .orderBy(desc(users.createdAt));
+
+      res.json(usuariosEmpresa.map(u => ({
+        ...u,
+        isActive: u.isActive === "true",
+      })));
+    } catch (error) {
+      console.error("Erro ao listar usuários da empresa:", error);
+      res.status(500).json({ error: "Erro ao listar usuários" });
+    }
+  });
+
+  // ============================================
+  // ALTERAR EMAIL DE USUÁRIO (ADMIN)
+  // ============================================
+  app.patch("/api/admin/usuarios/:userId/email", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { novoEmail } = req.body;
+
+      if (!novoEmail || !novoEmail.includes("@")) {
+        return res.status(400).json({ error: "Email inválido" });
+      }
+
+      // Verificar se o email já está em uso por outro usuário
+      const emailExistente = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, novoEmail))
+        .limit(1);
+
+      if (emailExistente.length > 0 && emailExistente[0].id !== userId) {
+        return res.status(400).json({ error: "Este email já está em uso por outro usuário" });
+      }
+
+      // Buscar usuário atual
+      const usuarioAtual = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (usuarioAtual.length === 0) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const emailAntigo = usuarioAtual[0].email;
+
+      // Atualizar email
+      const updated = await db
+        .update(users)
+        .set({ 
+          email: novoEmail,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      console.log(`[ADMIN] Email alterado: ${emailAntigo} -> ${novoEmail} (userId: ${userId})`);
+
+      res.json({
+        id: updated[0].id,
+        email: updated[0].email,
+        emailAntigo,
+        mensagem: "Email alterado com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao alterar email:", error);
+      res.status(500).json({ error: "Erro ao alterar email do usuário" });
+    }
+  });
+
+  // ============================================
   // LISTAR TODOS OS PAGAMENTOS
   // ============================================
   app.get("/api/admin/pagamentos", requireAdminAuth, async (req: any, res) => {
@@ -897,6 +988,8 @@ export async function registerAdminRoutes(app: Express) {
       const empresa = await db.select().from(subscriptions).where(eq(subscriptions.companyId, companyId)).limit(1);
       const subscriptionId = empresa[0]?.id || companyId;
 
+      const descricaoFinal = descricao || `Cobrança VeloStock - ${new Date().toLocaleDateString('pt-BR')}`;
+
       const novoPagamento = await db
         .insert(payments)
         .values({
@@ -905,10 +998,25 @@ export async function registerAdminRoutes(app: Express) {
           valor: String(valor),
           status: "pendente",
           dataVencimento: new Date(dataVencimento),
-          descricao: descricao || `Cobrança ${new Date().toLocaleDateString('pt-BR')}`,
+          descricao: descricaoFinal,
           metodo: metodo || null,
         })
         .returning();
+
+      // Criar conta a pagar automaticamente no painel do cliente
+      await db.insert(billsPayable).values({
+        empresaId: companyId,
+        tipo: "a_pagar",
+        descricao: descricaoFinal,
+        categoria: "Assinatura VeloStock",
+        valor: String(valor),
+        dataVencimento: new Date(dataVencimento),
+        status: "pendente",
+        observacoes: `Cobrança gerada automaticamente pelo sistema VeloStock. ID do pagamento: ${novoPagamento[0].id}`,
+        criadoPor: "admin_system",
+      });
+
+      console.log(`[ADMIN] Pagamento criado para empresa ${companyId}: R$ ${valor} - Conta a pagar também criada`);
 
       res.json(novoPagamento[0]);
     } catch (error) {
