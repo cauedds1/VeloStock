@@ -1,0 +1,76 @@
+
+Jermaine
+Monday, 15 December 11:50 AM
+Hi Cauê , very interested in the site, could I get access to the demo site please?
+
+Was this built yourself from the ground up or based on an existing platform/template?
+
+Many thanks
+
+
+Cauê Dalberto
+Monday, 15 December 12:42 PM
+Hello Jermaine,
+I created the website entirely by myself from scratch, with the help of AI for code maintenance.
+
+
+Cauê Dalberto
+Monday, 15 December 1:22 PM
+I work at a car dealership and decided to build a system with features that most existing solutions don’t offer, but that add significant value to daily dealership operations.
+
+
+Cauê Dalberto
+Monday, 15 December 1:22 PM
+The system was developed with clean and well-organized code, with the assistance of artificial intelligence, which ensures easier maintenance and faster implementation of new features.
+
+
+Cauê Dalberto
+Monday, 15 December 1:22 PM
+At this stage, the platform is around 99% complete. Any required adjustments or improvements can be implemented very quickly, allowing the system and overall user experience to continuously evolve.
+
+
+Jermaine
+Monday, 15 December 1:24 PM
+thanks for the response, are there any quick ways to implement a translation on the user interface? eg all the menus and options don't currently translate
+
+
+Cauê Dalberto
+Monday, 15 December 1:30 PM
+Were you able to find the option highlighted in the image?
+
+capp.png
+180 KB
+
+Cauê Dalberto
+Monday, 15 December 1:33 PM
+Go to Vehicles > Filters > All statuses to view all vehicles.
+Vehicles are organized by status (ready for sale, under repair, cleaning, etc.) for easier management, but you can display all statuses if needed
+
+
+Cauê Dalberto
+Monday, 15 December 1:34 PM
+I apologize for the areas that are not yet translated. I’ll fix this as quickly as possible.
+
+
+Jermaine
+Monday, 15 December 1:35 PM
+I Was, yes, thanks - just some of the menus such as he below don't translate
+
+Screenshot_2025-12-15_103445.png
+51.9 KB
+
+Jermaine
+Monday, 15 December 1:35 PM
+ah no problem was just wondering if I was missing an option.
+
+Did find the vehicle, I didn't realise there was a filter on, thanks :)
+
+
+Cauê Dalberto
+Monday, 15 December 1:58 PM
+Glad you managed to find your way. In the meantime, I’m finishing up some translation adjustments and will update the system shortly.
+
+
+Cauê Dalberto
+Monday, 15 December 2:43 PM
+Hi, I’ve fixed the translation issue. You can access the website again now. The AI text generation has also been adjusted to provide responses in English. If you have any questions, feel free to reach out.

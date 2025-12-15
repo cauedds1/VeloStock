@@ -167,6 +167,41 @@ export async function registerAdminRoutes(app: Express) {
     });
   });
 
+  // Atualizar email do admin logado
+  app.patch("/api/admin/update-email", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      const adminId = req.session.adminId;
+
+      if (!email || !email.includes("@")) {
+        return res.status(400).json({ error: "Email inválido" });
+      }
+
+      // Verificar se o email já está em uso por outro admin
+      const existingAdmin = await db
+        .select()
+        .from(adminCredentials)
+        .where(eq(adminCredentials.email, email))
+        .limit(1);
+
+      if (existingAdmin.length > 0 && existingAdmin[0].id !== adminId) {
+        return res.status(400).json({ error: "Este email já está em uso" });
+      }
+
+      await db
+        .update(adminCredentials)
+        .set({ email })
+        .where(eq(adminCredentials.id, adminId));
+
+      req.session.adminEmail = email;
+
+      res.json({ success: true, email });
+    } catch (error) {
+      console.error("Erro ao atualizar email:", error);
+      res.status(500).json({ error: "Erro ao atualizar email" });
+    }
+  });
+
   // ============================================
   // GERENCIAMENTO DE USUÁRIOS ADMIN
   // ============================================

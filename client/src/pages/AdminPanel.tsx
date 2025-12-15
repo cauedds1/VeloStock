@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, Language } from "@/lib/i18n";
+import { Globe } from "lucide-react";
 
 interface DashboardStats {
   totalClientes: number;
@@ -1525,51 +1526,7 @@ export default function AdminPanel() {
           </TabsContent>
 
           <TabsContent value="config" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("admin.systemSettings")}</CardTitle>
-                <CardDescription>{t("admin.manageSystemSettingsDesc")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4">
-                  <div className="p-4 border rounded-lg">
-                    <h3 className="font-medium mb-2">{t("admin.adminInfo")}</h3>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="text-muted-foreground">{t("admin.name")}:</span> {admin.nome}</p>
-                      <p><span className="text-muted-foreground">Email:</span> {admin.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-4 border rounded-lg">
-                    <h3 className="font-medium mb-2">{t("admin.generalStats")}</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <p><span className="text-muted-foreground">{t("admin.totalCompanies")}:</span> {stats?.totalClientes || 0}</p>
-                      <p><span className="text-muted-foreground">{t("admin.activeCompanies")}:</span> {stats?.clientesAtivos || 0}</p>
-                      <p><span className="text-muted-foreground">{t("admin.totalVehicles")}:</span> {stats?.totalVeiculos || 0}</p>
-                      <p><span className="text-muted-foreground">{t("admin.totalUsers")}:</span> {stats?.totalUsuarios || 0}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-4 border rounded-lg">
-                    <h3 className="font-medium mb-2">{t("admin.availablePlans")}</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>{t("admin.planBasic")}</span>
-                        <span className="text-muted-foreground">{t("admin.essentialFeatures")}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{t("admin.planPro")}</span>
-                        <span className="text-muted-foreground">{t("admin.advancedFeaturesAI")}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{t("admin.planEnterprise")}</span>
-                        <span className="text-muted-foreground">{t("admin.allPlusPriority")}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AdminConfigTab admin={admin} stats={stats ?? null} onAdminUpdate={(updatedAdmin) => setAdmin(updatedAdmin)} />
           </TabsContent>
 
           <TabsContent value="bugs" className="space-y-6">
@@ -1818,6 +1775,185 @@ export default function AdminPanel() {
         </Dialog>
       </main>
     </div>
+  );
+}
+
+function AdminConfigTab({ admin, stats, onAdminUpdate }: { 
+  admin: Admin; 
+  stats: DashboardStats | null;
+  onAdminUpdate: (admin: Admin) => void;
+}) {
+  const { t, language, setLanguage } = useI18n();
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState(admin.email);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState(false);
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value as Language);
+  };
+
+  const handleEmailUpdate = async () => {
+    if (!newEmail || newEmail === admin.email) {
+      setEditingEmail(false);
+      return;
+    }
+
+    setEmailLoading(true);
+    setEmailError("");
+    setEmailSuccess(false);
+
+    try {
+      const res = await fetch("/api/admin/update-email", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: newEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setEmailError(data.error || t("admin.errorUpdatingEmail"));
+        return;
+      }
+
+      onAdminUpdate({ ...admin, email: newEmail });
+      setEmailSuccess(true);
+      setEditingEmail(false);
+      setTimeout(() => setEmailSuccess(false), 3000);
+    } catch (err) {
+      setEmailError(t("admin.connectionError"));
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("admin.systemSettings")}</CardTitle>
+        <CardDescription>{t("admin.manageSystemSettingsDesc")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4">
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-medium mb-4 flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              {t("admin.languageSettings")}
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">{t("admin.systemLanguage")}</p>
+                  <p className="text-xs text-muted-foreground">{t("admin.languageDesc")}</p>
+                </div>
+                <Select value={language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="w-40" data-testid="select-language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pt-BR">Português (BR)</SelectItem>
+                    <SelectItem value="en-US">English (US)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-medium mb-4">{t("admin.adminInfo")}</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("admin.name")}:</span>
+                <span className="text-sm font-medium">{admin.nome}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Email:</span>
+                {editingEmail ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="h-8 w-48"
+                      data-testid="input-new-admin-email-config"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleEmailUpdate}
+                      disabled={emailLoading}
+                      data-testid="button-save-email"
+                    >
+                      {emailLoading ? "..." : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingEmail(false);
+                        setNewEmail(admin.email);
+                        setEmailError("");
+                      }}
+                      data-testid="button-cancel-email"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{admin.email}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingEmail(true)}
+                      data-testid="button-edit-admin-email"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              {emailError && (
+                <p className="text-sm text-red-500">{emailError}</p>
+              )}
+              {emailSuccess && (
+                <p className="text-sm text-green-500">{t("admin.emailUpdated")}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-medium mb-2">{t("admin.generalStats")}</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <p><span className="text-muted-foreground">{t("admin.totalCompanies")}:</span> {stats?.totalClientes || 0}</p>
+              <p><span className="text-muted-foreground">{t("admin.activeCompanies")}:</span> {stats?.clientesAtivos || 0}</p>
+              <p><span className="text-muted-foreground">{t("admin.totalVehicles")}:</span> {stats?.totalVeiculos || 0}</p>
+              <p><span className="text-muted-foreground">{t("admin.totalUsers")}:</span> {stats?.totalUsuarios || 0}</p>
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-medium mb-2">{t("admin.availablePlans")}</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>{t("admin.planBasic")}</span>
+                <span className="text-muted-foreground">{t("admin.essentialFeatures")}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t("admin.planPro")}</span>
+                <span className="text-muted-foreground">{t("admin.advancedFeaturesAI")}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t("admin.planEnterprise")}</span>
+                <span className="text-muted-foreground">{t("admin.allPlusPriority")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
