@@ -26,7 +26,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
   const [targetMargin, setTargetMargin] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   
   const versionsMutation = useFipeVehicleVersions(
     vehicleData.brand,
@@ -87,6 +87,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
         body: JSON.stringify({
           fipePrice: fipeValue || undefined,
           targetMarginPercent: parseInt(targetMargin) || 20,
+          language,
         }),
       });
 

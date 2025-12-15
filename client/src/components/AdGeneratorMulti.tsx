@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Copy, Check, Loader2, Instagram, Facebook, MessageSquare, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 
 interface AdGeneratorMultiProps {
   vehicleId: string;
@@ -43,6 +44,7 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedPlatform, setCopiedPlatform] = useState<Platform | null>(null);
   const { toast } = useToast();
+  const { t, language } = useI18n();
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -51,6 +53,7 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
       const response = await fetch(`/api/vehicles/${vehicleId}/generate-ad-multi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language }),
       });
 
       if (!response.ok) {
@@ -62,14 +65,14 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
       setGeneratedAds(data);
 
       toast({
-        title: "Anúncios gerados",
-        description: "Textos criados para todas as plataformas.",
+        title: t("adGenerator.generatedTitle"),
+        description: t("adGenerator.generatedDesc"),
       });
     } catch (error) {
       console.error("Erro:", error);
       toast({
-        title: "Erro ao gerar anúncios",
-        description: error instanceof Error ? error.message : "Tente novamente.",
+        title: t("adGenerator.errorTitle"),
+        description: error instanceof Error ? error.message : t("adGenerator.errorDesc"),
         variant: "destructive",
       });
     } finally {
@@ -83,8 +86,8 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
     await navigator.clipboard.writeText(generatedAds[platform]);
     setCopiedPlatform(platform);
     toast({
-      title: "Copiado",
-      description: `Texto do ${platformConfig[platform].label} copiado.`,
+      title: t("adGenerator.copied"),
+      description: t("adGenerator.copiedDesc", { platform: platformConfig[platform].label }),
     });
     setTimeout(() => setCopiedPlatform(null), 2000);
   };
@@ -92,9 +95,9 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
   return (
     <Card className="p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-card-foreground">Gerador de Anúncios Multi-Plataforma</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">{t("adGenerator.title")}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Crie textos otimizados para Instagram, Facebook, OLX e WhatsApp
+          {t("adGenerator.description")}
         </p>
       </div>
 
@@ -109,12 +112,12 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
           {isGenerating ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Gerando anúncios...
+              {t("adGenerator.generating")}
             </>
           ) : (
             <>
               <Sparkles className="mr-2 h-5 w-5" />
-              Gerar Anúncios para Todas Plataformas
+              {t("adGenerator.generateButton")}
             </>
           )}
         </Button>
@@ -169,12 +172,12 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
                       {copiedPlatform === platform ? (
                         <>
                           <Check className="mr-2 h-4 w-4" />
-                          Copiado
+                          {t("adGenerator.copied")}
                         </>
                       ) : (
                         <>
                           <Copy className="mr-2 h-4 w-4" />
-                          Copiar {config.label}
+                          {t("adGenerator.copy")} {config.label}
                         </>
                       )}
                     </Button>
