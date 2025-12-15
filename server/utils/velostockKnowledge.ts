@@ -130,15 +130,122 @@ O VeloStock é um sistema SaaS completo de gestão para revendas de veículos (c
 6. **Equipe Alinhada**: Todos sabem o status de cada veículo
 7. **Segurança**: Permissões por papel garantem privacidade dos dados
 
-### DIFERENCIAIS COMPETITIVOS
-- Interface moderna estilo Kanban (inspirada no Trello/Notion)
-- IA integrada em múltiplos pontos
-- Sistema bilíngue completo
-- Multi-tenant white-label
-- Checklist de entrada completo
-- Gestão de localização física
-- Aprovação de custos
-- Comissões automáticas
+---
+
+## GUIAS ESTRATÉGICOS POR PAPEL DE USUÁRIO
+
+### GUIA DO VENDEDOR - FOCO EM CONVERSÃO
+
+**Seu dia a dia:**
+1. Verificar seus leads pendentes logo cedo
+2. Fazer follow-up dos leads quentes (contato < 2 dias)
+3. Responder leads novos rapidamente (velocidade = conversão)
+4. Atualizar status das negociações
+5. Verificar veículos prontos para ofertar
+
+**Dicas de mensagens para clientes:**
+- **Primeiro contato**: "Olá [Nome]! Vi que você se interessou pelo [Veículo]. Está disponível e posso te enviar mais fotos/vídeos. Qual horário seria bom para conversarmos?"
+- **Follow-up após visita**: "Olá [Nome]! Foi um prazer te receber. O [Veículo] continua reservado para você. Posso ajudar com algo mais?"
+- **Reativação de lead frio**: "Olá [Nome]! Lembrei de você. Temos novidades no estoque que combinam com o que você procurava. Posso te mostrar?"
+- **Negociação de preço**: "Entendo sua proposta. Deixa eu verificar internamente o melhor que posso fazer e te retorno ainda hoje."
+- **Fechamento**: "Ótima escolha! Vou preparar toda a documentação. Quando você consegue vir para finalizarmos?"
+
+**Métricas que você deve acompanhar:**
+- Taxa de conversão (leads → vendas)
+- Tempo médio de resposta aos leads
+- Leads quentes vs frios
+- Suas vendas do mês
+
+### GUIA DO PROPRIETÁRIO - FOCO EM CONTROLE E LUCRO
+
+**Seu dia a dia:**
+1. Verificar resumo financeiro (entradas x saídas)
+2. Aprovar custos pendentes
+3. Verificar contas vencendo
+4. Analisar margem dos veículos
+5. Acompanhar performance da equipe
+
+**Indicadores importantes:**
+- **Margem por veículo**: Preço venda - (Compra + Custos) = Lucro
+- **Tempo médio em estoque**: Carros parados = dinheiro parado
+- **Custo operacional mensal**: Aluguel + funcionários + despesas fixas
+- **Ticket médio**: Valor médio das vendas
+- **ROI por veículo**: Quanto cada carro retornou de lucro
+
+**Dicas de gestão financeira:**
+- Defina limite de custo por veículo (ex: máximo 15% do valor de compra)
+- Acompanhe veículos há mais de 60 dias em estoque (considere promoção)
+- Mantenha reserva de caixa para oportunidades
+- Compare custo real vs estimado para melhorar precificação
+
+**Perguntas que você deveria fazer regularmente:**
+- "Quais veículos estão com margem negativa?"
+- "Quanto gastamos em custos este mês?"
+- "Quais contas vencem esta semana?"
+- "Qual vendedor está performando melhor?"
+- "Quantos dias em média os carros ficam parados?"
+
+### GUIA DO GERENTE - FOCO EM EQUIPE E OPERAÇÃO
+
+**Seu dia a dia:**
+1. Verificar custos pendentes de aprovação
+2. Acompanhar leads da equipe
+3. Verificar veículos em preparação (evitar gargalos)
+4. Resolver problemas/observações pendentes
+5. Apoiar vendedores em negociações difíceis
+
+**Gestão da equipe:**
+- Distribua leads de forma equilibrada
+- Acompanhe tempo de resposta de cada vendedor
+- Identifique vendedores que precisam de coaching
+- Celebre vendas e resultados positivos
+
+**Otimização de processos:**
+- Veículos não devem ficar mais de 3 dias em preparação
+- Custos devem ser aprovados no mesmo dia
+- Leads novos devem ser contatados em até 2 horas
+- Problemas devem ser resolvidos em até 48 horas
+
+### GUIA DO MOTORISTA - FOCO EM LOGÍSTICA
+
+**Seu dia a dia:**
+1. Verificar veículos para transportar
+2. Atualizar localização ao mover veículos
+3. Reportar qualquer problema encontrado
+
+**Boas práticas:**
+- Sempre atualize a localização no sistema ao mover um veículo
+- Tire foto se encontrar algum problema novo
+- Comunique atrasos com antecedência
+
+---
+
+## DICAS ESTRATÉGICAS PROATIVAS
+
+### PARA AUMENTAR VENDAS
+1. Responda leads em menos de 5 minutos (aumenta 21x a chance de conversão)
+2. Faça follow-up em até 48 horas após primeiro contato
+3. Use fotos de qualidade nos anúncios
+4. Mantenha descrições completas e honestas
+5. Ofereça test-drive sempre que possível
+
+### PARA REDUZIR CUSTOS
+1. Negocie com fornecedores fixos (oficinas, lavanderias)
+2. Agrupe serviços similares para desconto por volume
+3. Evite reparos desnecessários - foque no essencial
+4. Compare orçamentos antes de aprovar custos altos
+
+### PARA MELHORAR ORGANIZAÇÃO
+1. Mantenha o Kanban sempre atualizado
+2. Não deixe veículos em "preparação" por mais de 1 semana
+3. Complete checklists de entrada no mesmo dia
+4. Resolva observações pendentes diariamente
+
+### PARA GESTÃO DE ESTOQUE
+1. Veículos populares: priorize preparação
+2. Veículos há +60 dias: considere reduzir preço
+3. Veículos há +90 dias: ação urgente necessária
+4. Mantenha mix equilibrado (populares + premium)
 `,
 
   "en-US": `
@@ -272,15 +379,124 @@ VeloStock is a complete SaaS management system for vehicle dealerships (cars, mo
 6. **Aligned Team**: Everyone knows the status of each vehicle
 7. **Security**: Role-based permissions ensure data privacy
 
-### COMPETITIVE DIFFERENTIATORS
-- Modern Kanban-style interface (inspired by Trello/Notion)
-- AI integrated at multiple points
-- Complete bilingual system
-- Multi-tenant white-label
-- Complete entry checklist
-- Physical location management
-- Cost approval workflow
-- Automatic commissions
+---
+
+## STRATEGIC GUIDES BY USER ROLE
+
+### SELLER GUIDE - FOCUS ON CONVERSION
+
+**Your daily routine:**
+1. Check your pending leads first thing in the morning
+2. Follow up on hot leads (contact < 2 days)
+3. Respond to new leads quickly (speed = conversion)
+4. Update negotiation status
+5. Check vehicles ready to offer
+
+**Tips for customer messages:**
+- **First contact**: "Hello [Name]! I saw you're interested in the [Vehicle]. It's available and I can send you more photos/videos. What time would be good to chat?"
+- **Post-visit follow-up**: "Hello [Name]! It was a pleasure meeting you. The [Vehicle] is still reserved for you. Can I help with anything else?"
+- **Cold lead reactivation**: "Hello [Name]! I remembered you. We have new arrivals that match what you were looking for. Want me to show you?"
+- **Price negotiation**: "I understand your offer. Let me check internally for the best I can do and get back to you today."
+- **Closing**: "Great choice! I'll prepare all the documentation. When can you come to finalize?"
+
+**Metrics you should track:**
+- Conversion rate (leads → sales)
+- Average response time to leads
+- Hot vs cold leads
+- Your monthly sales
+
+### OWNER GUIDE - FOCUS ON CONTROL AND PROFIT
+
+**Your daily routine:**
+1. Check financial summary (income vs expenses)
+2. Approve pending costs
+3. Check upcoming due bills
+4. Analyze vehicle margins
+5. Monitor team performance
+
+**Important indicators:**
+- **Margin per vehicle**: Sale price - (Purchase + Costs) = Profit
+- **Average time in stock**: Idle cars = idle money
+- **Monthly operational cost**: Rent + employees + fixed expenses
+- **Average ticket**: Average sale value
+- **ROI per vehicle**: How much profit each car returned
+
+**Financial management tips:**
+- Set cost limit per vehicle (e.g., max 15% of purchase value)
+- Track vehicles over 60 days in stock (consider promotion)
+- Keep cash reserve for opportunities
+- Compare actual vs estimated costs to improve pricing
+
+**Questions you should ask regularly:**
+- "Which vehicles have negative margins?"
+- "How much did we spend on costs this month?"
+- "What bills are due this week?"
+- "Which seller is performing best?"
+- "How many days on average do cars sit?"
+
+### MANAGER GUIDE - FOCUS ON TEAM AND OPERATIONS
+
+**Your daily routine:**
+1. Check pending cost approvals
+2. Monitor team leads
+3. Check vehicles in preparation (avoid bottlenecks)
+4. Resolve pending issues/observations
+5. Support sellers in difficult negotiations
+
+**Team management:**
+- Distribute leads evenly
+- Track each seller's response time
+- Identify sellers needing coaching
+- Celebrate sales and positive results
+
+**Process optimization:**
+- Vehicles should not stay in preparation for more than 3 days
+- Costs should be approved same day
+- New leads should be contacted within 2 hours
+- Issues should be resolved within 48 hours
+
+### DRIVER GUIDE - FOCUS ON LOGISTICS
+
+**Your daily routine:**
+1. Check vehicles to transport
+2. Update location when moving vehicles
+3. Report any problems found
+
+**Best practices:**
+- Always update location in the system when moving a vehicle
+- Take photos if you find any new problem
+- Communicate delays in advance
+
+---
+
+## PROACTIVE STRATEGIC TIPS
+
+### TO INCREASE SALES
+1. Respond to leads within 5 minutes (21x higher conversion chance)
+2. Follow up within 48 hours of first contact
+3. Use quality photos in ads
+4. Keep descriptions complete and honest
+5. Offer test drives whenever possible
+
+### TO REDUCE COSTS
+1. Negotiate with regular suppliers (workshops, car washes)
+2. Bundle similar services for volume discounts
+3. Avoid unnecessary repairs - focus on essentials
+4. Compare quotes before approving high costs
+
+### TO IMPROVE ORGANIZATION
+1. Keep the Kanban always updated
+2. Don't leave vehicles in "preparation" for more than 1 week
+3. Complete entry checklists same day
+4. Resolve pending observations daily
+
+### TO MANAGE INVENTORY
+1. Popular vehicles: prioritize preparation
+2. Vehicles 60+ days: consider price reduction
+3. Vehicles 90+ days: urgent action needed
+4. Maintain balanced mix (popular + premium)
+
+---
 
 ### FREQUENTLY ASKED QUESTIONS
 
