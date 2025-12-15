@@ -7,6 +7,7 @@ import { Sparkles, TrendingUp, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFipeVehicleVersions, useFipePriceByVersion } from "@/hooks/use-fipe";
 import type { FipeYear } from "@/hooks/use-fipe";
+import { useI18n } from "@/lib/i18n";
 
 interface PriceSuggestionProps {
   vehicleId: string;
@@ -25,6 +26,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
   const [targetMargin, setTargetMargin] = useState("20");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useI18n();
   
   const versionsMutation = useFipeVehicleVersions(
     vehicleData.brand,
@@ -73,8 +75,8 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
 
       // Chamar IA para sugerir preço IMEDIATAMENTE (não aguarda FIPE)
       toast({
-        title: "Gerando sugestão...",
-        description: "A IA está analisando custos e margem desejada.",
+        title: t("priceSuggestion.generatingTitle"),
+        description: t("priceSuggestion.generatingDesc"),
       });
 
       const response = await fetch(`/api/vehicles/${vehicleId}/suggest-price-dynamic`, {
@@ -92,11 +94,11 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
         const errorData = await response.json().catch(() => ({}));
         
         if (response.status === 400 && errorData.error?.includes("API key")) {
-          throw new Error("A chave da API da OpenAI não está configurada.");
+          throw new Error(t("priceSuggestion.apiKeyError"));
         } else if (response.status === 429) {
-          throw new Error("Limite de uso da API excedido. Tente mais tarde.");
+          throw new Error(t("priceSuggestion.rateLimitError"));
         } else {
-          throw new Error(errorData.error || "Erro ao gerar sugestão");
+          throw new Error(errorData.error || t("priceSuggestion.genericError"));
         }
       }
 
@@ -109,17 +111,17 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
       setReasoning(data.reasoning || "");
       
       toast({
-        title: "Sugestão gerada!",
-        description: `Preço sugerido: R$ ${priceValue.toFixed(2)}`,
+        title: t("priceSuggestion.generatedTitle"),
+        description: t("priceSuggestion.generatedDesc", { price: priceValue.toFixed(2) }),
       });
     } catch (error) {
       console.error("Erro ao sugerir preço:", error);
       const errorMessage = error instanceof Error 
         ? error.message 
-        : "Não foi possível gerar a sugestão. Tente novamente.";
+        : t("priceSuggestion.genericError");
       
       toast({
-        title: "Erro ao sugerir preço",
+        title: t("priceSuggestion.errorTitle"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -133,10 +135,10 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          Sugestão de Preço com IA
+          {t("priceSuggestion.title")}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Análise inteligente baseada em custos, margem desejada e preço FIPE de referência
+          {t("priceSuggestion.description")}
         </p>
       </div>
 
@@ -158,7 +160,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="targetMargin">Margem de Lucro Desejada (%)</Label>
+          <Label htmlFor="targetMargin">{t("priceSuggestion.targetMargin")}</Label>
           <Input
             id="targetMargin"
             type="number"
@@ -169,7 +171,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
             max="100"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Padrão: 20% de margem sobre o custo total
+            {t("priceSuggestion.marginDefault")}
           </p>
         </div>
 
@@ -182,12 +184,12 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {versionsMutation.isPending || priceMutation.isPending ? "Consultando FIPE..." : "Gerando sugestão..."}
+              {versionsMutation.isPending || priceMutation.isPending ? t("priceSuggestion.consultingFipe") : t("priceSuggestion.generatingSuggestion")}
             </>
           ) : (
             <>
               <TrendingUp className="mr-2 h-5 w-5" />
-              Sugerir Preço de Venda
+              {t("priceSuggestion.suggestPrice")}
             </>
           )}
         </Button>
@@ -195,7 +197,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
         {fipePrice && (
           <div className="p-4 bg-muted rounded-md">
             <p className="text-sm font-medium text-muted-foreground">
-              Preço de Referência FIPE
+              {t("priceSuggestion.fipeReferencePrice")}
             </p>
             <p className="text-2xl font-bold text-foreground">{fipePrice}</p>
           </div>
@@ -205,7 +207,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
           <div className="space-y-3">
             <div className="p-4 bg-primary/10 rounded-md border border-primary/20">
               <p className="text-sm font-medium text-muted-foreground">
-                Preço Sugerido pela IA
+                {t("priceSuggestion.aiSuggestedPrice")}
               </p>
               <p className="text-3xl font-bold text-primary">
                 R$ {parseFloat(suggestedPrice).toLocaleString("pt-BR", {
@@ -218,7 +220,7 @@ export function PriceSuggestion({ vehicleId, vehicleData, fipeReferencePrice }: 
             {reasoning && (
               <div className="p-4 bg-muted rounded-md">
                 <p className="text-sm font-medium text-muted-foreground mb-2">
-                  Justificativa
+                  {t("priceSuggestion.reasoning")}
                 </p>
                 <p className="text-sm text-foreground whitespace-pre-wrap">
                   {reasoning}

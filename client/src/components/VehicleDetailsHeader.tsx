@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, MapPin } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface VehicleDetailsHeaderProps {
   image: string;
@@ -33,8 +34,10 @@ export function VehicleDetailsHeader({
   onEdit,
   onChangeLocation,
 }: VehicleDetailsHeaderProps) {
+  const { t } = useI18n();
   const statusColors: Record<string, string> = {
     "Entrada": "bg-blue-600",
+    "Em Preparação": "bg-yellow-600",
     "Em Reparos": "bg-amber-600",
     "Em Higienização": "bg-cyan-600",
     "Pronto para Venda": "bg-green-600",
@@ -57,7 +60,7 @@ export function VehicleDetailsHeader({
             data-testid="button-back"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
+            {t("common.back")}
           </Button>
           <div className="flex gap-2">
             {onChangeLocation && (
@@ -68,7 +71,7 @@ export function VehicleDetailsHeader({
                 data-testid="button-change-location"
               >
                 <MapPin className="mr-2 h-4 w-4" />
-                Mudar Localização
+                {t("vehicleHeader.changeLocation")}
               </Button>
             )}
             <Button
@@ -78,7 +81,7 @@ export function VehicleDetailsHeader({
               data-testid="button-edit"
             >
               <Edit className="mr-2 h-4 w-4" />
-              Editar
+              {t("common.edit")}
             </Button>
           </div>
         </div>
@@ -98,21 +101,21 @@ export function VehicleDetailsHeader({
                 {brand} {model}
               </h1>
               <Badge className={`${statusColor} text-white border-0`}>
-                {displayStatus}
+                {statusColors[displayStatus] ? t(`status.${displayStatus}`) : displayStatus}
               </Badge>
             </div>
             
             <div className="flex items-center gap-6 text-sm mb-1">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Ano:</span>
+                <span className="text-muted-foreground">{t("vehicles.year")}:</span>
                 <span className="font-semibold text-card-foreground">{year}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Placa:</span>
+                <span className="text-muted-foreground">{t("vehicles.plate")}:</span>
                 <span className="font-semibold text-card-foreground">{plate}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Cor:</span>
+                <span className="text-muted-foreground">{t("vehicles.color")}:</span>
                 <span className="font-semibold text-card-foreground">{color}</span>
               </div>
             </div>

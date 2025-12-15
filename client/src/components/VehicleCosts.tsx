@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useI18n } from "@/lib/i18n";
 
 interface Cost {
   id: string;
@@ -28,6 +29,7 @@ interface VehicleCostsProps {
 }
 
 export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }: VehicleCostsProps) {
+  const { t } = useI18n();
   const total = costs.reduce((sum, cost) => sum + cost.value, 0);
 
   const formatCurrency = (value: number) =>
@@ -50,7 +52,7 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }
   return (
     <Card className="p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-card-foreground">Custos de Preparação</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">{t("vehicleCosts.preparationCosts")}</h3>
         {addCostTrigger}
       </div>
 
@@ -58,12 +60,12 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Pagamento</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              {(onEditCost || onDeleteCost) && <TableHead className="w-[120px]">Ações</TableHead>}
+              <TableHead>{t("common.category")}</TableHead>
+              <TableHead>{t("common.description")}</TableHead>
+              <TableHead>{t("common.date")}</TableHead>
+              <TableHead>{t("vehicleCosts.payment")}</TableHead>
+              <TableHead className="text-right">{t("common.value")}</TableHead>
+              {(onEditCost || onDeleteCost) && <TableHead className="w-[120px]">{t("common.actions")}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -78,8 +80,8 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }
                 <TableCell className="text-muted-foreground">{cost.date}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {cost.paymentMethod === "Outra Pessoa" && cost.paidBy 
-                    ? `${cost.paymentMethod} (${cost.paidBy})`
-                    : cost.paymentMethod || "Cartão Loja"}
+                    ? `${t("vehicleCosts.otherPerson")} (${cost.paidBy})`
+                    : cost.paymentMethod || t("vehicleCosts.storeCard")}
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">
                   {formatCurrency(cost.value)}
@@ -92,7 +94,7 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }
                           variant="ghost"
                           size="sm"
                           onClick={() => onEditCost(cost)}
-                          title="Editar custo"
+                          title={t("vehicleCosts.editCost")}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -102,7 +104,7 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }
                           variant="ghost"
                           size="sm"
                           onClick={() => onDeleteCost(cost.id)}
-                          title="Excluir custo"
+                          title={t("vehicleCosts.deleteCost")}
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -119,7 +121,7 @@ export function VehicleCosts({ costs, addCostTrigger, onEditCost, onDeleteCost }
 
       <div className="mt-6 flex justify-end border-t border-border pt-4">
         <div className="text-right">
-          <p className="text-sm font-medium text-muted-foreground">Custo Total de Preparação</p>
+          <p className="text-sm font-medium text-muted-foreground">{t("vehicleCosts.totalPreparationCost")}</p>
           <p className="mt-1 text-2xl font-bold tabular-nums text-primary">
             {formatCurrency(total)}
           </p>
