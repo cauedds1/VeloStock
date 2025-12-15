@@ -202,6 +202,74 @@ export async function registerAdminRoutes(app: Express) {
     }
   });
 
+  // Atualizar nome do admin logado
+  app.patch("/api/admin/update-name", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { nome } = req.body;
+      const adminId = req.session.adminId;
+
+      if (!nome || nome.trim().length < 2) {
+        return res.status(400).json({ error: "Nome inválido" });
+      }
+
+      await db
+        .update(adminCredentials)
+        .set({ nome: nome.trim() })
+        .where(eq(adminCredentials.id, adminId));
+
+      res.json({ success: true, nome: nome.trim() });
+    } catch (error) {
+      console.error("Erro ao atualizar nome:", error);
+      res.status(500).json({ error: "Erro ao atualizar nome" });
+    }
+  });
+
+  // Atualizar senha do admin logado
+  app.patch("/api/admin/update-password", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const adminId = req.session.adminId;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Preencha todos os campos" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "A nova senha deve ter pelo menos 6 caracteres" });
+      }
+
+      // Buscar admin atual
+      const admin = await db
+        .select()
+        .from(adminCredentials)
+        .where(eq(adminCredentials.id, adminId))
+        .limit(1);
+
+      if (admin.length === 0) {
+        return res.status(404).json({ error: "Admin não encontrado" });
+      }
+
+      // Verificar senha atual
+      const isValidPassword = await bcrypt.compare(currentPassword, admin[0].passwordHash);
+      if (!isValidPassword) {
+        return res.status(400).json({ error: "Senha atual incorreta" });
+      }
+
+      // Hash da nova senha
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await db
+        .update(adminCredentials)
+        .set({ passwordHash: hashedPassword })
+        .where(eq(adminCredentials.id, adminId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Erro ao atualizar senha:", error);
+      res.status(500).json({ error: "Erro ao atualizar senha" });
+    }
+  });
+
   // ============================================
   // GERENCIAMENTO DE USUÁRIOS ADMIN
   // ============================================

@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useI18n, Language } from "@/lib/i18n";
 import { Globe } from "lucide-react";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface DashboardStats {
   totalClientes: number;
@@ -1097,16 +1098,19 @@ export default function AdminPanel() {
               {t("admin.hello")}, {admin.nome}
             </p>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            data-testid="button-admin-logout"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("auth.logout")}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              data-testid="button-admin-logout"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("auth.logout")}</span>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -1783,16 +1787,18 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
   stats: DashboardStats | null;
   onAdminUpdate: (admin: Admin) => void;
 }) {
-  const { t, language, setLanguage } = useI18n();
+  const { t } = useI18n();
   const [editingEmail, setEditingEmail] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [editingPassword, setEditingPassword] = useState(false);
   const [newEmail, setNewEmail] = useState(admin.email);
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [emailSuccess, setEmailSuccess] = useState(false);
-
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value as Language);
-  };
+  const [newName, setNewName] = useState(admin.nome);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleEmailUpdate = async () => {
     if (!newEmail || newEmail === admin.email) {
@@ -1800,9 +1806,8 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
       return;
     }
 
-    setEmailLoading(true);
-    setEmailError("");
-    setEmailSuccess(false);
+    setLoading(true);
+    setError("");
 
     try {
       const res = await fetch("/api/admin/update-email", {
@@ -1815,18 +1820,100 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
       const data = await res.json();
 
       if (!res.ok) {
-        setEmailError(data.error || t("admin.errorUpdatingEmail"));
+        setError(data.error || t("admin.errorUpdatingEmail"));
         return;
       }
 
       onAdminUpdate({ ...admin, email: newEmail });
-      setEmailSuccess(true);
+      setSuccess(t("admin.emailUpdated"));
       setEditingEmail(false);
-      setTimeout(() => setEmailSuccess(false), 3000);
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setEmailError(t("admin.connectionError"));
+      setError(t("admin.connectionError"));
     } finally {
-      setEmailLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleNameUpdate = async () => {
+    if (!newName || newName === admin.nome) {
+      setEditingName(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/update-name", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ nome: newName }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("admin.errorUpdatingName"));
+        return;
+      }
+
+      onAdminUpdate({ ...admin, nome: newName });
+      setSuccess(t("admin.nameUpdated"));
+      setEditingName(false);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(t("admin.connectionError"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!currentPassword || !newPassword) {
+      setError(t("admin.fillAllFields"));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError(t("admin.passwordsDoNotMatch"));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError(t("admin.passwordTooShort"));
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/update-password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("admin.errorUpdatingPassword"));
+        return;
+      }
+
+      setSuccess(t("admin.passwordUpdated"));
+      setEditingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(t("admin.connectionError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1840,34 +1927,55 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
         <div className="grid gap-4">
           <div className="p-4 border rounded-lg">
             <h3 className="font-medium mb-4 flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              {t("admin.languageSettings")}
+              <User className="h-4 w-4" />
+              {t("admin.adminInfo")}
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium">{t("admin.systemLanguage")}</p>
-                  <p className="text-xs text-muted-foreground">{t("admin.languageDesc")}</p>
-                </div>
-                <Select value={language} onValueChange={handleLanguageChange}>
-                  <SelectTrigger className="w-40" data-testid="select-language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pt-BR">Português (BR)</SelectItem>
-                    <SelectItem value="en-US">English (US)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 border rounded-lg">
-            <h3 className="font-medium mb-4">{t("admin.adminInfo")}</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{t("admin.name")}:</span>
-                <span className="text-sm font-medium">{admin.nome}</span>
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="h-8 w-48"
+                      data-testid="input-new-admin-name"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleNameUpdate}
+                      disabled={loading}
+                      data-testid="button-save-name"
+                    >
+                      {loading ? "..." : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingName(false);
+                        setNewName(admin.nome);
+                        setError("");
+                      }}
+                      data-testid="button-cancel-name"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{admin.nome}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingName(true)}
+                      data-testid="button-edit-admin-name"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm text-muted-foreground">Email:</span>
@@ -1883,10 +1991,10 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                     <Button
                       size="sm"
                       onClick={handleEmailUpdate}
-                      disabled={emailLoading}
+                      disabled={loading}
                       data-testid="button-save-email"
                     >
-                      {emailLoading ? "..." : <Check className="h-4 w-4" />}
+                      {loading ? "..." : <Check className="h-4 w-4" />}
                     </Button>
                     <Button
                       size="sm"
@@ -1894,7 +2002,7 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                       onClick={() => {
                         setEditingEmail(false);
                         setNewEmail(admin.email);
-                        setEmailError("");
+                        setError("");
                       }}
                       data-testid="button-cancel-email"
                     >
@@ -1915,14 +2023,89 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                   </div>
                 )}
               </div>
-              {emailError && (
-                <p className="text-sm text-red-500">{emailError}</p>
-              )}
-              {emailSuccess && (
-                <p className="text-sm text-green-500">{t("admin.emailUpdated")}</p>
-              )}
             </div>
           </div>
+
+          <div className="p-4 border rounded-lg">
+            <h3 className="font-medium mb-4 flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              {t("admin.changePassword")}
+            </h3>
+            {editingPassword ? (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm">{t("admin.currentPassword")}</Label>
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="h-8 mt-1"
+                    data-testid="input-current-password"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">{t("admin.newPassword")}</Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="h-8 mt-1"
+                    data-testid="input-new-password"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">{t("admin.confirmPassword")}</Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-8 mt-1"
+                    data-testid="input-confirm-password"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    onClick={handlePasswordUpdate}
+                    disabled={loading}
+                    data-testid="button-save-password"
+                  >
+                    {loading ? "..." : t("common.save")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingPassword(false);
+                      setCurrentPassword("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                      setError("");
+                    }}
+                    data-testid="button-cancel-password"
+                  >
+                    {t("common.cancel")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingPassword(true)}
+                data-testid="button-change-password"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                {t("admin.changePassword")}
+              </Button>
+            )}
+          </div>
+
+          {(error || success) && (
+            <div className={`p-3 rounded-lg ${error ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
+              {error || success}
+            </div>
+          )}
 
           <div className="p-4 border rounded-lg">
             <h3 className="font-medium mb-2">{t("admin.generalStats")}</h3>
