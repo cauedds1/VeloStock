@@ -38,6 +38,64 @@ import {
 } from "@/components/ui/alert-dialog";
 import { type ChecklistData, type ChecklistItem, getChecklistItemStatus, getChecklistCategories, getChecklistItems, type VehicleType } from "@shared/checklistUtils";
 
+const categoryTranslationKeys: Record<string, Record<string, string>> = {
+  Carro: {
+    pneus: "checklist.categories.pneus",
+    interior: "checklist.categories.interior",
+    somEletrica: "checklist.categories.somEletrica",
+    lataria: "checklist.categories.lataria",
+    documentacao: "checklist.categories.documentacao",
+    equipamentos: "checklist.categories.equipamentos",
+  },
+  Moto: {
+    pneus: "checklist.categories.pneus",
+    interior: "checklist.categories.interiorMoto",
+    somEletrica: "checklist.categories.somEletricaMoto",
+    lataria: "checklist.categories.latariaMoto",
+    documentacao: "checklist.categories.documentacao",
+    equipamentos: "checklist.categories.equipamentos",
+  },
+};
+
+const itemTranslationKeys: Record<string, string> = {
+  "Pneus Dianteiros": "checklist.items.pneusDianteiros",
+  "Pneus Traseiros": "checklist.items.pneusTraseiros",
+  "Pneu Dianteiro": "checklist.items.pneuDianteiro",
+  "Pneu Traseiro": "checklist.items.pneuTraseiro",
+  "Calibragem": "checklist.items.calibragem",
+  "Limpeza": "checklist.items.limpeza",
+  "Estado dos bancos": "checklist.items.estadoBancos",
+  "Estado do banco": "checklist.items.estadoBanco",
+  "Tapetes": "checklist.items.tapetes",
+  "Porta-objetos": "checklist.items.portaObjetos",
+  "Acabamentos": "checklist.items.acabamentos",
+  "Volante": "checklist.items.volante",
+  "Apoio para passageiro": "checklist.items.apoioPassageiro",
+  "Funcionamento do som": "checklist.items.funcionamentoSom",
+  "Vidros elétricos": "checklist.items.vidrosEletricos",
+  "Ar-condicionado": "checklist.items.arCondicionado",
+  "Travas elétricas": "checklist.items.travasEletricas",
+  "Faróis": "checklist.items.farois",
+  "Lanterna": "checklist.items.lanterna",
+  "Setas": "checklist.items.setas",
+  "Bateria": "checklist.items.bateria",
+  "Painel": "checklist.items.painel",
+  "Arranhões": "checklist.items.arranhoes",
+  "Amassados": "checklist.items.amassados",
+  "Pintura desbotada": "checklist.items.pinturaDesbotada",
+  "Faróis/Lanternas": "checklist.items.faroisLanternas",
+  "Carenagens": "checklist.items.carenagens",
+  "Tanque": "checklist.items.tanque",
+  "Pintura": "checklist.items.pintura",
+  "Documento do veículo": "checklist.items.documentoVeiculo",
+  "IPVA": "checklist.items.ipva",
+  "Licenciamento": "checklist.items.licenciamento",
+  "Macaco": "checklist.items.macaco",
+  "Chave de Roda": "checklist.items.chaveRoda",
+  "Triângulo": "checklist.items.triangulo",
+  "Estepe": "checklist.items.estepe",
+};
+
 export default function VehicleDetails() {
   const params = useParams();
   const vehicleId = params.id || "";
@@ -881,7 +939,7 @@ export default function VehicleDetails() {
                       <div className="flex items-center">
                         <CheckSquare className="h-5 w-5 text-primary mr-2" />
                         <h3 className="text-lg font-semibold text-card-foreground">
-                          {categories[category]}
+                          {t(categoryTranslationKeys[vehicleType]?.[category] || `checklist.categories.${category}`)}
                         </h3>
                       </div>
                       <Button
@@ -909,7 +967,7 @@ export default function VehicleDetails() {
                                 checked={isChecked}
                                 onCheckedChange={() => toggleChecklistItem(category, itemName)}
                               />
-                              <span className="text-sm flex-1">{itemName}</span>
+                              <span className="text-sm flex-1">{t(itemTranslationKeys[itemName] || itemName)}</span>
                             </label>
                             <Button
                               variant="ghost"

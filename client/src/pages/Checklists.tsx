@@ -22,6 +22,64 @@ import {
   type VehicleType
 } from "@shared/checklistUtils";
 
+const categoryTranslationKeys: Record<string, Record<string, string>> = {
+  Carro: {
+    pneus: "checklist.categories.pneus",
+    interior: "checklist.categories.interior",
+    somEletrica: "checklist.categories.somEletrica",
+    lataria: "checklist.categories.lataria",
+    documentacao: "checklist.categories.documentacao",
+    equipamentos: "checklist.categories.equipamentos",
+  },
+  Moto: {
+    pneus: "checklist.categories.pneus",
+    interior: "checklist.categories.interiorMoto",
+    somEletrica: "checklist.categories.somEletricaMoto",
+    lataria: "checklist.categories.latariaMoto",
+    documentacao: "checklist.categories.documentacao",
+    equipamentos: "checklist.categories.equipamentos",
+  },
+};
+
+const itemTranslationKeys: Record<string, string> = {
+  "Pneus Dianteiros": "checklist.items.pneusDianteiros",
+  "Pneus Traseiros": "checklist.items.pneusTraseiros",
+  "Pneu Dianteiro": "checklist.items.pneuDianteiro",
+  "Pneu Traseiro": "checklist.items.pneuTraseiro",
+  "Calibragem": "checklist.items.calibragem",
+  "Limpeza": "checklist.items.limpeza",
+  "Estado dos bancos": "checklist.items.estadoBancos",
+  "Estado do banco": "checklist.items.estadoBanco",
+  "Tapetes": "checklist.items.tapetes",
+  "Porta-objetos": "checklist.items.portaObjetos",
+  "Acabamentos": "checklist.items.acabamentos",
+  "Volante": "checklist.items.volante",
+  "Apoio para passageiro": "checklist.items.apoioPassageiro",
+  "Funcionamento do som": "checklist.items.funcionamentoSom",
+  "Vidros elétricos": "checklist.items.vidrosEletricos",
+  "Ar-condicionado": "checklist.items.arCondicionado",
+  "Travas elétricas": "checklist.items.travasEletricas",
+  "Faróis": "checklist.items.farois",
+  "Lanterna": "checklist.items.lanterna",
+  "Setas": "checklist.items.setas",
+  "Bateria": "checklist.items.bateria",
+  "Painel": "checklist.items.painel",
+  "Arranhões": "checklist.items.arranhoes",
+  "Amassados": "checklist.items.amassados",
+  "Pintura desbotada": "checklist.items.pinturaDesbotada",
+  "Faróis/Lanternas": "checklist.items.faroisLanternas",
+  "Carenagens": "checklist.items.carenagens",
+  "Tanque": "checklist.items.tanque",
+  "Pintura": "checklist.items.pintura",
+  "Documento do veículo": "checklist.items.documentoVeiculo",
+  "IPVA": "checklist.items.ipva",
+  "Licenciamento": "checklist.items.licenciamento",
+  "Macaco": "checklist.items.macaco",
+  "Chave de Roda": "checklist.items.chaveRoda",
+  "Triângulo": "checklist.items.triangulo",
+  "Estepe": "checklist.items.estepe",
+};
+
 export default function Checklists() {
   const { t } = useI18n();
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
@@ -143,7 +201,7 @@ export default function Checklists() {
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold flex items-center gap-2">
                               <CheckSquare className="h-4 w-4 text-primary" />
-                              {categories[category]}
+                              {t(categoryTranslationKeys[vehicleType]?.[category] || `checklist.categories.${category}`)}
                             </h3>
                             <span className="text-xs text-muted-foreground">
                               {status.completed}/{status.total}
@@ -163,7 +221,7 @@ export default function Checklists() {
                                   }`}
                                 >
                                   <ChecklistItemStatus status={itemStatus} size={14} className="flex-shrink-0" />
-                                  <span className="truncate">{itemName}</span>
+                                  <span className="truncate">{t(itemTranslationKeys[itemName] || itemName)}</span>
                                 </div>
                               );
                             })}

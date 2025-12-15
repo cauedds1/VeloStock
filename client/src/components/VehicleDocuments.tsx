@@ -20,14 +20,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 import { FileText, Upload, Download, Trash2, FileCheck, FileWarning, FileBadge } from "lucide-react";
 
 const DOCUMENT_TYPES = [
-  { value: "CRLV", label: "CRLV", description: "Certificado de Registro", icon: FileCheck },
-  { value: "Nota Fiscal", label: "Nota Fiscal", description: "Compra do veículo", icon: FileBadge },
-  { value: "Laudo Cautelar", label: "Laudo Cautelar", description: "Vistoria técnica", icon: FileWarning },
-  { value: "Contrato de Compra", label: "Contrato de Compra", description: "Aquisição do veículo", icon: FileText },
-  { value: "Transferência", label: "Transferência", description: "Documentação de transferência", icon: FileText },
+  { value: "CRLV", labelKey: "documents.typeCRLV", descKey: "documents.typeCRLVDesc", icon: FileCheck },
+  { value: "Nota Fiscal", labelKey: "documents.typeInvoice", descKey: "documents.typeInvoiceDesc", icon: FileBadge },
+  { value: "Laudo Cautelar", labelKey: "documents.typeCautionary", descKey: "documents.typeCautionaryDesc", icon: FileWarning },
+  { value: "Contrato de Compra", labelKey: "documents.typePurchase", descKey: "documents.typePurchaseDesc", icon: FileText },
+  { value: "Transferência", labelKey: "documents.typeTransfer", descKey: "documents.typeTransferDesc", icon: FileText },
 ];
 
 interface VehicleDocumentsProps {
@@ -35,6 +36,7 @@ interface VehicleDocumentsProps {
 }
 
 export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
+  const { t } = useI18n();
   const [selectedType, setSelectedType] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; docId: string | null }>({ 
@@ -61,7 +63,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Erro ao fazer upload");
+        throw new Error(error.error || t("documents.errorSending"));
       }
 
       return response.json();
@@ -71,14 +73,14 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
       setSelectedFile(null);
       setSelectedType("");
       toast({
-        title: "Documento enviado!",
-        description: "O documento foi adicionado com sucesso.",
+        title: t("documents.documentSent"),
+        description: t("documents.documentSentDesc"),
       });
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Erro ao enviar documento",
+        title: t("documents.errorSending"),
         description: error.message,
       });
     },
@@ -91,21 +93,21 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao deletar documento");
+        throw new Error(t("documents.errorRemoving"));
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/documents`] });
       toast({
-        title: "Documento removido!",
-        description: "O documento foi excluído com sucesso.",
+        title: t("documents.documentRemoved"),
+        description: t("documents.documentRemovedDesc"),
       });
     },
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Erro ao remover documento",
-        description: "Não foi possível excluir o documento.",
+        title: t("documents.errorRemoving"),
+        description: t("documents.errorRemovingDesc"),
       });
     },
   });
@@ -116,16 +118,16 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
       if (file.type !== "application/pdf") {
         toast({
           variant: "destructive",
-          title: "Arquivo inválido",
-          description: "Apenas arquivos PDF são permitidos.",
+          title: t("documents.invalidFile"),
+          description: t("documents.onlyPdf"),
         });
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
         toast({
           variant: "destructive",
-          title: "Arquivo muito grande",
-          description: "O arquivo deve ter no máximo 10MB.",
+          title: t("documents.fileTooLarge"),
+          description: t("documents.maxSize"),
         });
         return;
       }
@@ -137,8 +139,8 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
     if (!selectedFile || !selectedType) {
       toast({
         variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Selecione o tipo de documento e o arquivo PDF.",
+        title: t("documents.invalidFile"),
+        description: t("documents.selectType"),
       });
       return;
     }
@@ -166,10 +168,6 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
     setDeleteDialog({ open: false, docId: null });
   };
 
-  const getDocumentTypeInfo = (type: string) => {
-    return DOCUMENT_TYPES.find(t => t.value === type) || DOCUMENT_TYPES[0];
-  };
-
   const groupedDocuments = DOCUMENT_TYPES.map(docType => ({
     ...docType,
     documents: documents.filter(doc => doc.documentType === docType.value),
@@ -181,23 +179,23 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
         <div className="flex items-center mb-4">
           <Upload className="h-5 w-5 text-primary mr-2" />
           <h3 className="text-lg font-semibold text-card-foreground">
-            Upload de Documento
+            {t("documents.uploadTitle")}
           </h3>
         </div>
         
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-2 block">
-              Tipo de Documento
+              {t("documents.documentType")}
             </label>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
+                <SelectValue placeholder={t("documents.selectType")} />
               </SelectTrigger>
               <SelectContent>
                 {DOCUMENT_TYPES.map(type => (
                   <SelectItem key={type.value} value={type.value}>
-                    {type.label}
+                    {t(type.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -206,7 +204,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
 
           <div>
             <label className="text-sm font-medium mb-2 block">
-              Arquivo PDF
+              {t("documents.pdfFile")}
             </label>
             <input
               type="file"
@@ -232,7 +230,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
             className="w-full"
           >
             <Upload className="mr-2 h-4 w-4" />
-            {uploadMutation.isPending ? "Enviando..." : "Enviar Documento"}
+            {uploadMutation.isPending ? t("common.loading") : t("documents.sendDocument")}
           </Button>
         </div>
       </Card>
@@ -241,7 +239,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
         <div className="flex items-center mb-4">
           <FileText className="h-5 w-5 text-primary mr-2" />
           <h3 className="text-lg font-semibold text-card-foreground">
-            Documentos do Veículo
+            {t("documents.vehicleDocuments")}
           </h3>
         </div>
 
@@ -254,7 +252,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
         ) : documents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-2 opacity-30" />
-            <p>Nenhum documento adicionado</p>
+            <p>{t("documents.noDocuments")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -267,7 +265,7 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
                 <div key={group.value}>
                   <h4 className="text-sm font-semibold mb-2 flex items-center">
                     <Icon className="h-4 w-4 mr-1" />
-                    {group.label}
+                    {t(group.labelKey)}
                   </h4>
                   <div className="space-y-2">
                     {group.documents.map((doc: any) => (
@@ -312,15 +310,15 @@ export function VehicleDocuments({ vehicleId }: VehicleDocumentsProps) {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, docId: null })}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.confirmDelete")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.
+              {t("documents.confirmDeleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
