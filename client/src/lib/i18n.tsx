@@ -369,6 +369,7 @@ const translations: Record<Language, Record<string, string>> = {
     "adGenerator.errorGenerating": "Erro ao gerar anúncios",
     "adGenerator.copied": "Copiado",
     "adGenerator.copiedDesc": "Texto do {platform} copiado.",
+    "adGenerator.copy": "Copiar",
 
     "documents.uploadTitle": "Upload de Documento",
     "documents.documentType": "Tipo de Documento",
@@ -1483,6 +1484,17 @@ const translations: Record<Language, Record<string, string>> = {
     "vehicleDetails.costDeletedDesc": "The cost was removed successfully.",
     "vehicleDetails.errorDeletingCost": "Error deleting cost",
     "vehicleDetails.statusUpdated": "Status updated",
+
+    "adGenerator.title": "Multi-Platform Ad Generator",
+    "adGenerator.description": "Create optimized texts for Instagram, Facebook, OLX and WhatsApp",
+    "adGenerator.generating": "Generating ads...",
+    "adGenerator.generateButton": "Generate Ads for All Platforms",
+    "adGenerator.adsGenerated": "Ads generated",
+    "adGenerator.adsGeneratedDesc": "Texts created for all platforms.",
+    "adGenerator.errorGenerating": "Error generating ads",
+    "adGenerator.copied": "Copied",
+    "adGenerator.copiedDesc": "{platform} text copied.",
+    "adGenerator.copy": "Copy",
 
     "costs.title": "Costs",
     "costs.addCost": "Add Cost",

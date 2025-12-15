@@ -65,14 +65,14 @@ export function AdGeneratorMulti({ vehicleId, vehicleData }: AdGeneratorMultiPro
       setGeneratedAds(data);
 
       toast({
-        title: t("adGenerator.generatedTitle"),
-        description: t("adGenerator.generatedDesc"),
+        title: t("adGenerator.adsGenerated"),
+        description: t("adGenerator.adsGeneratedDesc"),
       });
     } catch (error) {
       console.error("Erro:", error);
       toast({
-        title: t("adGenerator.errorTitle"),
-        description: error instanceof Error ? error.message : t("adGenerator.errorDesc"),
+        title: t("adGenerator.errorGenerating"),
+        description: error instanceof Error ? error.message : t("common.error"),
         variant: "destructive",
       });
     } finally {

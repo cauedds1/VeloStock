@@ -19,10 +19,18 @@ const adCache: AdCache = {};
 const AD_CACHE_TTL = 48 * 60 * 60 * 1000; // 48 horas em milissegundos
 
 /**
+ * Gera chave de cache composta por veículo + idioma
+ */
+function getCacheKey(vehicleId: string, language: string = "pt-BR"): string {
+  return `${vehicleId}:${language}`;
+}
+
+/**
  * Obtém anúncio do cache se existir e ainda for válido
  */
-export function getAdFromCache(vehicleId: string): CachedAd | null {
-  const cached = adCache[vehicleId];
+export function getAdFromCache(vehicleId: string, language: string = "pt-BR"): CachedAd | null {
+  const cacheKey = getCacheKey(vehicleId, language);
+  const cached = adCache[cacheKey];
   
   if (!cached) {
     return null;
@@ -32,7 +40,7 @@ export function getAdFromCache(vehicleId: string): CachedAd | null {
   const age = Date.now() - cached.timestamp;
   if (age > AD_CACHE_TTL) {
     // Remover do cache se expirou
-    delete adCache[vehicleId];
+    delete adCache[cacheKey];
     return null;
   }
 
@@ -42,18 +50,23 @@ export function getAdFromCache(vehicleId: string): CachedAd | null {
 /**
  * Salva anúncio em cache
  */
-export function saveAdToCache(vehicleId: string, ad: Omit<CachedAd, 'timestamp'>) {
-  adCache[vehicleId] = {
+export function saveAdToCache(vehicleId: string, ad: Omit<CachedAd, 'timestamp'>, language: string = "pt-BR") {
+  const cacheKey = getCacheKey(vehicleId, language);
+  adCache[cacheKey] = {
     ...ad,
     timestamp: Date.now(),
   };
 }
 
 /**
- * Limpa cache de um veículo específico
+ * Limpa cache de um veículo específico (todos os idiomas)
  */
 export function clearAdCache(vehicleId: string) {
-  delete adCache[vehicleId];
+  Object.keys(adCache).forEach(key => {
+    if (key.startsWith(`${vehicleId}:`)) {
+      delete adCache[key];
+    }
+  });
 }
 
 /**

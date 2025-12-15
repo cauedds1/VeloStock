@@ -45,8 +45,11 @@ export function registerAIRoutes(app: Express) {
 
       const vehicleId = req.params.id;
 
-      // ===== VERIFICAR CACHE =====
-      const cachedAd = getAdFromCache(vehicleId);
+      // Obter idioma da requisição (padrão pt-BR)
+      const { language = "pt-BR" } = req.body;
+
+      // ===== VERIFICAR CACHE (por idioma) =====
+      const cachedAd = getAdFromCache(vehicleId, language);
       if (cachedAd) {
         // Remover timestamp antes de retornar
         const { timestamp, ...adWithoutTimestamp } = cachedAd;
@@ -88,8 +91,37 @@ ${featuresList}
 ${vehicle.notes ? `Observações importantes: ${vehicle.notes}` : ''}
 ${priceInfo}`;
 
-      // Prompt mais detalhado e específico para gerar anúncios autênticos
-      const prompt = `Você é um especialista em vendas de veículos. Gere anúncios AUTÊNTICOS e ESPECÍFICOS (não genéricos) para este veículo:
+      // Prompt dinâmico baseado no idioma
+      const isEnglish = language === "en-US";
+      
+      const prompt = isEnglish 
+        ? `IMPORTANT: Generate ALL text content in English.
+
+You are a vehicle sales expert. Generate AUTHENTIC and SPECIFIC ads (not generic) for this vehicle:
+
+${vehicleDescription}
+
+Store: "${companyName}"
+
+IMPORTANT:
+1. Use SPECIFIC information about the car (don't say "beautiful vehicle" or similar - mention real features)
+2. Highlight the mentioned features naturally
+3. Mention low mileage as an advantage if applicable
+4. Be persuasive but honest - sound like a REAL sale, not a generic template
+5. Each ad should sound like the seller knows this specific car well
+
+Generate a JSON object with these fields (max characters):
+- instagram_story: Short impactful text for Story (max 50 chars, mention something specific)
+- instagram_feed: Engaging Feed post (max 150 chars, highlight 1-2 main features)
+- facebook: Complete persuasive post (max 200 chars, tell a "story" about the car)
+- olx_title: SEO optimized title for OLX (max 60 chars, include color and year if fits)
+- whatsapp: Conversational message (max 100 chars, like a friend recommending)
+- seo_title: Title for search engines (max 60 chars, SEO friendly)
+
+Use natural, conversational English, without excessive emojis. Return ONLY valid JSON.`
+        : `IMPORTANTE: Gere TODO o conteúdo de texto em português brasileiro.
+
+Você é um especialista em vendas de veículos. Gere anúncios AUTÊNTICOS e ESPECÍFICOS (não genéricos) para este veículo:
 
 ${vehicleDescription}
 
@@ -112,15 +144,19 @@ Gere um objeto JSON com os seguintes campos (máximo de caracteres):
 
 Use linguagem brasileira natural, conversacional, sem emojis excessivos. Retorne APENAS JSON válido.`;
 
+      const systemPromptLang = language === "en-US"
+        ? "You are an expert automotive sales copywriter with years of experience. Create ads that seem real and specific, not generic. Return only valid JSON. All text must be in English."
+        : "Você é um copywriter especialista em vendas de veículos automotivos com anos de experiência. Crie anúncios que pareçam reais e específicos, não genéricos. Retorne apenas JSON válido.";
+
       const result = await generateJSON(prompt, {
         model: "gpt-4o-mini",
         temperature: 0.8,
         maxTokens: 800,
-        systemPrompt: "Você é um copywriter especialista em vendas de veículos automotivos com anos de experiência. Crie anúncios que pareçam reais e específicos, não genéricos. Retorne apenas JSON válido.",
+        systemPrompt: systemPromptLang,
       });
 
-      // ===== SALVAR EM CACHE =====
-      saveAdToCache(vehicleId, result);
+      // ===== SALVAR EM CACHE (por idioma) =====
+      saveAdToCache(vehicleId, result, language);
 
       res.json({ ...result, fromCache: false });
     } catch (error) {
@@ -1342,7 +1378,7 @@ Retorne JSON: { "tips": ["dica1", "dica2", "dica3"], "focusArea": "área de foco
         return res.status(404).json({ error: "Veículo não encontrado" });
       }
 
-      const { fipePrice, targetMarginPercent = 20 } = req.body;
+      const { fipePrice, targetMarginPercent = 20, language = "pt-BR" } = req.body;
 
       // Buscar veículos similares (mesma marca, ano próximo)
       const allVehicles = await storage.getAllVehicles(userCompany.empresaId);
@@ -1424,13 +1460,19 @@ Exemplo de justificativa PLAUSÍVEL:
 
 Analise TODOS esses fatores e retorne um preço estratégico com justificativa PLAUSÍVEL que cite dados concretos.
 
+${language === "en-US" ? "IMPORTANT: Write ALL reasoning and recommendation text in English." : "IMPORTANTE: Escreva TODA a justificativa e recomendação em português brasileiro."}
+
 Retorne APENAS JSON válido (sem markdown): { "suggestedPrice": 00000.00, "reasoning": "justificativa detalhada com cálculos e fatores específicos", "recommendation": "recomendação de ação" }`;
+
+      const priceSystemPrompt = language === "en-US"
+        ? "You are a used vehicle pricing consultant. Provide precise and strategic analyses. All text must be in English."
+        : "Você é um consultor de precificação de veículos seminovos. Forneça análises precisas e estratégicas.";
 
       const result = await generateJSON(prompt, {
         model: "gpt-4o-mini",
         temperature: 0.5,
         maxTokens: 500,
-        systemPrompt: "Você é um consultor de precificação de veículos seminovos. Forneça análises precisas e estratégicas.",
+        systemPrompt: priceSystemPrompt,
       });
 
       res.json({
