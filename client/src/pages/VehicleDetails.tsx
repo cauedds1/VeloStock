@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useI18n } from "@/lib/i18n";
 import { Save, Upload, Trash2, FileText, CheckSquare, MessageSquare, CheckCheck } from "lucide-react";
 import {
   AlertDialog,
@@ -42,6 +43,7 @@ export default function VehicleDetails() {
   const vehicleId = params.id || "";
   const [, setLocation] = useLocation();
   const { can } = usePermissions();
+  const { t } = useI18n();
   
   // Ler parâmetro ?tab= da URL para abrir aba específica
   const getInitialTab = () => {
@@ -148,11 +150,11 @@ export default function VehicleDetails() {
         body: JSON.stringify({ notes }),
       });
 
-      if (!response.ok) throw new Error("Erro ao salvar observações");
+      if (!response.ok) throw new Error("Failed to save notes");
 
       toast({
-        title: "Observações salvas!",
-        description: "As observações foram atualizadas com sucesso.",
+        title: t("vehicleDetails.notesSaved"),
+        description: t("vehicleDetails.notesSavedDesc"),
       });
 
       await queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
@@ -163,8 +165,8 @@ export default function VehicleDetails() {
       }
     } catch (error) {
       toast({
-        title: "Erro ao salvar anotações",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: t("vehicleDetails.errorSavingNotes"),
+        description: t("vehicleDetails.errorOccurred"),
         variant: "destructive",
       });
     } finally {
@@ -197,7 +199,7 @@ export default function VehicleDetails() {
         body: JSON.stringify({ checklist: newChecklist }),
       });
 
-      if (!response.ok) throw new Error("Erro ao salvar checklist");
+      if (!response.ok) throw new Error("Failed to save checklist");
       
       // Invalidar queries para atualizar notificações
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
@@ -206,8 +208,8 @@ export default function VehicleDetails() {
       setChecklist(previousChecklist);
       lastServerChecklistRef.current = JSON.stringify(previousChecklist);
       toast({
-        title: "Erro ao atualizar checklist",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: t("vehicleDetails.errorUpdatingChecklist"),
+        description: t("vehicleDetails.errorOccurred"),
         variant: "destructive",
       });
     }
@@ -228,8 +230,8 @@ export default function VehicleDetails() {
     // Se todos já estão marcados, não fazer nada
     if (allMarked) {
       toast({
-        title: "Categoria completa",
-        description: "Todos os itens já estão marcados!",
+        title: t("vehicleDetails.categoryComplete"),
+        description: t("vehicleDetails.allItemsMarked"),
       });
       return;
     }
@@ -256,22 +258,22 @@ export default function VehicleDetails() {
         body: JSON.stringify({ checklist: newChecklist }),
       });
 
-      if (!response.ok) throw new Error("Erro ao salvar checklist");
+      if (!response.ok) throw new Error("Failed to save checklist");
       
       // Invalidar queries para atualizar notificações
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
 
       toast({
-        title: "Categoria marcada!",
-        description: "Todos os itens foram marcados com sucesso.",
+        title: t("vehicleDetails.categoryMarked"),
+        description: t("vehicleDetails.allItemsMarkedSuccess"),
       });
     } catch (error) {
       // Reverter em caso de erro
       setChecklist(previousChecklist);
       lastServerChecklistRef.current = JSON.stringify(previousChecklist);
       toast({
-        title: "Erro ao marcar itens",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: t("vehicleDetails.errorMarkingItems"),
+        description: t("vehicleDetails.errorOccurred"),
         variant: "destructive",
       });
     }
@@ -324,20 +326,20 @@ export default function VehicleDetails() {
         body: JSON.stringify({ checklist: newChecklist }),
       });
 
-      if (!response.ok) throw new Error("Erro ao salvar observação");
+      if (!response.ok) throw new Error("Failed to save observation");
 
       await queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}`] });
       await queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
 
       toast({
-        title: "Observação salva!",
-        description: "A observação foi atualizada com sucesso.",
+        title: t("vehicleDetails.observationSaved"),
+        description: t("vehicleDetails.observationSavedDesc"),
       });
     } catch (error) {
       setChecklist(previousChecklist);
       toast({
-        title: "Erro ao salvar observação",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: t("vehicleDetails.errorSavingObservation"),
+        description: t("vehicleDetails.errorOccurred"),
         variant: "destructive",
       });
     }
@@ -356,11 +358,11 @@ export default function VehicleDetails() {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Erro ao excluir custo");
+      if (!response.ok) throw new Error("Failed to delete cost");
 
       toast({
-        title: "Custo excluído!",
-        description: "O custo foi removido com sucesso.",
+        title: t("vehicleDetails.costDeleted"),
+        description: t("vehicleDetails.costDeletedDesc"),
       });
 
       queryClient.invalidateQueries({ queryKey: [`/api/vehicles/${vehicleId}/costs`] });
@@ -369,8 +371,8 @@ export default function VehicleDetails() {
       setCostToDelete(null);
     } catch (error) {
       toast({
-        title: "Erro ao excluir custo",
-        description: "Ocorreu um erro. Tente novamente.",
+        title: t("vehicleDetails.errorDeletingCost"),
+        description: t("vehicleDetails.errorOccurred"),
         variant: "destructive",
       });
     }
@@ -389,8 +391,8 @@ export default function VehicleDetails() {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold text-foreground">Veículo não encontrado</h2>
-          <p className="mt-2 text-muted-foreground">O veículo que você procura não existe.</p>
+          <h2 className="text-2xl font-bold text-foreground">{t("vehicleDetails.notFound")}</h2>
+          <p className="mt-2 text-muted-foreground">{t("vehicleDetails.notFoundDesc")}</p>
         </Card>
       </div>
     );
@@ -443,47 +445,47 @@ export default function VehicleDetails() {
           <TabsList ref={tabsListRef} className="mb-6" data-testid="tabs-vehicle-details">
             {can.viewOverviewTab && (
               <TabsTrigger value="visao-geral" data-testid="tab-visao-geral">
-                Visão Geral
+                {t("vehicleDetails.tabs.overview")}
               </TabsTrigger>
             )}
             {can.viewHistoryTab && (
               <TabsTrigger value="historico" data-testid="tab-historico">
-                Histórico
+                {t("vehicleDetails.tabs.history")}
               </TabsTrigger>
             )}
             {can.viewCostsTab && (
               <TabsTrigger value="custos" data-testid="tab-custos">
-                Custos
+                {t("vehicleDetails.tabs.costs")}
               </TabsTrigger>
             )}
             {can.viewNotesTab && (
               <TabsTrigger value="anotacoes" data-testid="tab-anotacoes">
-                Observações Gerais
+                {t("vehicleDetails.tabs.notes")}
               </TabsTrigger>
             )}
             {can.viewPriceTab && (
               <TabsTrigger value="preco" data-testid="tab-preco">
-                Sugestão de Preço
+                {t("vehicleDetails.tabs.priceSuggestion")}
               </TabsTrigger>
             )}
             {can.viewAdTab && (
               <TabsTrigger value="anuncio" data-testid="tab-anuncio">
-                Anúncio
+                {t("vehicleDetails.tabs.ad")}
               </TabsTrigger>
             )}
             {can.viewMediaTab && (
               <TabsTrigger value="midia" data-testid="tab-midia">
-                Mídia
+                {t("vehicleDetails.tabs.media")}
               </TabsTrigger>
             )}
             {can.viewDocumentsTab && (
               <TabsTrigger value="documentos" data-testid="tab-documentos">
-                Documentos
+                {t("vehicleDetails.tabs.documents")}
               </TabsTrigger>
             )}
             {can.viewChecklistTab && (
               <TabsTrigger value="checklist" data-testid="tab-checklist">
-                Checklist
+                {t("vehicleDetails.tabs.checklist")}
               </TabsTrigger>
             )}
           </TabsList>
@@ -492,12 +494,12 @@ export default function VehicleDetails() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card className="p-6">
                 <h3 className="mb-4 text-lg font-semibold text-card-foreground">
-                  Resumo de Custos
+                  {t("vehicleDetails.costSummary")}
                 </h3>
                 {costs.length > 0 ? (
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Total Investido</span>
+                      <span className="text-sm font-medium text-muted-foreground">{t("vehicleDetails.totalInvested")}</span>
                       <span className="text-lg font-bold text-card-foreground">
                         R$ {costs.reduce((sum: number, c: any) => sum + Number(c.value), 0).toFixed(2)}
                       </span>
@@ -517,25 +519,25 @@ export default function VehicleDetails() {
                         onClick={() => setActiveTab("custos")}
                         className="text-sm text-primary hover:underline"
                       >
-                        Ver todos os {costs.length} custos
+                        {t("vehicleDetails.viewAllCosts", { count: costs.length })}
                       </button>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Nenhum custo registrado ainda</p>
+                  <p className="text-sm text-muted-foreground">{t("vehicleDetails.noCostsYet")}</p>
                 )}
               </Card>
 
               <Card className="p-6">
                 <h3 className="mb-4 text-lg font-semibold text-card-foreground">
-                  Preço de Venda
+                  {t("vehicleDetails.salePrice")}
                 </h3>
                 <SalePriceEditor vehicleId={vehicleId} currentPrice={vehicle.salePrice || null} />
               </Card>
 
               <Card className="p-6">
                 <h3 className="mb-4 text-lg font-semibold text-card-foreground">
-                  Galeria de Fotos
+                  {t("vehicleDetails.photoGallery")}
                 </h3>
                 {vehicle.images && vehicle.images.length > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
@@ -558,7 +560,7 @@ export default function VehicleDetails() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Nenhuma foto adicionada ainda</p>
+                  <p className="text-sm text-muted-foreground">{t("vehicleDetails.noPhotosYet")}</p>
                 )}
                 {vehicle.images && vehicle.images.length > 6 && (
                   <button
@@ -566,14 +568,14 @@ export default function VehicleDetails() {
                     className="mt-3 text-sm text-primary hover:underline"
                     data-testid="button-view-all-photos"
                   >
-                    Ver todas as {vehicle.images.length} fotos
+                    {t("vehicleDetails.viewAllPhotos", { count: vehicle.images.length })}
                   </button>
                 )}
               </Card>
 
               <Card className="p-6">
                 <h3 className="mb-4 text-lg font-semibold text-card-foreground">
-                  Últimas Movimentações
+                  {t("vehicleDetails.recentMovements")}
                 </h3>
                 {(() => {
                   const allActivities = [
@@ -597,7 +599,7 @@ export default function VehicleDetails() {
                           desc = desc ? `${desc} | ${locText}` : locText;
                         }
                         
-                        return desc || 'Movimentação registrada';
+                        return desc || t("vehicleDetails.movementRegistered");
                       })()
                     })),
                     ...costs.map((c: any) => ({
@@ -634,28 +636,28 @@ export default function VehicleDetails() {
                           onClick={() => setActiveTab("historico")}
                           className="text-sm text-primary hover:underline"
                         >
-                          Ver tudo ({history.length + costs.length} atividades)
+                          {t("vehicleDetails.viewAllActivities", { count: history.length + costs.length })}
                         </button>
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Nenhuma movimentação registrada</p>
+                    <p className="text-sm text-muted-foreground">{t("vehicleDetails.noMovementsYet")}</p>
                   );
                 })()}
               </Card>
 
               <Card className="p-6">
                 <h3 className="mb-4 text-lg font-semibold text-card-foreground">
-                  Notas Rápidas
+                  {t("vehicleDetails.quickNotes")}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  {vehicle.notes || "Nenhuma anotação registrada"}
+                  {vehicle.notes || t("vehicleDetails.noNotesYet")}
                 </p>
                 <button
                   onClick={() => setActiveTab("anotacoes")}
                   className="text-sm text-primary hover:underline"
                 >
-                  Editar anotações
+                  {t("vehicleDetails.editNotes")}
                 </button>
               </Card>
             </div>
@@ -727,20 +729,20 @@ export default function VehicleDetails() {
           <TabsContent value="anotacoes">
             <Card className="p-6">
               <h3 className="mb-4 text-lg font-semibold text-card-foreground">
-                Observações Gerais
+                {t("vehicleDetails.generalNotes")}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Registre observações e anotações específicas deste veículo (defeitos, pendências, características especiais, negociações, etc.)
+                {t("vehicleDetails.notesDescription")}
               </p>
               <Textarea
-                placeholder="Ex: Cliente interessado, aguardando contato. Arranhão no para-choque traseiro precisa polimento. Documentação original em mãos..."
+                placeholder={t("vehicleDetails.notesPlaceholder")}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="min-h-[200px] mb-4"
               />
               <Button onClick={saveNotes} disabled={isSavingNotes}>
                 <Save className="mr-2 h-4 w-4" />
-                {isSavingNotes ? "Salvando..." : "Salvar Observações"}
+                {isSavingNotes ? t("vehicleDetails.saving") : t("vehicleDetails.saveNotes")}
               </Button>
             </Card>
           </TabsContent>
@@ -780,17 +782,17 @@ export default function VehicleDetails() {
                 <div className="flex items-center justify-between gap-4 mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-card-foreground">
-                      Galeria de Fotos
+                      {t("vehicleDetails.photoGallery")}
                     </h3>
                     {vehicle.images && vehicle.images.length > 0 && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {vehicle.images.length} foto{vehicle.images.length > 1 ? 's' : ''} - Clique para ampliar
+                        {t("vehicleDetails.photoCount", { count: vehicle.images.length })}
                       </p>
                     )}
                   </div>
                   <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
                     <Upload className="mr-2 h-4 w-4" />
-                    Gerenciar Fotos
+                    {t("vehicleDetails.managePhotos")}
                   </Button>
                 </div>
                 {vehicle.images && vehicle.images.length > 0 ? (
@@ -813,7 +815,7 @@ export default function VehicleDetails() {
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                         {idx === 0 && (
                           <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded font-medium">
-                            Capa
+                            {t("vehicleDetails.cover")}
                           </div>
                         )}
                       </button>
@@ -821,10 +823,10 @@ export default function VehicleDetails() {
                   </div>
                 ) : (
                   <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground mb-4">Nenhuma foto adicionada ainda</p>
+                    <p className="text-muted-foreground mb-4">{t("vehicleDetails.noPhotosYet")}</p>
                     <Button onClick={() => setIsEditDialogOpen(true)}>
                       <Upload className="mr-2 h-4 w-4" />
-                      Adicionar Fotos
+                      {t("vehicleDetails.addPhotos")}
                     </Button>
                   </div>
                 )}
@@ -849,10 +851,10 @@ export default function VehicleDetails() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-card-foreground">
-                      Checklist de Inspeção
+                      {t("vehicleDetails.inspectionChecklist")}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Acompanhe e baixe o checklist pronto para imprimir
+                      {t("vehicleDetails.checklistDescription")}
                     </p>
                   </div>
                   <Button 
@@ -861,7 +863,7 @@ export default function VehicleDetails() {
                     data-testid="button-download-checklist"
                   >
                     <FileText className="h-4 w-4" />
-                    Baixar PDF
+                    {t("vehicleDetails.downloadPDF")}
                   </Button>
                 </div>
               </Card>
@@ -889,7 +891,7 @@ export default function VehicleDetails() {
                         className="h-8 text-xs"
                       >
                         <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
-                        Marcar Todas
+                        {t("vehicleDetails.markAll")}
                       </Button>
                     </div>
                     <div className="space-y-2">
@@ -914,7 +916,7 @@ export default function VehicleDetails() {
                               size="sm"
                               className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
                               onClick={() => openObservationDialog(category, itemName)}
-                              title="Adicionar observação"
+                              title={t("vehicleDetails.addObservation")}
                             >
                               <MessageSquare className="h-4 w-4" />
                             </Button>
@@ -941,15 +943,15 @@ export default function VehicleDetails() {
       <AlertDialog open={!!costToDelete} onOpenChange={(open) => !open && setCostToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogTitle>{t("vehicleDetails.confirmDelete")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este custo? Esta ação não pode ser desfeita.
+              {t("vehicleDetails.deleteCostConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteCost} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
