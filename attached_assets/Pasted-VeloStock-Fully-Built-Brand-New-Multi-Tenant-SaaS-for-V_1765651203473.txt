@@ -1,0 +1,155 @@
+VeloStock – Fully Built, Brand-New Multi-Tenant SaaS for Vehicle Dealerships (Cars / Motorcycles / Trucks) 100% Finished • Mobile-First • Multi-Tenant • GPT-4 Native • Pre-Revenue (Clean Slate)
+
+VeloStock is a brand-new, never-launched, zero-customer SaaS platform built specifically for car, motorcycle, and truck dealerships.
+The system is fully complete, fully tested, fully documented — and has never been marketed, meaning the buyer gets a clean, zero-legacy product with no old pricing, no support history, no churn, and no technical debt from users.
+
+A public live demo is already populated with 34 real vehicles (Civic, Corolla, BMW, Onix, Argo, etc.) including real photos, documents, checklists, costs, and complete historical data.
+
+This is a rare opportunity to acquire a fresh, untouched, production-ready SaaS that can be launched globally — the system already includes English support and can be adapted to any country’s vehicle market.
+
+? Why This SaaS Is Valuable
+
+Brand-new (“virgin”) platform: never sold, never used commercially — you start with a clean slate.
+
+No legacy users, no legacy pricing, no backlog, no bugs reported by paying clients.
+
+Immediate revenue potential: competitors charge $25–$80/mo for far fewer features.
+
+100% ready for commercialization: buyer can start charging customers immediately.
+
+High-demand niche: vehicle dealerships worldwide require digital inventory + CRM + financial control.
+
+? All Key Features (Fully Working Today) Pipeline & Operations
+
+Drag-and-drop Kanban workflow (Intake → Prep → Ready → Sold)
+
+Vehicle documents, checklists, photos, attachments
+
+Built-in alerts for vehicles stopped >30 days, expiring paperwork, pending tasks
+
+Financial & Accounting
+
+Full financial module (purchase cost, prep costs, taxes)
+
+Profit per vehicle, automatic commissions
+
+P&L, accounts payable/receivable
+
+Real-time financial dashboards
+
+CRM & Sales
+
+Lead CRM with automated follow-ups
+
+Lead assignment per salesperson
+
+Internal chat
+
+Realtime notifications
+
+AI-Powered Tools (GPT-4 Integration)
+
+VeloBot 24/7
+
+Suggests FIPE/market price
+
+Generates ads in 3 styles
+
+Internal AI chat support
+
+Multi-Tenant + Customization
+
+True multi-tenant architecture
+
+Custom theme per company
+
+Dark mode
+
+Granular RBAC (Owner, Manager, Salesperson, Driver)
+
+Admin / Super Admin Panel
+
+(For the owner of the SaaS, not dealership users)
+
+View all companies
+
+Manage all active users
+
+Track free trials, paid accounts, delinquent accounts
+
+Global bug/error report system (users report issues → appears in admin panel)
+
+Track total registered vehicles across all tenants
+
+Monitor system activity + metrics
+
+Convenience Features
+
+Excel/CSV import
+
+FIPE lookup (Brazil), but can be replaced with any external valuation API globally
+
+Automatic database + file + photo backups
+
+English included (ready for international launch)
+
+? Tech Stack & Operating Costs
+
+Frontend: React, TypeScript, Vite, Tailwind, shadcn/ui
+Backend: Node.js, Express, Drizzle ORM, PostgreSQL
+
+Hosting:
+Currently on Replit (~$25/mo)
+Includes migration guide for Railway / Render / Vercel (takes <2 hours)
+
+Total monthly cost: ~US$40, including GPT-4 usage.
+
+? Market Opportunity
+
+Used-vehicle dealership sector continues to grow globally
+
+Competitors in the US & LATAM charge $25–$80/mo
+
+VeloStock includes far more features, especially AI + financials
+
+This SaaS can be sold in:
+?? USA · ?? Brazil · ?? Mexico · ?? Canada · ?? Europe · and any other market
+(Valuation/lookup API can be swapped in 1–2 hours.)
+
+? Revenue Projection (Conservative)
+
+10 customers → US$2,000–3,500 MRR (depending on chosen pricing)
+
+20 customers → US$4,000–7,000 MRR
+
+Buyer gains full pricing freedom since system is pre-launch.
+
+? Sale Includes
+
+Full source code
+
+Live database with 34 real vehicles + photos
+
+Domain velostock.com.br (transferable)
+
+Complete deployment/migration guide
+
+30 days post-sale support (WhatsApp or call)
+
+Instant access to full demo environment
+
+? Reason for Sale
+
+Solo developer — product is fully completed, but I do not have the marketing budget to launch it properly. Rather sell it immediately than let it sit unused.
+
+⭐ Rare Opportunity
+
+A fully-built, brand-new, never-launched, AI-powered SaaS platform in a booming, global niche.
+Perfect for agencies, entrepreneurs, or investors wanting to enter the dealership management market without spending 4–6 months building a system from scratch.
+
+Ask anything — I reply in minutes and provide full demo access instantly.
+
+
+Access: https://velostock.com.br/ to check out the website.
+
+You can request a demo login and password to access the full site.

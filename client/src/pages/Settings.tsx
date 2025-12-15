@@ -170,8 +170,8 @@ export default function Settings() {
     } catch (error) {
       console.error("Erro ao atualizar empresa:", error);
       toast({
-        title: "Erro ao atualizar",
-        description: "Tente novamente",
+        title: t("settings.saveError"),
+        description: t("common.error"),
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -221,19 +221,19 @@ export default function Settings() {
                     <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <CardTitle>Informações da Empresa</CardTitle>
-                    <CardDescription>Dados principais da concessionária</CardDescription>
+                    <CardTitle>{t("settings.companyInfo")}</CardTitle>
+                    <CardDescription>{t("settings.companyInfoDesc")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nomeFantasia">Nome da Empresa *</Label>
+                    <Label htmlFor="nomeFantasia">{t("settings.companyName")} *</Label>
                     <Input
                       id="nomeFantasia"
                       {...form.register("nomeFantasia")}
-                      placeholder="Digite o nome da sua empresa"
+                      placeholder={t("settings.companyNamePlaceholder")}
                     />
                     {form.formState.errors.nomeFantasia && (
                       <p className="text-sm text-red-500">
@@ -243,16 +243,16 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="razaoSocial">Razão Social</Label>
+                    <Label htmlFor="razaoSocial">{t("settings.tradeName")}</Label>
                     <Input
                       id="razaoSocial"
                       {...form.register("razaoSocial")}
-                      placeholder="Razão social completa"
+                      placeholder={t("settings.tradeName")}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ</Label>
+                    <Label htmlFor="cnpj">{t("settings.cnpj")}</Label>
                     <Input
                       id="cnpj"
                       {...form.register("cnpj")}
@@ -261,11 +261,11 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="endereco">Endereço</Label>
+                    <Label htmlFor="endereco">{t("settings.address")}</Label>
                     <Input
                       id="endereco"
                       {...form.register("endereco")}
-                      placeholder="Rua, número, bairro, cidade"
+                      placeholder={t("settings.addressPlaceholder")}
                     />
                   </div>
                 </div>
@@ -280,15 +280,15 @@ export default function Settings() {
                     <Phone className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <CardTitle>Informações de Contato</CardTitle>
-                    <CardDescription>Telefones e e-mail</CardDescription>
+                    <CardTitle>{t("settings.contactInfo")}</CardTitle>
+                    <CardDescription>{t("settings.contactInfoDesc")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone Principal</Label>
+                    <Label htmlFor="telefone">{t("settings.mainPhone")}</Label>
                     <Input
                       id="telefone"
                       {...form.register("telefone")}
@@ -297,7 +297,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="whatsappNumero">WhatsApp</Label>
+                    <Label htmlFor="whatsappNumero">{t("settings.whatsapp")}</Label>
                     <Input
                       id="whatsappNumero"
                       {...form.register("whatsappNumero")}
@@ -306,7 +306,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="telefone2">Telefone Secundário</Label>
+                    <Label htmlFor="telefone2">{t("settings.secondaryPhone")}</Label>
                     <Input
                       id="telefone2"
                       {...form.register("telefone2")}
@@ -315,7 +315,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
+                    <Label htmlFor="email">{t("settings.email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -335,26 +335,26 @@ export default function Settings() {
                     <MapPin className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
-                    <CardTitle>Configurações do Sistema</CardTitle>
-                    <CardDescription>Locais e alertas</CardDescription>
+                    <CardTitle>{t("settings.systemSettings")}</CardTitle>
+                    <CardDescription>{t("settings.systemSettingsDesc")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="locaisComuns">Locais Físicos (separados por vírgula)</Label>
+                  <Label htmlFor="locaisComuns">{t("settings.physicalLocations")}</Label>
                   <Input
                     id="locaisComuns"
                     {...form.register("locaisComuns")}
-                    placeholder="Matriz, Filial, Pátio Externo, Oficina"
+                    placeholder={t("settings.physicalLocationsPlaceholder")}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Onde os veículos podem estar localizados fisicamente
+                    {t("settings.physicalLocationsDesc")}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="alertaDiasParado">Alerta de Veículos Parados (dias)</Label>
+                  <Label htmlFor="alertaDiasParado">{t("settings.stoppedVehicleAlert")}</Label>
                   <Input
                     id="alertaDiasParado"
                     type="number"
@@ -362,7 +362,7 @@ export default function Settings() {
                     placeholder="7"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Receba alertas quando um veículo ficar parado por este período
+                    {t("settings.stoppedVehicleAlertDesc")}
                   </p>
                 </div>
               </CardContent>
@@ -374,7 +374,7 @@ export default function Settings() {
                 disabled={isSubmitting}
                 className="px-8 bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
               >
-                {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                {isSubmitting ? t("settings.saving") : t("settings.saveChanges")}
               </Button>
             </div>
           </form>
@@ -389,9 +389,9 @@ export default function Settings() {
                     <Palette className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <CardTitle>Personalização de Cores</CardTitle>
+                    <CardTitle>{t("settings.colorCustomization")}</CardTitle>
                     <CardDescription>
-                      Escolha as cores que representam sua marca
+                      {t("settings.colorCustomizationDesc")}
                     </CardDescription>
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export default function Settings() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <Label htmlFor="corPrimaria">Cor Primária</Label>
+                    <Label htmlFor="corPrimaria">{t("settings.primaryColor")}</Label>
                     <div className="flex gap-3">
                       <Input
                         id="corPrimaria"
@@ -417,10 +417,10 @@ export default function Settings() {
                       />
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Cor principal dos botões, links e destaques do sistema
+                      {t("settings.primaryColorDesc")}
                     </p>
                     <div className="space-y-2 pt-2">
-                      <p className="text-xs font-medium text-muted-foreground">Preview:</p>
+                      <p className="text-xs font-medium text-muted-foreground">{t("settings.preview")}</p>
                       <div className="flex gap-2">
                         <Button 
                           type="button" 
@@ -428,14 +428,14 @@ export default function Settings() {
                           style={{ backgroundColor: form.watch("corPrimaria") }}
                           className="text-white"
                         >
-                          Botão Primário
+                          {t("settings.primaryButton")}
                         </Button>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <Label htmlFor="corSecundaria">Cor Secundária</Label>
+                    <Label htmlFor="corSecundaria">{t("settings.secondaryColor")}</Label>
                     <div className="flex gap-3">
                       <Input
                         id="corSecundaria"
@@ -453,10 +453,10 @@ export default function Settings() {
                       />
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Cor secundária para acentos e elementos complementares
+                      {t("settings.secondaryColorDesc")}
                     </p>
                     <div className="space-y-2 pt-2">
-                      <p className="text-xs font-medium text-muted-foreground">Preview:</p>
+                      <p className="text-xs font-medium text-muted-foreground">{t("settings.preview")}</p>
                       <div className="flex gap-2">
                         <Button 
                           type="button" 
@@ -464,7 +464,7 @@ export default function Settings() {
                           variant="outline"
                           style={{ borderColor: form.watch("corSecundaria"), color: form.watch("corSecundaria") }}
                         >
-                          Botão Secundário
+                          {t("settings.secondaryButton")}
                         </Button>
                       </div>
                     </div>
@@ -477,9 +477,9 @@ export default function Settings() {
                   <div className="rounded-lg border p-4 bg-muted/30 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Mudar Cor dos Ícones</h4>
+                        <h4 className="font-medium">{t("settings.changeIconColors")}</h4>
                         <p className="text-sm text-muted-foreground">
-                          Os ícones do dashboard e cards também mudarão de cor junto com o tema personalizado
+                          {t("settings.changeIconColorsDesc")}
                         </p>
                       </div>
                       <Switch
@@ -493,10 +493,10 @@ export default function Settings() {
                   <div className="rounded-lg border p-4 bg-muted/50">
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       <RotateCcw className="h-4 w-4" />
-                      Cores Padrão do VeloStock
+                      {t("settings.defaultColors")}
                     </h4>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Restaure as cores originais do VeloStock (violeta e verde).
+                      {t("settings.defaultColorsDesc")}
                     </p>
                     <Button
                       type="button"
@@ -508,14 +508,14 @@ export default function Settings() {
                       data-testid="button-reset-colors"
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />
-                      Voltar ao Padrão
+                      {t("settings.resetToDefault")}
                     </Button>
                   </div>
                 </div>
 
                 <div className="rounded-lg border p-4 bg-muted/30">
                   <p className="text-sm text-muted-foreground">
-                    As cores serão aplicadas em todo o sistema: botões, links, destaques, sidebar e gráficos.
+                    {t("settings.colorsAppliedNote")}
                   </p>
                 </div>
               </CardContent>
@@ -527,7 +527,7 @@ export default function Settings() {
                 disabled={isSubmitting}
                 className="px-8 bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
               >
-                {isSubmitting ? "Salvando..." : "Salvar Cores"}
+                {isSubmitting ? t("settings.saving") : t("settings.saveColors")}
               </Button>
             </div>
           </form>
@@ -536,22 +536,22 @@ export default function Settings() {
         <TabsContent value="system" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Informações do Sistema</CardTitle>
-              <CardDescription>Detalhes e integr ações</CardDescription>
+              <CardTitle>{t("settings.systemInfo")}</CardTitle>
+              <CardDescription>{t("settings.systemInfoDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Versão do VeloStock</p>
-                  <p className="text-sm text-muted-foreground">1.0.0 - Controle Interno</p>
+                  <p className="font-medium">{t("settings.version")}</p>
+                  <p className="text-sm text-muted-foreground">{t("settings.versionNumber")}</p>
                 </div>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">OpenAI API</p>
+                  <p className="font-medium">{t("settings.openaiApi")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Geração de anúncios e sugestão de preços
+                    {t("settings.openaiApiDesc")}
                   </p>
                 </div>
                 <div className="flex h-3 w-3 rounded-full bg-green-500" />
@@ -559,9 +559,9 @@ export default function Settings() {
               <Separator />
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Integração FIPE</p>
+                  <p className="font-medium">{t("settings.fipeIntegration")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Consulta de preços de referência
+                    {t("settings.fipeIntegrationDesc")}
                   </p>
                 </div>
                 <div className="flex h-3 w-3 rounded-full bg-green-500" />
@@ -577,14 +577,14 @@ export default function Settings() {
                     <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <CardTitle>Comissão Fixa Global</CardTitle>
-                    <CardDescription>Valor padrão de comissão para vendedores</CardDescription>
+                    <CardTitle>{t("settings.globalCommission")}</CardTitle>
+                    <CardDescription>{t("settings.globalCommissionDesc")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="comissao-global">Comissão Fixa Global (R$)</Label>
+                  <Label htmlFor="comissao-global">{t("settings.globalCommissionLabel")}</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
                     <Input
@@ -599,19 +599,19 @@ export default function Settings() {
                     />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Este valor será usado como padrão para todos os vendedores, a menos que uma comissão individual seja definida.
+                    {t("settings.globalCommissionHelp")}
                   </p>
                 </div>
                 
                 <div className="rounded-lg border p-4 bg-muted/50">
                   <h4 className="font-medium mb-2 flex items-center gap-2">
                     <DollarSign className="h-4 w-4" />
-                    Como funciona
+                    {t("settings.howItWorks")}
                   </h4>
                   <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
-                    <li>Vendedores com "Usar comissão global" ativado receberão este valor por venda</li>
-                    <li>Você pode definir comissões individuais diferentes na gestão de usuários</li>
-                    <li>O valor é fixo em Reais (R$), não é porcentagem</li>
+                    <li>{t("settings.commissionRule1")}</li>
+                    <li>{t("settings.commissionRule2")}</li>
+                    <li>{t("settings.commissionRule3")}</li>
                   </ul>
                 </div>
 
@@ -621,7 +621,7 @@ export default function Settings() {
                     disabled={isSubmitting}
                     className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
                   >
-                    {isSubmitting ? "Salvando..." : "Salvar Comissão"}
+                    {isSubmitting ? t("settings.saving") : t("settings.saveCommission")}
                   </Button>
                 </div>
               </CardContent>
@@ -630,20 +630,18 @@ export default function Settings() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Sobre o VeloStock</CardTitle>
+              <CardTitle>{t("settings.aboutVeloStock")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                <strong className="text-foreground">VeloStock</strong> é um sistema completo de controle 
-                interno para lojas e concessionárias de veículos.
+                <strong className="text-foreground">VeloStock</strong> {t("settings.aboutDesc1")}
               </p>
               <p className="text-sm text-muted-foreground">
-                Gerencie onde cada veículo está, o que precisa ser comprado (copos, material de limpeza), 
-                checklists de preparação e muito mais - tudo em um único lugar.
+                {t("settings.aboutDesc2")}
               </p>
               <Separator />
               <p className="text-xs text-muted-foreground">
-                Sistema focado em controle operacional interno, não é um sistema de gestão comercial.
+                {t("settings.aboutDesc3")}
               </p>
             </CardContent>
           </Card>
@@ -660,8 +658,8 @@ export default function Settings() {
                     <SettingsIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Categorias de Custos</CardTitle>
-                    <CardDescription className="text-xs">Personalizadas</CardDescription>
+                    <CardTitle className="text-lg">{t("settings.costCategories")}</CardTitle>
+                    <CardDescription className="text-xs">{t("settings.customized")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -670,7 +668,7 @@ export default function Settings() {
                   <Input
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="Nova categoria..."
+                    placeholder={t("settings.newCategoryPlaceholder")}
                     className="text-sm"
                     data-testid="input-new-category"
                     onKeyDown={(e) => {
@@ -713,7 +711,7 @@ export default function Settings() {
                     </div>
                   ))}
                   {customCategories.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhuma adicionada</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.noneAdded")}</p>
                   )}
                 </div>
               </CardContent>
@@ -727,8 +725,8 @@ export default function Settings() {
                     <SettingsIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Origens de Leads</CardTitle>
-                    <CardDescription className="text-xs">Personalizadas</CardDescription>
+                    <CardTitle className="text-lg">{t("settings.leadSources")}</CardTitle>
+                    <CardDescription className="text-xs">{t("settings.customized")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -737,7 +735,7 @@ export default function Settings() {
                   <Input
                     value={newOrigin}
                     onChange={(e) => setNewOrigin(e.target.value)}
-                    placeholder="Nova origem..."
+                    placeholder={t("settings.newSourcePlaceholder")}
                     className="text-sm"
                     data-testid="input-new-origin"
                     onKeyDown={(e) => {
@@ -780,7 +778,7 @@ export default function Settings() {
                     </div>
                   ))}
                   {customOrigins.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhuma adicionada</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.noneAdded")}</p>
                   )}
                 </div>
               </CardContent>
@@ -795,8 +793,8 @@ export default function Settings() {
                   <MapPin className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Localizações</CardTitle>
-                  <CardDescription className="text-xs">Locais onde os veículos podem ser enviados</CardDescription>
+                  <CardTitle className="text-lg">{t("settings.locations")}</CardTitle>
+                  <CardDescription className="text-xs">{t("settings.locationsDesc")}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -805,7 +803,7 @@ export default function Settings() {
                 <Input
                   value={newLocation}
                   onChange={(e) => setNewLocation(e.target.value)}
-                  placeholder="Nova localização..."
+                  placeholder={t("settings.newLocationPlaceholder")}
                   className="text-sm"
                   data-testid="input-new-location"
                   onKeyDown={(e) => {
@@ -848,7 +846,7 @@ export default function Settings() {
                   </div>
                 ))}
                 {customLocations.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Nenhuma adicionada</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.noneAdded")}</p>
                 )}
               </div>
             </CardContent>
@@ -863,15 +861,15 @@ export default function Settings() {
                     <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Notificações</CardTitle>
-                    <CardDescription className="text-xs">Alertas do sistema</CardDescription>
+                    <CardTitle className="text-lg">{t("settings.notifications")}</CardTitle>
+                    <CardDescription className="text-xs">{t("settings.notificationsDesc")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between gap-4 p-2 rounded bg-muted/50">
-                    <span>Alertas de veículos parados</span>
+                    <span>{t("settings.stoppedVehicleAlerts")}</span>
                     <Switch
                       checked={notifVeiculosParados}
                       onCheckedChange={setNotifVeiculosParados}
@@ -879,7 +877,7 @@ export default function Settings() {
                     />
                   </div>
                   <div className="flex items-center justify-between gap-4 p-2 rounded bg-muted/50">
-                    <span>Notificação de prazos</span>
+                    <span>{t("settings.deadlineNotifications")}</span>
                     <Switch
                       checked={notifPrazos}
                       onCheckedChange={setNotifPrazos}
@@ -887,7 +885,7 @@ export default function Settings() {
                     />
                   </div>
                   <div className="flex items-center justify-between gap-4 p-2 rounded bg-muted/50">
-                    <span>Avisos de custos altos</span>
+                    <span>{t("settings.highCostWarnings")}</span>
                     <Switch
                       checked={avisosCustosAltos}
                       onCheckedChange={setAvisosCustosAltos}
@@ -905,15 +903,15 @@ export default function Settings() {
                     <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Prazos Padrão</CardTitle>
-                    <CardDescription className="text-xs">Clique para editar os períodos</CardDescription>
+                    <CardTitle className="text-lg">{t("settings.defaultDeadlines")}</CardTitle>
+                    <CardDescription className="text-xs">{t("settings.clickToEdit")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between gap-4 p-2 rounded bg-muted/50">
-                    <span>Preparação de veículo</span>
+                    <span>{t("settings.vehiclePreparation")}</span>
                     {editingPrazo === "preparacao" ? (
                       <div className="flex items-center gap-1">
                         <Input
@@ -937,7 +935,7 @@ export default function Settings() {
                             }
                           }}
                         />
-                        <span className="text-xs">dias</span>
+                        <span className="text-xs">{t("settings.days")}</span>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -964,13 +962,13 @@ export default function Settings() {
                           setTempPrazoValue(prazoPreparacao.toString());
                         }}
                       >
-                        {prazoPreparacao} dias
+                        {prazoPreparacao} {t("settings.days")}
                         <Edit2 className="h-3 w-3" />
                       </button>
                     )}
                   </div>
                   <div className="flex items-center justify-between gap-4 p-2 rounded bg-muted/50">
-                    <span>Validade de orçamento</span>
+                    <span>{t("settings.quotationValidity")}</span>
                     {editingPrazo === "orcamento" ? (
                       <div className="flex items-center gap-1">
                         <Input
@@ -994,7 +992,7 @@ export default function Settings() {
                             }
                           }}
                         />
-                        <span className="text-xs">dias</span>
+                        <span className="text-xs">{t("settings.days")}</span>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -1021,13 +1019,13 @@ export default function Settings() {
                           setTempPrazoValue(prazoOrcamento.toString());
                         }}
                       >
-                        {prazoOrcamento} dias
+                        {prazoOrcamento} {t("settings.days")}
                         <Edit2 className="h-3 w-3" />
                       </button>
                     )}
                   </div>
                   <div className="flex items-center justify-between gap-4 p-2 rounded bg-muted/50">
-                    <span>Alerta veículo parado</span>
+                    <span>{t("settings.stoppedVehicleAlertDeadline")}</span>
                     {editingPrazo === "alerta" ? (
                       <div className="flex items-center gap-1">
                         <Input
@@ -1051,7 +1049,7 @@ export default function Settings() {
                             }
                           }}
                         />
-                        <span className="text-xs">dias</span>
+                        <span className="text-xs">{t("settings.days")}</span>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -1078,7 +1076,7 @@ export default function Settings() {
                           setTempPrazoValue(prazoAlerta.toString());
                         }}
                       >
-                        {prazoAlerta} dias
+                        {prazoAlerta} {t("settings.days")}
                         <Edit2 className="h-3 w-3" />
                       </button>
                     )}
@@ -1097,8 +1095,8 @@ export default function Settings() {
                     <Database className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Gestão de Dados</CardTitle>
-                    <CardDescription className="text-xs">Backup e limpeza</CardDescription>
+                    <CardTitle className="text-lg">{t("settings.dataManagement")}</CardTitle>
+                    <CardDescription className="text-xs">{t("settings.backupAndClean")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -1125,19 +1123,19 @@ export default function Settings() {
                             hour: "2-digit", 
                             minute: "2-digit" 
                           }));
-                          toast({ title: "Backup realizado com sucesso!" });
+                          toast({ title: t("settings.backupSuccess") });
                         } else {
-                          toast({ title: "Erro ao fazer backup", variant: "destructive" });
+                          toast({ title: t("settings.backupError"), variant: "destructive" });
                         }
                       } catch {
-                        toast({ title: "Erro ao fazer backup", variant: "destructive" });
+                        toast({ title: t("settings.backupError"), variant: "destructive" });
                       } finally {
                         setBackupInProgress(false);
                       }
                     }}
                   >
                     <Download className="w-3 h-3 mr-2" />
-                    {backupInProgress ? "Fazendo backup..." : "Fazer backup dos dados"}
+                    {backupInProgress ? t("settings.backingUp") : t("settings.backupData")}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -1147,11 +1145,11 @@ export default function Settings() {
                     onClick={() => setCleanDataOpen(true)}
                   >
                     <Trash2 className="w-3 h-3 mr-2" />
-                    Limpar dados antigos
+                    {t("settings.cleanOldData")}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {lastBackupDate ? `Último backup: ${lastBackupDate}` : "Nenhum backup recente"}
+                  {lastBackupDate ? t("settings.lastBackup", { date: lastBackupDate }) : t("settings.noRecentBackup")}
                 </p>
               </CardContent>
             </Card>
@@ -1163,8 +1161,8 @@ export default function Settings() {
                     <Lock className="h-5 w-5 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Segurança</CardTitle>
-                    <CardDescription className="text-xs">Privacidade e proteção</CardDescription>
+                    <CardTitle className="text-lg">{t("settings.security")}</CardTitle>
+                    <CardDescription className="text-xs">{t("settings.privacyProtection")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -1178,7 +1176,7 @@ export default function Settings() {
                     onClick={() => setChangePasswordOpen(true)}
                   >
                     <Key className="w-3 h-3 mr-2" />
-                    Alterar senha
+                    {t("settings.changePassword")}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -1188,11 +1186,11 @@ export default function Settings() {
                     onClick={() => setSessionsOpen(true)}
                   >
                     <Monitor className="w-3 h-3 mr-2" />
-                    Sessões ativas
+                    {t("settings.activeSessions")}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Sessões: 1 ativa
+                  {t("settings.sessionsCount")}
                 </p>
               </CardContent>
             </Card>
@@ -1222,14 +1220,14 @@ export default function Settings() {
                   });
                   if (!res.ok) throw new Error();
                   await refetchAdvanced();
-                  toast({ title: "Configurações avançadas atualizadas!" });
+                  toast({ title: t("settings.advancedSettingsUpdated") });
                 } catch {
-                  toast({ title: "Erro ao salvar", variant: "destructive" });
+                  toast({ title: t("settings.saveError"), variant: "destructive" });
                 }
               }}
               className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
             >
-              Salvar Configurações Avançadas
+              {t("settings.saveAdvancedSettings")}
             </Button>
           </div>
         </TabsContent>
@@ -1248,19 +1246,19 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lock className="h-5 w-5 text-red-500" />
-              Alterar Senha
+              {t("settings.changePasswordTitle")}
             </DialogTitle>
             <DialogDescription>
-              Para sua segurança, confirme sua senha atual antes de definir uma nova.
+              {t("settings.changePasswordDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="current-password">Senha atual</Label>
+              <Label htmlFor="current-password">{t("settings.currentPassword")}</Label>
               <Input
                 id="current-password"
                 type="password"
-                placeholder="Digite sua senha atual"
+                placeholder={t("settings.currentPasswordPlaceholder")}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 data-testid="input-current-password"
@@ -1268,43 +1266,43 @@ export default function Settings() {
             </div>
             <Separator />
             <div className="space-y-2">
-              <Label htmlFor="new-password">Nova senha</Label>
+              <Label htmlFor="new-password">{t("settings.newPassword")}</Label>
               <Input
                 id="new-password"
                 type="password"
-                placeholder="Digite a nova senha"
+                placeholder={t("settings.newPasswordPlaceholder")}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 data-testid="input-new-password"
               />
               <div className="space-y-1 mt-2">
-                <p className="text-xs text-muted-foreground font-medium">Requisitos da senha:</p>
+                <p className="text-xs text-muted-foreground font-medium">{t("settings.passwordRequirements")}</p>
                 <ul className="text-xs space-y-0.5">
                   <li className={`flex items-center gap-1 ${newPassword.length >= 8 ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
                     {newPassword.length >= 8 ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                    Mínimo 8 caracteres
+                    {t("settings.minCharacters")}
                   </li>
                   <li className={`flex items-center gap-1 ${/[A-Z]/.test(newPassword) ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
                     {/[A-Z]/.test(newPassword) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                    Uma letra maiúscula
+                    {t("settings.oneUppercase")}
                   </li>
                   <li className={`flex items-center gap-1 ${/[a-z]/.test(newPassword) ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
                     {/[a-z]/.test(newPassword) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                    Uma letra minúscula
+                    {t("settings.oneLowercase")}
                   </li>
                   <li className={`flex items-center gap-1 ${/[0-9]/.test(newPassword) ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
                     {/[0-9]/.test(newPassword) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                    Um número
+                    {t("settings.oneNumber")}
                   </li>
                 </ul>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+              <Label htmlFor="confirm-password">{t("settings.confirmNewPassword")}</Label>
               <Input
                 id="confirm-password"
                 type="password"
-                placeholder="Confirme a nova senha"
+                placeholder={t("settings.confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 data-testid="input-confirm-password"
@@ -1312,20 +1310,20 @@ export default function Settings() {
               {confirmPassword && newPassword !== confirmPassword && (
                 <p className="text-xs text-red-500 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  As senhas não coincidem
+                  {t("settings.passwordsDontMatch")}
                 </p>
               )}
               {confirmPassword && newPassword === confirmPassword && newPassword.length > 0 && (
                 <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                   <Check className="h-3 w-3" />
-                  Senhas coincidem
+                  {t("settings.passwordsMatch")}
                 </p>
               )}
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setChangePasswordOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               data-testid="button-save-password"
@@ -1339,7 +1337,7 @@ export default function Settings() {
               }
               onClick={async () => {
                 if (newPassword !== confirmPassword) {
-                  toast({ title: "As senhas não coincidem", variant: "destructive" });
+                  toast({ title: t("settings.passwordsDontMatch"), variant: "destructive" });
                   return;
                 }
                 try {
@@ -1350,22 +1348,22 @@ export default function Settings() {
                     body: JSON.stringify({ currentPassword, newPassword }),
                   });
                   if (res.ok) {
-                    toast({ title: "Senha alterada com sucesso!", description: "Sua nova senha está ativa." });
+                    toast({ title: t("settings.passwordChanged"), description: t("settings.passwordChangedDesc") });
                     setChangePasswordOpen(false);
                     setCurrentPassword("");
                     setNewPassword("");
                     setConfirmPassword("");
                   } else {
                     const data = await res.json();
-                    toast({ title: data.error || "Erro ao alterar senha", variant: "destructive" });
+                    toast({ title: data.error || t("settings.passwordChangeError"), variant: "destructive" });
                   }
                 } catch {
-                  toast({ title: "Erro ao alterar senha", variant: "destructive" });
+                  toast({ title: t("settings.passwordChangeError"), variant: "destructive" });
                 }
               }}
               className="bg-gradient-to-r from-purple-600 to-green-600"
             >
-              Alterar Senha
+              {t("settings.changePassword")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1375,9 +1373,9 @@ export default function Settings() {
       <Dialog open={sessionsOpen} onOpenChange={setSessionsOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sessões Ativas</DialogTitle>
+            <DialogTitle>{t("settings.activeSessionsTitle")}</DialogTitle>
             <DialogDescription>
-              Gerencie suas sessões de login ativas.
+              {t("settings.activeSessionsDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -1386,20 +1384,20 @@ export default function Settings() {
                 <div className="flex items-center gap-3">
                   <Monitor className="h-5 w-5 text-green-500" />
                   <div>
-                    <p className="font-medium text-sm">Sessão atual</p>
-                    <p className="text-xs text-muted-foreground">Este dispositivo</p>
+                    <p className="font-medium text-sm">{t("settings.currentSession")}</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.thisDevice")}</p>
                   </div>
                 </div>
                 <div className="flex h-2 w-2 rounded-full bg-green-500" />
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Apenas sua sessão atual está ativa. Não há outras sessões em outros dispositivos.
+              {t("settings.noOtherSessions")}
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSessionsOpen(false)}>
-              Fechar
+              {t("common.close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1409,14 +1407,13 @@ export default function Settings() {
       <AlertDialog open={cleanDataOpen} onOpenChange={setCleanDataOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Limpar Dados Antigos</AlertDialogTitle>
+            <AlertDialogTitle>{t("settings.cleanOldDataTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação irá remover veículos vendidos há mais de 6 meses, leads inativos há mais de 1 ano, 
-              e logs de atividade antigos. Esta ação não pode ser desfeita.
+              {t("settings.cleanOldDataDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               data-testid="button-confirm-clean-data"
               onClick={async () => {
@@ -1428,19 +1425,19 @@ export default function Settings() {
                   if (res.ok) {
                     const data = await res.json();
                     toast({ 
-                      title: "Dados antigos limpos!", 
-                      description: data.message || "A limpeza foi concluída com sucesso." 
+                      title: t("settings.oldDataCleaned"), 
+                      description: data.message 
                     });
                   } else {
-                    toast({ title: "Erro ao limpar dados", variant: "destructive" });
+                    toast({ title: t("settings.cleanDataError"), variant: "destructive" });
                   }
                 } catch {
-                  toast({ title: "Erro ao limpar dados", variant: "destructive" });
+                  toast({ title: t("settings.cleanDataError"), variant: "destructive" });
                 }
               }}
               className="bg-red-600 hover:bg-red-700"
             >
-              Limpar Dados
+              {t("settings.cleanData")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
