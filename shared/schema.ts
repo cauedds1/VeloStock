@@ -1196,3 +1196,50 @@ export const fipeCache = pgTable("fipe_cache", {
 ]);
 
 export type FipeCache = typeof fipeCache.$inferSelect;
+
+// ============================================
+// CHECKLIST CUSTOMIZADO POR EMPRESA
+// ============================================
+
+export const checklistCategories = pgTable("checklist_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull().references(() => companies.id),
+  name: varchar("name").notNull(),
+  vehicleType: varchar("vehicle_type").default("Carro"), // "Carro" ou "Moto"
+  order: integer("order").default(0),
+  isActive: varchar("is_active").default("true"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_checklist_categories_empresa").on(table.empresaId),
+]);
+
+export const insertChecklistCategorySchema = createInsertSchema(checklistCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertChecklistCategory = z.infer<typeof insertChecklistCategorySchema>;
+export type ChecklistCategory = typeof checklistCategories.$inferSelect;
+
+export const checklistCustomItems = pgTable("checklist_custom_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull().references(() => companies.id),
+  categoryId: varchar("category_id").references(() => checklistCategories.id),
+  categoryKey: varchar("category_key"), // Para categorias padrão: "pneus", "interior", etc.
+  itemName: varchar("item_name").notNull(),
+  vehicleType: varchar("vehicle_type").default("Carro"),
+  order: integer("order").default(0),
+  isActive: varchar("is_active").default("true"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_checklist_items_empresa").on(table.empresaId),
+  index("idx_checklist_items_category").on(table.categoryId),
+]);
+
+export const insertChecklistCustomItemSchema = createInsertSchema(checklistCustomItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertChecklistCustomItem = z.infer<typeof insertChecklistCustomItemSchema>;
+export type ChecklistCustomItem = typeof checklistCustomItems.$inferSelect;
