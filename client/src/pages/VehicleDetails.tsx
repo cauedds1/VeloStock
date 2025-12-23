@@ -989,7 +989,7 @@ export default function VehicleDetails() {
                 const categories = getChecklistCategories(vehicleType);
                 const items = getChecklistItems(vehicleType);
                 
-                return (Object.keys(categories) as Array<keyof typeof categories>).map((category) => (
+                const defaultCategoryCards = (Object.keys(categories) as Array<keyof typeof categories>).map((category) => (
                   <Card key={category} className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
@@ -1040,6 +1040,76 @@ export default function VehicleDetails() {
                     </div>
                   </Card>
                 ));
+
+                const filteredCustomCategories = (customChecklistCategories || []).filter(
+                  cat => cat.isActive && (cat.vehicleType === vehicleType || cat.vehicleType === "Todos")
+                );
+
+                const customCategoryCards = filteredCustomCategories.map((customCat) => {
+                  const categoryItems = (customChecklistItems || []).filter(
+                    item => item.categoryId === customCat.id && item.isActive
+                  );
+                  const categoryName = customCat.name as keyof ChecklistData;
+
+                  return (
+                    <Card key={`custom-${customCat.id}`} className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <CheckSquare className="h-5 w-5 text-primary mr-2" />
+                          <h3 className="text-lg font-semibold text-card-foreground">
+                            {customCat.name}
+                          </h3>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => markAllInCategory(customCat.name)}
+                          className="h-8 text-xs"
+                        >
+                          <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+                          {t("vehicleDetails.markAll")}
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {categoryItems.map((item) => {
+                          const status = getChecklistItemStatus(categoryName, item.name, checklist);
+                          const catItems = (checklist as Record<string, ChecklistItem[]>)[customCat.name] || [];
+                          const existingItem = catItems.find((ci: ChecklistItem) => ci.item === item.name);
+                          const isChecked = !!existingItem;
+
+                          return (
+                            <div key={item.id} className="flex items-center gap-2 p-2 hover:bg-accent rounded group">
+                              <ChecklistItemStatus status={status} size={16} />
+                              <label className="flex items-center space-x-3 flex-1 cursor-pointer">
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={() => toggleChecklistItem(customCat.name, item.name)}
+                                />
+                                <span className="text-sm flex-1">{item.name}</span>
+                              </label>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                                onClick={() => openObservationDialog(customCat.name, item.name)}
+                                title={t("vehicleDetails.addObservation")}
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                        {categoryItems.length === 0 && (
+                          <p className="text-sm text-muted-foreground italic py-2">
+                            {t("vehicleDetails.noCustomItems")}
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                });
+
+                return [...defaultCategoryCards, ...customCategoryCards];
               })()}
             </div>
           </TabsContent>
