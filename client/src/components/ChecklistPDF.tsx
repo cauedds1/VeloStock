@@ -1,5 +1,17 @@
 import { getChecklistCategories, getChecklistItems, ChecklistData } from "@shared/checklistUtils";
 
+interface CustomChecklistItem {
+  id: string;
+  itemName: string;
+  categoryKey: string | null;
+  categoryId: string | null;
+}
+
+interface CustomCategory {
+  id: string;
+  name: string;
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -9,11 +21,28 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
-export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
+export function generateChecklistHTML(
+  vehicle: any, 
+  checklist: ChecklistData,
+  customItems?: CustomChecklistItem[],
+  customCategories?: CustomCategory[]
+) {
   const vehicleType = (vehicle?.vehicleType || "Carro") as "Carro" | "Moto";
   const categories = getChecklistCategories(vehicleType);
   const items = getChecklistItems(vehicleType);
   const safeFilename = `checklist-${escapeHtml(vehicle.brand || '')}-${escapeHtml(vehicle.model || '')}-${escapeHtml(vehicle.plate || '')}.pdf`;
+
+  const customItemsByCategory = customItems?.reduce((acc, item) => {
+    const key = item.categoryKey || `custom:${item.categoryId}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item.itemName);
+    return acc;
+  }, {} as Record<string, string[]>) || {};
+
+  const customCategoryMap = customCategories?.reduce((acc, cat) => {
+    acc[cat.id] = cat.name;
+    return acc;
+  }, {} as Record<string, string>) || {};
 
   const html = `
     <!DOCTYPE html>
@@ -484,10 +513,10 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               <div class="category-section">
                 <div class="category-header">${categories.pneus}</div>
                 <div class="checkbox-list">
-                  ${(items.pneus || []).map(item => `
+                  ${[...(items.pneus || []), ...(customItemsByCategory['pneus'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${item}</div>
+                      <div class="item-text">${escapeHtml(item)}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -498,10 +527,10 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               <div class="category-section">
                 <div class="category-header">${categories.interior}</div>
                 <div class="checkbox-list">
-                  ${(items.interior || []).map(item => `
+                  ${[...(items.interior || []), ...(customItemsByCategory['interior'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${item}</div>
+                      <div class="item-text">${escapeHtml(item)}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -512,10 +541,10 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               <div class="category-section">
                 <div class="category-header">${categories.lataria}</div>
                 <div class="checkbox-list">
-                  ${(items.lataria || []).map(item => `
+                  ${[...(items.lataria || []), ...(customItemsByCategory['lataria'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${item}</div>
+                      <div class="item-text">${escapeHtml(item)}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -529,10 +558,10 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               <div class="category-section">
                 <div class="category-header">${categories.somEletrica}</div>
                 <div class="checkbox-list">
-                  ${(items.somEletrica || []).map(item => `
+                  ${[...(items.somEletrica || []), ...(customItemsByCategory['somEletrica'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${item}</div>
+                      <div class="item-text">${escapeHtml(item)}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -543,10 +572,10 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               <div class="category-section">
                 <div class="category-header">${categories.documentacao}</div>
                 <div class="checkbox-list">
-                  ${(items.documentacao || []).map(item => `
+                  ${[...(items.documentacao || []), ...(customItemsByCategory['documentacao'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${item}</div>
+                      <div class="item-text">${escapeHtml(item)}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -557,10 +586,10 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               <div class="category-section">
                 <div class="category-header">${categories.equipamentos}</div>
                 <div class="checkbox-list">
-                  ${(items.equipamentos || []).map(item => `
+                  ${[...(items.equipamentos || []), ...(customItemsByCategory['equipamentos'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${item}</div>
+                      <div class="item-text">${escapeHtml(item)}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -568,6 +597,27 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
               </div>
             </div>
           </div>
+
+          <!-- CATEGORIAS CUSTOMIZADAS -->
+          ${Object.keys(customItemsByCategory).filter(key => key.startsWith('custom:')).map(key => {
+            const categoryId = key.replace('custom:', '');
+            const categoryName = customCategoryMap[categoryId] || 'Categoria Personalizada';
+            const categoryItems = customItemsByCategory[key] || [];
+            return `
+              <div class="category-section" style="margin-bottom: 16px;">
+                <div class="category-header">${escapeHtml(categoryName)}</div>
+                <div class="checkbox-list">
+                  ${categoryItems.map(item => `
+                    <div class="checkbox-item">
+                      <div class="checkbox"></div>
+                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-obs-line"></div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
 
           <!-- HISTÓRICO DE SERVIÇOS -->
           <div class="service-section">
@@ -649,9 +699,14 @@ export function generateChecklistHTML(vehicle: any, checklist: ChecklistData) {
   return html;
 }
 
-export async function openChecklistPreview(vehicle: any, checklist: ChecklistData) {
+export async function openChecklistPreview(
+  vehicle: any, 
+  checklist: ChecklistData,
+  customItems?: CustomChecklistItem[],
+  customCategories?: CustomCategory[]
+) {
   try {
-    const htmlContent = generateChecklistHTML(vehicle, checklist);
+    const htmlContent = generateChecklistHTML(vehicle, checklist, customItems, customCategories);
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
@@ -662,6 +717,11 @@ export async function openChecklistPreview(vehicle: any, checklist: ChecklistDat
   }
 }
 
-export async function downloadChecklistPDF(vehicle: any, checklist: ChecklistData) {
-  return openChecklistPreview(vehicle, checklist);
+export async function downloadChecklistPDF(
+  vehicle: any, 
+  checklist: ChecklistData,
+  customItems?: CustomChecklistItem[],
+  customCategories?: CustomCategory[]
+) {
+  return openChecklistPreview(vehicle, checklist, customItems, customCategories);
 }

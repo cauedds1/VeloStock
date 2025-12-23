@@ -17,6 +17,7 @@ import { ChecklistObservationDialog } from "@/components/ChecklistObservationDia
 import { ChecklistItemStatus } from "@/components/ChecklistItemStatus";
 import { PhotoViewer } from "@/components/PhotoViewer";
 import { downloadChecklistPDF } from "@/components/ChecklistPDF";
+import { AddChecklistItemDialog } from "@/components/AddChecklistItemDialog";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -162,6 +163,14 @@ export default function VehicleDetails() {
   const { data: costs = [] } = useQuery<any[]>({
     queryKey: [`/api/vehicles/${vehicleId}/costs`],
     enabled: !!vehicleId,
+  });
+
+  const { data: customChecklistItems = [] } = useQuery<any[]>({
+    queryKey: ["/api/checklist-items"],
+  });
+
+  const { data: customChecklistCategories = [] } = useQuery<any[]>({
+    queryKey: ["/api/checklist-categories"],
   });
 
   useEffect(() => {
@@ -915,14 +924,24 @@ export default function VehicleDetails() {
                       {t("vehicleDetails.checklistDescription")}
                     </p>
                   </div>
-                  <Button 
-                    onClick={() => downloadChecklistPDF(vehicle, checklist)}
-                    className="gap-2"
-                    data-testid="button-download-checklist"
-                  >
-                    <FileText className="h-4 w-4" />
-                    {t("vehicleDetails.downloadPDF")}
-                  </Button>
+                  <div className="flex gap-2 flex-wrap">
+                    <AddChecklistItemDialog 
+                      vehicleType={(vehicle?.vehicleType || "Carro") as VehicleType}
+                    />
+                    <Button 
+                      onClick={() => downloadChecklistPDF(
+                        vehicle, 
+                        checklist, 
+                        customChecklistItems,
+                        customChecklistCategories
+                      )}
+                      className="gap-2"
+                      data-testid="button-download-checklist"
+                    >
+                      <FileText className="h-4 w-4" />
+                      {t("vehicleDetails.downloadPDF")}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </div>
