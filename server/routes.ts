@@ -4052,5 +4052,129 @@ Retorne APENAS um JSON válido no formato:
     }
   });
 
+  // ============================================
+  // CHECKLIST CUSTOM CATEGORIES AND ITEMS
+  // ============================================
+
+  // Get all custom categories for the company
+  app.get("/api/checklist-categories", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      const categories = await storage.getChecklistCategories(userInfo.empresaId);
+      res.json(categories);
+    } catch (error) {
+      console.error("Erro ao buscar categorias de checklist:", error);
+      res.status(500).json({ error: "Erro ao buscar categorias" });
+    }
+  });
+
+  // Create a new custom category
+  app.post("/api/checklist-categories", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      const { name, vehicleType } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "Nome da categoria é obrigatório" });
+      }
+
+      const category = await storage.createChecklistCategory({
+        empresaId: userInfo.empresaId,
+        name,
+        vehicleType: vehicleType || "Carro",
+      });
+      res.json(category);
+    } catch (error) {
+      console.error("Erro ao criar categoria de checklist:", error);
+      res.status(500).json({ error: "Erro ao criar categoria" });
+    }
+  });
+
+  // Delete a custom category
+  app.delete("/api/checklist-categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      await storage.deleteChecklistCategory(req.params.id, userInfo.empresaId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Erro ao deletar categoria de checklist:", error);
+      res.status(500).json({ error: "Erro ao deletar categoria" });
+    }
+  });
+
+  // Get all custom items for the company
+  app.get("/api/checklist-items", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      const items = await storage.getChecklistCustomItems(userInfo.empresaId);
+      res.json(items);
+    } catch (error) {
+      console.error("Erro ao buscar itens de checklist:", error);
+      res.status(500).json({ error: "Erro ao buscar itens" });
+    }
+  });
+
+  // Create a new custom item
+  app.post("/api/checklist-items", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      const { itemName, categoryId, categoryKey, vehicleType } = req.body;
+      if (!itemName) {
+        return res.status(400).json({ error: "Nome do item é obrigatório" });
+      }
+
+      if (!categoryId && !categoryKey) {
+        return res.status(400).json({ error: "Categoria ou chave de categoria é obrigatória" });
+      }
+
+      const item = await storage.createChecklistCustomItem({
+        empresaId: userInfo.empresaId,
+        itemName,
+        categoryId: categoryId || null,
+        categoryKey: categoryKey || null,
+        vehicleType: vehicleType || "Carro",
+      });
+      res.json(item);
+    } catch (error) {
+      console.error("Erro ao criar item de checklist:", error);
+      res.status(500).json({ error: "Erro ao criar item" });
+    }
+  });
+
+  // Delete a custom item
+  app.delete("/api/checklist-items/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) {
+        return res.status(401).json({ error: "Não autorizado" });
+      }
+
+      await storage.deleteChecklistCustomItem(req.params.id, userInfo.empresaId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Erro ao deletar item de checklist:", error);
+      res.status(500).json({ error: "Erro ao deletar item" });
+    }
+  });
+
   return httpServer;
 }

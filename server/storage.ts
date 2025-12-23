@@ -23,6 +23,10 @@ import {
   type InsertReminder,
   type BugReport,
   type InsertBugReport,
+  type ChecklistCategory,
+  type InsertChecklistCategory,
+  type ChecklistCustomItem,
+  type InsertChecklistCustomItem,
   users,
   vehicles,
   vehicleImages,
@@ -39,6 +43,8 @@ import {
   followUps,
   reminders,
   bugReports,
+  checklistCategories,
+  checklistCustomItems,
 } from "@shared/schema";
 import { or, sql } from "drizzle-orm";
 import { normalizeChecklistData } from "@shared/checklistUtils";
@@ -103,6 +109,14 @@ export interface IStorage {
   createBugReport(report: InsertBugReport): Promise<BugReport>;
   getAllBugReports(): Promise<BugReport[]>;
   updateBugReportStatus(id: string, status: string): Promise<BugReport | undefined>;
+
+  // Checklist Custom Categories and Items
+  getChecklistCategories(empresaId: string): Promise<ChecklistCategory[]>;
+  createChecklistCategory(category: InsertChecklistCategory): Promise<ChecklistCategory>;
+  deleteChecklistCategory(id: string, empresaId: string): Promise<boolean>;
+  getChecklistCustomItems(empresaId: string): Promise<ChecklistCustomItem[]>;
+  createChecklistCustomItem(item: InsertChecklistCustomItem): Promise<ChecklistCustomItem>;
+  deleteChecklistCustomItem(id: string, empresaId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -717,6 +731,43 @@ export class DatabaseStorage implements IStorage {
   async updateBugReportStatus(id: string, status: string): Promise<BugReport | undefined> {
     const [updated] = await db.update(bugReports).set({ status }).where(eq(bugReports.id, id)).returning();
     return updated;
+  }
+
+  // Checklist Custom Categories and Items
+  async getChecklistCategories(empresaId: string): Promise<ChecklistCategory[]> {
+    return await db.select().from(checklistCategories)
+      .where(and(eq(checklistCategories.empresaId, empresaId), eq(checklistCategories.isActive, "true")))
+      .orderBy(checklistCategories.order);
+  }
+
+  async createChecklistCategory(category: InsertChecklistCategory): Promise<ChecklistCategory> {
+    const [created] = await db.insert(checklistCategories).values(category).returning();
+    return created;
+  }
+
+  async deleteChecklistCategory(id: string, empresaId: string): Promise<boolean> {
+    const result = await db.update(checklistCategories)
+      .set({ isActive: "false" })
+      .where(and(eq(checklistCategories.id, id), eq(checklistCategories.empresaId, empresaId)));
+    return true;
+  }
+
+  async getChecklistCustomItems(empresaId: string): Promise<ChecklistCustomItem[]> {
+    return await db.select().from(checklistCustomItems)
+      .where(and(eq(checklistCustomItems.empresaId, empresaId), eq(checklistCustomItems.isActive, "true")))
+      .orderBy(checklistCustomItems.order);
+  }
+
+  async createChecklistCustomItem(item: InsertChecklistCustomItem): Promise<ChecklistCustomItem> {
+    const [created] = await db.insert(checklistCustomItems).values(item).returning();
+    return created;
+  }
+
+  async deleteChecklistCustomItem(id: string, empresaId: string): Promise<boolean> {
+    const result = await db.update(checklistCustomItems)
+      .set({ isActive: "false" })
+      .where(and(eq(checklistCustomItems.id, id), eq(checklistCustomItems.empresaId, empresaId)));
+    return true;
   }
 }
 
