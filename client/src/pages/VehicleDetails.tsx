@@ -16,7 +16,7 @@ import { SalePriceEditor } from "@/components/SalePriceEditor";
 import { ChecklistObservationDialog } from "@/components/ChecklistObservationDialog";
 import { ChecklistItemStatus } from "@/components/ChecklistItemStatus";
 import { PhotoViewer } from "@/components/PhotoViewer";
-import { downloadChecklistPDF } from "@/components/ChecklistPDF";
+import { downloadChecklistPDF, type PDFTranslations } from "@/components/ChecklistPDF";
 import { AddChecklistItemDialog } from "@/components/AddChecklistItemDialog";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -929,12 +929,49 @@ export default function VehicleDetails() {
                       vehicleType={(vehicle?.vehicleType || "Carro") as VehicleType}
                     />
                     <Button 
-                      onClick={() => downloadChecklistPDF(
-                        vehicle, 
-                        checklist, 
-                        customChecklistItems,
-                        customChecklistCategories
-                      )}
+                      onClick={() => {
+                        const vehicleType = (vehicle?.vehicleType || "Carro") as VehicleType;
+                        const pdfTranslations: PDFTranslations = {
+                          title: t("checklist.pdf.title"),
+                          vehicleInfo: t("checklist.pdf.vehicleInfo"),
+                          brand: t("checklist.pdf.brand"),
+                          model: t("checklist.pdf.model"),
+                          year: t("checklist.pdf.year"),
+                          plate: t("checklist.pdf.plate"),
+                          color: t("checklist.pdf.color"),
+                          km: t("checklist.pdf.km"),
+                          inspectionChecklist: t("checklist.pdf.inspectionChecklist"),
+                          serviceHistory: t("checklist.pdf.serviceHistory"),
+                          serviceType: t("checklist.pdf.serviceType"),
+                          date: t("checklist.pdf.date"),
+                          location: t("checklist.pdf.location"),
+                          observations: t("checklist.pdf.observations"),
+                          generalObservations: t("checklist.pdf.generalObservations"),
+                          inspector: t("checklist.pdf.inspector"),
+                          print: t("checklist.pdf.print"),
+                          download: t("checklist.pdf.download"),
+                          generating: t("checklist.pdf.generating"),
+                          customCategory: t("checklist.pdf.customCategory"),
+                          categories: {
+                            pneus: t(categoryTranslationKeys[vehicleType]?.pneus || "checklist.categories.pneus"),
+                            interior: t(categoryTranslationKeys[vehicleType]?.interior || "checklist.categories.interior"),
+                            somEletrica: t(categoryTranslationKeys[vehicleType]?.somEletrica || "checklist.categories.somEletrica"),
+                            lataria: t(categoryTranslationKeys[vehicleType]?.lataria || "checklist.categories.lataria"),
+                            documentacao: t(categoryTranslationKeys[vehicleType]?.documentacao || "checklist.categories.documentacao"),
+                            equipamentos: t(categoryTranslationKeys[vehicleType]?.equipamentos || "checklist.categories.equipamentos"),
+                          },
+                          items: Object.fromEntries(
+                            Object.entries(itemTranslationKeys).map(([key, value]) => [key, t(value)])
+                          ),
+                        };
+                        downloadChecklistPDF(
+                          vehicle, 
+                          checklist, 
+                          customChecklistItems,
+                          customChecklistCategories,
+                          pdfTranslations
+                        );
+                      }}
                       className="gap-2"
                       data-testid="button-download-checklist"
                     >

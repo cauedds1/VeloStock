@@ -12,6 +12,31 @@ interface CustomCategory {
   name: string;
 }
 
+interface PDFTranslations {
+  title: string;
+  vehicleInfo: string;
+  brand: string;
+  model: string;
+  year: string;
+  plate: string;
+  color: string;
+  km: string;
+  inspectionChecklist: string;
+  serviceHistory: string;
+  serviceType: string;
+  date: string;
+  location: string;
+  observations: string;
+  generalObservations: string;
+  inspector: string;
+  print: string;
+  download: string;
+  generating: string;
+  customCategory: string;
+  categories: Record<string, string>;
+  items: Record<string, string>;
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -25,12 +50,41 @@ export function generateChecklistHTML(
   vehicle: any, 
   checklist: ChecklistData,
   customItems?: CustomChecklistItem[],
-  customCategories?: CustomCategory[]
+  customCategories?: CustomCategory[],
+  translations?: PDFTranslations
 ) {
   const vehicleType = (vehicle?.vehicleType || "Carro") as "Carro" | "Moto";
   const categories = getChecklistCategories(vehicleType);
   const items = getChecklistItems(vehicleType);
   const safeFilename = `checklist-${escapeHtml(vehicle.brand || '')}-${escapeHtml(vehicle.model || '')}-${escapeHtml(vehicle.plate || '')}.pdf`;
+
+  const t = translations || {
+    title: "Checklist de Inspeção de Veículos",
+    vehicleInfo: "Informações do Veículo",
+    brand: "Marca",
+    model: "Modelo",
+    year: "Ano",
+    plate: "Placa",
+    color: "Cor",
+    km: "KM",
+    inspectionChecklist: "Checklist de Inspeção",
+    serviceHistory: "Histórico de Serviços",
+    serviceType: "Tipo de Serviço",
+    date: "Data",
+    location: "Local",
+    observations: "Observações",
+    generalObservations: "Observações Gerais",
+    inspector: "Responsável pela Inspeção",
+    print: "Imprimir",
+    download: "Baixar PDF",
+    generating: "Gerando...",
+    customCategory: "Categoria Personalizada",
+    categories: {},
+    items: {}
+  };
+
+  const getCategoryName = (key: string) => t.categories[key] || categories[key as keyof typeof categories] || key;
+  const getItemName = (name: string) => t.items[name] || name;
 
   const customItemsByCategory = customItems?.reduce((acc, item) => {
     const key = item.categoryKey || `custom:${item.categoryId}`;
@@ -436,7 +490,7 @@ export function generateChecklistHTML(
             <circle cx="7" cy="17" r="2" stroke="white" stroke-width="2"/>
             <circle cx="17" cy="17" r="2" stroke="white" stroke-width="2"/>
           </svg>
-          VeloStock - Checklist de Inspeção
+          VeloStock - ${escapeHtml(t.title)}
         </div>
         <div class="toolbar-buttons">
           <button class="toolbar-btn btn-print" onclick="window.print()">
@@ -444,13 +498,13 @@ export function generateChecklistHTML(
               <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
               <rect x="6" y="14" width="12" height="8"/>
             </svg>
-            Imprimir
+            ${escapeHtml(t.print)}
           </button>
           <button class="toolbar-btn btn-download" id="downloadBtn" onclick="downloadPDF()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
             </svg>
-            Baixar PDF
+            ${escapeHtml(t.download)}
           </button>
         </div>
       </div>
@@ -470,53 +524,53 @@ export function generateChecklistHTML(
               </div>
               <div class="logo-text">Velo<span>Stock</span></div>
             </div>
-            <div class="header-title">Checklist de Inspeção de Veículos</div>
+            <div class="header-title">${escapeHtml(t.title)}</div>
           </div>
 
           <!-- INFORMAÇÕES DO VEÍCULO -->
           <div class="vehicle-info-box">
-            <div class="vehicle-info-header">Informações do Veículo</div>
+            <div class="vehicle-info-header">${escapeHtml(t.vehicleInfo)}</div>
             <div class="vehicle-info-grid">
               <div class="vehicle-field">
-                <div class="vehicle-field-label">Marca:</div>
+                <div class="vehicle-field-label">${escapeHtml(t.brand)}:</div>
                 <div class="vehicle-field-value">${escapeHtml(vehicle.brand || '')}</div>
               </div>
               <div class="vehicle-field">
-                <div class="vehicle-field-label">Modelo:</div>
+                <div class="vehicle-field-label">${escapeHtml(t.model)}:</div>
                 <div class="vehicle-field-value">${escapeHtml(vehicle.model || '')}</div>
               </div>
               <div class="vehicle-field">
-                <div class="vehicle-field-label">Ano:</div>
+                <div class="vehicle-field-label">${escapeHtml(t.year)}:</div>
                 <div class="vehicle-field-value">${escapeHtml(String(vehicle.year || ''))}</div>
               </div>
               <div class="vehicle-field">
-                <div class="vehicle-field-label">Placa:</div>
+                <div class="vehicle-field-label">${escapeHtml(t.plate)}:</div>
                 <div class="vehicle-field-value">${escapeHtml(vehicle.plate || '')}</div>
               </div>
               <div class="vehicle-field">
-                <div class="vehicle-field-label">Cor:</div>
+                <div class="vehicle-field-label">${escapeHtml(t.color)}:</div>
                 <div class="vehicle-field-value">${escapeHtml(vehicle.color || '')}</div>
               </div>
               <div class="vehicle-field">
-                <div class="vehicle-field-label">KM:</div>
-                <div class="vehicle-field-value">${vehicle.kmOdometer ? escapeHtml(vehicle.kmOdometer.toLocaleString('pt-BR')) : ''}</div>
+                <div class="vehicle-field-label">${escapeHtml(t.km)}:</div>
+                <div class="vehicle-field-value">${vehicle.kmOdometer ? escapeHtml(vehicle.kmOdometer.toLocaleString()) : ''}</div>
               </div>
             </div>
           </div>
 
           <!-- CHECKLIST DE INSPEÇÃO -->
-          <div class="section-title">Checklist de Inspeção</div>
+          <div class="section-title">${escapeHtml(t.inspectionChecklist)}</div>
           <div class="checklist-container">
             <!-- Coluna Esquerda -->
             <div class="checklist-column">
               <!-- PNEUS -->
               <div class="category-section">
-                <div class="category-header">${categories.pneus}</div>
+                <div class="category-header">${escapeHtml(getCategoryName('pneus'))}</div>
                 <div class="checkbox-list">
                   ${[...(items.pneus || []), ...(customItemsByCategory['pneus'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-text">${escapeHtml(getItemName(item))}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -525,12 +579,12 @@ export function generateChecklistHTML(
               
               <!-- INTERIOR / BANCOS -->
               <div class="category-section">
-                <div class="category-header">${categories.interior}</div>
+                <div class="category-header">${escapeHtml(getCategoryName('interior'))}</div>
                 <div class="checkbox-list">
                   ${[...(items.interior || []), ...(customItemsByCategory['interior'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-text">${escapeHtml(getItemName(item))}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -539,12 +593,12 @@ export function generateChecklistHTML(
               
               <!-- LATARIA / PINTURA -->
               <div class="category-section">
-                <div class="category-header">${categories.lataria}</div>
+                <div class="category-header">${escapeHtml(getCategoryName('lataria'))}</div>
                 <div class="checkbox-list">
                   ${[...(items.lataria || []), ...(customItemsByCategory['lataria'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-text">${escapeHtml(getItemName(item))}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -556,12 +610,12 @@ export function generateChecklistHTML(
             <div class="checklist-column">
               <!-- SOM / ELÉTRICA -->
               <div class="category-section">
-                <div class="category-header">${categories.somEletrica}</div>
+                <div class="category-header">${escapeHtml(getCategoryName('somEletrica'))}</div>
                 <div class="checkbox-list">
                   ${[...(items.somEletrica || []), ...(customItemsByCategory['somEletrica'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-text">${escapeHtml(getItemName(item))}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -570,12 +624,12 @@ export function generateChecklistHTML(
               
               <!-- DOCUMENTAÇÃO -->
               <div class="category-section">
-                <div class="category-header">${categories.documentacao}</div>
+                <div class="category-header">${escapeHtml(getCategoryName('documentacao'))}</div>
                 <div class="checkbox-list">
                   ${[...(items.documentacao || []), ...(customItemsByCategory['documentacao'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-text">${escapeHtml(getItemName(item))}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -584,12 +638,12 @@ export function generateChecklistHTML(
               
               <!-- EQUIPAMENTOS DE SEGURANÇA -->
               <div class="category-section">
-                <div class="category-header">${categories.equipamentos}</div>
+                <div class="category-header">${escapeHtml(getCategoryName('equipamentos'))}</div>
                 <div class="checkbox-list">
                   ${[...(items.equipamentos || []), ...(customItemsByCategory['equipamentos'] || [])].map(item => `
                     <div class="checkbox-item">
                       <div class="checkbox"></div>
-                      <div class="item-text">${escapeHtml(item)}</div>
+                      <div class="item-text">${escapeHtml(getItemName(item))}</div>
                       <div class="item-obs-line"></div>
                     </div>
                   `).join('')}
@@ -601,7 +655,7 @@ export function generateChecklistHTML(
           <!-- CATEGORIAS CUSTOMIZADAS -->
           ${Object.keys(customItemsByCategory).filter(key => key.startsWith('custom:')).map(key => {
             const categoryId = key.replace('custom:', '');
-            const categoryName = customCategoryMap[categoryId] || 'Categoria Personalizada';
+            const categoryName = customCategoryMap[categoryId] || t.customCategory;
             const categoryItems = customItemsByCategory[key] || [];
             return `
               <div class="category-section" style="margin-bottom: 16px;">
@@ -621,14 +675,14 @@ export function generateChecklistHTML(
 
           <!-- HISTÓRICO DE SERVIÇOS -->
           <div class="service-section">
-            <div class="section-title">Histórico de Serviços</div>
+            <div class="section-title">${escapeHtml(t.serviceHistory)}</div>
             <table class="service-table">
               <thead>
                 <tr>
-                  <th style="width: 30%">Tipo de Serviço</th>
-                  <th style="width: 15%">Data</th>
-                  <th style="width: 15%">Local</th>
-                  <th style="width: 40%">Observações</th>
+                  <th style="width: 30%">${escapeHtml(t.serviceType)}</th>
+                  <th style="width: 15%">${escapeHtml(t.date)}</th>
+                  <th style="width: 15%">${escapeHtml(t.location)}</th>
+                  <th style="width: 40%">${escapeHtml(t.observations)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -641,7 +695,7 @@ export function generateChecklistHTML(
 
           <!-- OBSERVAÇÕES GERAIS -->
           <div class="obs-section">
-            <div class="section-title">Observações Gerais</div>
+            <div class="section-title">${escapeHtml(t.generalObservations)}</div>
             <div class="obs-box">
               <div class="obs-line"></div>
               <div class="obs-line"></div>
@@ -654,9 +708,9 @@ export function generateChecklistHTML(
           <div class="footer">
             <div class="footer-signature">
               <div class="footer-signature-line"></div>
-              <div class="footer-signature-label">Responsável pela Inspeção</div>
+              <div class="footer-signature-label">${escapeHtml(t.inspector)}</div>
             </div>
-            <div class="footer-date">Data: ____/____/________</div>
+            <div class="footer-date">${escapeHtml(t.date)}: ____/____/________</div>
           </div>
         </div>
       </div>
@@ -666,7 +720,7 @@ export function generateChecklistHTML(
         function downloadPDF() {
           const btn = document.getElementById('downloadBtn');
           btn.disabled = true;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg> Gerando...';
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg> ${escapeHtml(t.generating)}';
           
           const opt = {
             margin: 0,
@@ -682,7 +736,7 @@ export function generateChecklistHTML(
           
           html2pdf().set(opt).from(document.getElementById('checklistPage')).save().then(function() {
             btn.disabled = false;
-            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Baixar PDF';
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> ${escapeHtml(t.download)}';
           });
         }
       </script>
@@ -703,16 +757,17 @@ export async function openChecklistPreview(
   vehicle: any, 
   checklist: ChecklistData,
   customItems?: CustomChecklistItem[],
-  customCategories?: CustomCategory[]
+  customCategories?: CustomCategory[],
+  translations?: PDFTranslations
 ) {
   try {
-    const htmlContent = generateChecklistHTML(vehicle, checklist, customItems, customCategories);
+    const htmlContent = generateChecklistHTML(vehicle, checklist, customItems, customCategories, translations);
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   } catch (error) {
-    console.error('Erro ao abrir visualização:', error);
+    console.error('Error opening preview:', error);
     throw error;
   }
 }
@@ -721,7 +776,10 @@ export async function downloadChecklistPDF(
   vehicle: any, 
   checklist: ChecklistData,
   customItems?: CustomChecklistItem[],
-  customCategories?: CustomCategory[]
+  customCategories?: CustomCategory[],
+  translations?: PDFTranslations
 ) {
-  return openChecklistPreview(vehicle, checklist, customItems, customCategories);
+  return openChecklistPreview(vehicle, checklist, customItems, customCategories, translations);
 }
+
+export type { PDFTranslations };
