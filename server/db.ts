@@ -1,13 +1,15 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import pkg from 'pg';
+const { Pool } = pkg;
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 import { getDatabaseUrl } from "./config/database";
-
-neonConfig.webSocketConstructor = ws;
 
 // Obter URL do banco de dados (funciona em dev e produção)
 const databaseUrl = getDatabaseUrl();
 
-export const pool = new Pool({ connectionString: databaseUrl });
-export const db = drizzle({ client: pool, schema });
+export const pool = new Pool({ 
+  connectionString: databaseUrl,
+  ssl: databaseUrl.includes('localhost') ? false : { rejectUnauthorized: false }
+});
+
+export const db = drizzle(pool, { schema });
