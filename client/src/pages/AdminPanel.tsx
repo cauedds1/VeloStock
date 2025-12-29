@@ -2071,6 +2071,28 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                   </div>
                 )}
               </div>
+              {admin.token && (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">{t("admin.accessToken")}:</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                      {admin.token}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        navigator.clipboard.writeText(admin.token!);
+                        setSuccess(t("admin.tokenCopied"));
+                        setTimeout(() => setSuccess(""), 2000);
+                      }}
+                      data-testid="button-copy-my-token"
+                    >
+                      <Check className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
