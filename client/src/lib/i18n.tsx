@@ -69,7 +69,11 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.logout": "Sair",
     "nav.profile": "Perfil",
 
-    "reminders.title": "Lembretes",
+    "auth.inviteCode": "Código de Convite",
+    "auth.inviteCodePlaceholder": "Obrigatório para novos cadastros",
+    "auth.firstAdminNote": "Como este é o primeiro acesso, você não precisa de código de convite.",
+    "auth.inviteRequired": "Código de convite é necessário para criar conta.",
+
     "reminders.new": "Novo Lembrete",
     "reminders.empty": "Nenhum lembrete definido. Crie um novo!",
     "reminders.description": "Descrição",
@@ -1316,7 +1320,11 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.logout": "Logout",
     "nav.profile": "Profile",
 
-    "reminders.title": "Reminders",
+    "auth.inviteCode": "Invite Code",
+    "auth.inviteCodePlaceholder": "Required for new registrations",
+    "auth.firstAdminNote": "As this is the first access, you do not need an invite code.",
+    "auth.inviteRequired": "Invite code is required to create an account.",
+
     "reminders.new": "New Reminder",
     "reminders.empty": "No reminders set. Create a new one!",
     "reminders.description": "Description",

@@ -15,8 +15,18 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
   const { toast } = useToast();
+
+  // Check if it's the first user to show/hide invite code
+  useState(() => {
+    fetch("/api/users/count")
+      .then(res => res.json())
+      .then(data => setIsFirstUser(data.count === 0))
+      .catch(() => setIsFirstUser(false));
+  });
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +49,22 @@ export default function Signup() {
       return;
     }
 
+    if (!isFirstUser && !inviteCode) {
+      toast({
+        title: t("common.error"),
+        description: t("auth.inviteRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await fetch("/api/auth/signup-step1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email, password }),
+        body: JSON.stringify({ firstName, lastName, email, password, inviteCode }),
       });
 
       const data = await response.json();
@@ -164,6 +183,27 @@ export default function Signup() {
                     disabled={isLoading}
                   />
                 </div>
+
+                {!isFirstUser && isFirstUser !== null && (
+                  <div className="space-y-2">
+                    <Label htmlFor="inviteCode">{t("auth.inviteCode")}</Label>
+                    <Input
+                      id="inviteCode"
+                      type="password"
+                      placeholder={t("auth.inviteCodePlaceholder")}
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                )}
+
+                {isFirstUser && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-md border border-purple-200 dark:border-purple-800 text-xs text-purple-700 dark:text-purple-300">
+                    {t("auth.firstAdminNote")}
+                  </div>
+                )}
 
                 <Button
                   type="submit"

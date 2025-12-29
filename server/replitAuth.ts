@@ -64,10 +64,28 @@ export async function setupAuth(app: Express) {
 
   // Local signup - Create account (email verification DISABLED temporarily)
   app.post("/api/auth/signup-step1", async (req, res, next) => {
-    const { email, password, firstName, lastName } = req.body;
+    // SECURITY: Permite criação de conta apenas se não houver usuários cadastrados (primeiro admin)
+    // ou se houver um segredo de convite válido no corpo da requisição
+    const { email, password, firstName, lastName, inviteCode } = req.body;
     
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+    }
+
+    try {
+      const hasUsers = (await db.select({ count: sql<number>`count(*)` }).from(users))[0].count > 0;
+      
+      const MASTER_INVITE_CODE = process.env.ADMIN_INVITE_CODE || "velostock-admin-2024";
+
+      if (hasUsers && inviteCode !== MASTER_INVITE_CODE) {
+        console.log(`[SECURITY] Tentativa de signup negada para ${email} - Sem código de convite válido`);
+        return res.status(403).json({ 
+          message: "O cadastro público está desativado. Use um código de convite ou entre em contato com o administrador." 
+        });
+      }
+    } catch (err) {
+      console.error("[Signup Security Check] Error:", err);
+      return res.status(500).json({ message: "Erro interno de segurança" });
     }
     
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -109,8 +127,6 @@ export async function setupAuth(app: Express) {
       });
     } catch (error: any) {
       console.error("[Signup] Erro no signup:", error);
-      console.error("[Signup] Stack:", error?.stack);
-      console.error("[Signup] Message:", error?.message);
       return res.status(500).json({ message: "Erro ao criar conta", details: error?.message });
     }
   });

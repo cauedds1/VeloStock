@@ -89,7 +89,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Auth endpoint - Get current user
+  // GET /api/users/count - Verificar se existem usuários (usado no signup)
+  app.get('/api/users/count', async (req, res) => {
+    try {
+      const count = (await db.select({ count: sql<number>`count(*)` }).from(users))[0].count;
+      res.json({ count: Number(count) });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao contar usuários" });
+    }
+  });
+
+  // GET /api/auth/user - Get current user
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       // Extract userId from either OAuth claims or local auth
