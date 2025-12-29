@@ -169,6 +169,17 @@ function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) 
               </div>
             )}
 
+            <div className="text-center text-sm pt-2">
+              <span className="text-muted-foreground">O acesso ao Painel de Administrador Master é restrito. </span>
+              <button
+                type="button"
+                className="font-semibold text-purple-600 hover:text-purple-700 underline"
+                onClick={() => (window.location.href = "/signup")}
+              >
+                Clique aqui para criar uma conta de concessionária
+              </button>
+            </div>
+
             <Button type="submit" className="w-full" disabled={loading} data-testid="button-validate-token">
               {loading ? t("admin.validating") : t("admin.access")}
             </Button>
@@ -428,6 +439,17 @@ function AdminLogin({ onLogin }: {
                   {error}
                 </div>
               )}
+
+              <div className="text-center text-sm pt-2">
+                <span className="text-muted-foreground">Acesso exclusivo para administradores master. </span>
+                <button
+                  type="button"
+                  className="font-semibold text-purple-600 hover:text-purple-700 underline"
+                  onClick={() => (window.location.href = "/signup")}
+                >
+                  Clique aqui para criar sua conta de concessionária
+                </button>
+              </div>
 
               <Button type="submit" className="w-full" disabled={loading} data-testid="button-admin-login">
                 {loading ? t("admin.entering") : t("admin.login")}
