@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, User } from "lucide-react";
 import type { StoreObservation } from "@shared/schema";
+import { useI18n } from "@/lib/i18n";
 
 type UserType = {
   id: string;
@@ -44,6 +45,7 @@ export function StoreObservationDialog({
   onOpenChange,
   observation,
 }: StoreObservationDialogProps) {
+  const { t } = useI18n();
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [customCategory, setCustomCategory] = useState("");
@@ -121,16 +123,16 @@ export function StoreObservationDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/store-observations"] });
       toast({
-        title: "Observação criada",
-        description: "A observação foi criada com sucesso.",
+        title: t("observations.createdSuccess"),
+        description: t("observations.createdSuccessDesc"),
       });
       onOpenChange(false);
     },
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível criar a observação.",
+        title: t("observations.error"),
+        description: t("observations.errorCreate"),
       });
     },
   });
@@ -159,13 +161,13 @@ export function StoreObservationDialog({
       
       if (data.expense) {
         toast({
-          title: "Observação resolvida com gasto registrado",
-          description: `Despesa de R$ ${data.expense.value.toFixed(2)} registrada com sucesso.`,
+          title: t("observations.resolvedSuccess"),
+          description: t("observations.resolvedSuccessDesc", { value: data.expense.value.toFixed(2) }),
         });
       } else {
         toast({
-          title: "Observação atualizada",
-          description: "A observação foi atualizada com sucesso.",
+          title: t("observations.updatedSuccess"),
+          description: t("observations.updatedSuccessDesc"),
         });
       }
       
@@ -175,8 +177,8 @@ export function StoreObservationDialog({
     } catch {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível atualizar a observação.",
+        title: t("observations.error"),
+        description: t("observations.errorUpdate"),
       });
     } finally {
       setIsSubmitting(false);
@@ -187,8 +189,8 @@ export function StoreObservationDialog({
     if (!description.trim()) {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "A descrição é obrigatória.",
+        title: t("observations.error"),
+        description: t("observations.errorDescription"),
       });
       return;
     }
@@ -196,8 +198,8 @@ export function StoreObservationDialog({
     if (category === "Outro" && !customCategory.trim()) {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Por favor, especifique a categoria.",
+        title: t("observations.error"),
+        description: t("observations.errorCategory"),
       });
       return;
     }
@@ -208,8 +210,8 @@ export function StoreObservationDialog({
       if (isNaN(expenseVal) || expenseVal <= 0) {
         toast({
           variant: "destructive",
-          title: "Erro",
-          description: "Informe um valor válido para o gasto.",
+          title: t("observations.error"),
+          description: t("observations.errorExpenseValue"),
         });
         return;
       }
@@ -217,8 +219,8 @@ export function StoreObservationDialog({
       if (!expenseDescription.trim()) {
         toast({
           variant: "destructive",
-          title: "Erro",
-          description: "Informe a descrição do gasto.",
+          title: t("observations.error"),
+          description: t("observations.errorExpenseDescription"),
         });
         return;
       }
@@ -226,8 +228,8 @@ export function StoreObservationDialog({
       if (expensePaidBy === "other" && !expensePaidByCustom.trim()) {
         toast({
           variant: "destructive",
-          title: "Erro",
-          description: "Por favor, especifique quem pagou.",
+          title: t("observations.error"),
+          description: t("observations.errorPaidBy"),
         });
         return;
       }
@@ -287,19 +289,19 @@ export function StoreObservationDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {observation ? "Editar Observação" : "Nova Observação"}
+            {observation ? t("observations.edit") : t("observations.new")}
           </DialogTitle>
           <DialogDescription>
-            Registre lembretes sobre estoque da loja ou manutenção da propriedade
+            {t("observations.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição *</Label>
+            <Label htmlFor="description">{t("observations.label")}</Label>
             <Textarea
               id="description"
-              placeholder="Ex: Comprar papel higiênico, café e copos descartáveis. Portão pesado precisa lubrificar..."
+              placeholder={t("observations.placeholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[120px]"
@@ -307,7 +309,7 @@ export function StoreObservationDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="category">{t("observations.category")}</Label>
             <Select value={category} onValueChange={(value) => {
               setCategory(value);
               if (value !== "Outro") {
@@ -315,22 +317,22 @@ export function StoreObservationDialog({
               }
             }}>
               <SelectTrigger id="category">
-                <SelectValue placeholder="Selecione uma categoria (opcional)" />
+                <SelectValue placeholder={t("observations.categoryPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Estoque">Estoque</SelectItem>
-                <SelectItem value="Manutenção">Manutenção</SelectItem>
-                <SelectItem value="Outro">Outro</SelectItem>
+                <SelectItem value="Estoque">{t("observations.categoryStock")}</SelectItem>
+                <SelectItem value="Manutenção">{t("observations.categoryMaintenance")}</SelectItem>
+                <SelectItem value="Outro">{t("observations.categoryOther")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {category === "Outro" && (
             <div className="space-y-2">
-              <Label htmlFor="customCategory">Especifique a Categoria *</Label>
+              <Label htmlFor="customCategory">{t("observations.specifyCategory")}</Label>
               <Input
                 id="customCategory"
-                placeholder="Ex: Limpeza, Segurança, Administrativo..."
+                placeholder={t("observations.specifyCategoryPlaceholder")}
                 value={customCategory}
                 onChange={(e) => setCustomCategory(e.target.value)}
               />
@@ -339,19 +341,19 @@ export function StoreObservationDialog({
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t("observations.status")}</Label>
               <p className="text-sm text-muted-foreground">
-                Marque como resolvido quando concluído
+                {t("observations.statusDescription")}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Pendente</span>
+              <span className="text-sm text-muted-foreground">{t("observations.pending")}</span>
               <Switch
                 id="status"
                 checked={status === "Resolvido"}
                 onCheckedChange={(checked) => setStatus(checked ? "Resolvido" : "Pendente")}
               />
-              <span className="text-sm text-muted-foreground">Resolvido</span>
+              <span className="text-sm text-muted-foreground">{t("observations.resolved")}</span>
             </div>
           </div>
 
@@ -367,7 +369,7 @@ export function StoreObservationDialog({
                 />
                 <Label htmlFor="registerExpense" className="flex items-center gap-2 cursor-pointer">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  Registrar gasto para resolver esta observação
+                  {t("observations.registerExpense")}
                 </Label>
               </div>
 
@@ -375,13 +377,13 @@ export function StoreObservationDialog({
                 <div className="space-y-4 pt-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="expenseValue">Valor (R$) *</Label>
+                      <Label htmlFor="expenseValue">{t("observations.expenseValue")}</Label>
                       <Input
                         id="expenseValue"
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="0,00"
+                        placeholder={t("observations.expenseValuePlaceholder")}
                         value={expenseValue}
                         onChange={(e) => setExpenseValue(e.target.value)}
                         data-testid="input-expense-value"
@@ -389,7 +391,7 @@ export function StoreObservationDialog({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="expensePaymentMethod">Forma de Pagamento</Label>
+                      <Label htmlFor="expensePaymentMethod">{t("observations.paymentMethod")}</Label>
                       <Select
                         value={expensePaymentMethod}
                         onValueChange={(value) => {
@@ -401,22 +403,22 @@ export function StoreObservationDialog({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Cartão Loja">Cartão Loja</SelectItem>
-                          <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                          <SelectItem value="PIX">PIX</SelectItem>
-                          <SelectItem value="Cartão Crédito">Cartão Crédito</SelectItem>
-                          <SelectItem value="Cartão Débito">Cartão Débito</SelectItem>
-                          <SelectItem value="Outro">Outro...</SelectItem>
+                          <SelectItem value="Cartão Loja">{t("observations.paymentMethodStoreCard")}</SelectItem>
+                          <SelectItem value="Dinheiro">{t("observations.paymentMethodCash")}</SelectItem>
+                          <SelectItem value="PIX">{t("observations.paymentMethodPix")}</SelectItem>
+                          <SelectItem value="Cartão Crédito">{t("observations.paymentMethodCredit")}</SelectItem>
+                          <SelectItem value="Cartão Débito">{t("observations.paymentMethodDebit")}</SelectItem>
+                          <SelectItem value="Outro">{t("observations.paymentMethodOther")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     {expensePaymentMethod === "Outro" && (
                       <div className="space-y-2">
-                        <Label htmlFor="expensePaymentMethodCustom">Especifique a forma de pagamento</Label>
+                        <Label htmlFor="expensePaymentMethodCustom">{t("observations.specifyPayment")}</Label>
                         <Input
                           id="expensePaymentMethodCustom"
-                          placeholder="Ex: Transferência Bancária, Cheque, etc..."
+                          placeholder={t("observations.specifyPaymentPlaceholder")}
                           value={expensePaymentMethodCustom}
                           onChange={(e) => setExpensePaymentMethodCustom(e.target.value)}
                           data-testid="input-expense-payment-custom"
@@ -426,10 +428,10 @@ export function StoreObservationDialog({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="expenseDescription">Descrição do Gasto *</Label>
+                    <Label htmlFor="expenseDescription">{t("observations.expenseDescription")}</Label>
                     <Input
                       id="expenseDescription"
-                      placeholder="Ex: Compra de material de limpeza"
+                      placeholder={t("observations.expenseDescriptionPlaceholder")}
                       value={expenseDescription}
                       onChange={(e) => setExpenseDescription(e.target.value)}
                       data-testid="input-expense-description"
@@ -437,7 +439,7 @@ export function StoreObservationDialog({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="expensePaidBy">Quem Pagou (opcional)</Label>
+                    <Label htmlFor="expensePaidBy">{t("observations.paidBy")}</Label>
                     <Select
                       value={expensePaidBy}
                       onValueChange={(value) => {
@@ -446,10 +448,10 @@ export function StoreObservationDialog({
                       }}
                     >
                       <SelectTrigger id="expensePaidBy" data-testid="select-expense-paid-by">
-                        <SelectValue placeholder="Selecione quem pagou..." />
+                        <SelectValue placeholder={t("observations.paidByPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Não informar</SelectItem>
+                        <SelectItem value="none">{t("observations.paidByNone")}</SelectItem>
                         {users.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
                             <div className="flex items-center gap-2">
@@ -458,17 +460,17 @@ export function StoreObservationDialog({
                             </div>
                           </SelectItem>
                         ))}
-                        <SelectItem value="other">Outra pessoa...</SelectItem>
+                        <SelectItem value="other">{t("observations.paidByOther")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {expensePaidBy === "other" && (
                     <div className="space-y-2">
-                      <Label htmlFor="expensePaidByCustom">Nome de quem pagou</Label>
+                      <Label htmlFor="expensePaidByCustom">{t("observations.paidByName")}</Label>
                       <Input
                         id="expensePaidByCustom"
-                        placeholder="Ex: João Silva (fornecedor)"
+                        placeholder={t("observations.paidByNamePlaceholder")}
                         value={expensePaidByCustom}
                         onChange={(e) => setExpensePaidByCustom(e.target.value)}
                         data-testid="input-expense-paid-by-custom"
@@ -483,17 +485,17 @@ export function StoreObservationDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancelar
+            {t("common.cancel")}
           </Button>
           <Button 
             onClick={handleSubmit}
             disabled={createMutation.isPending || isSubmitting}
           >
             {createMutation.isPending || isSubmitting
-              ? "Salvando..."
+              ? t("observations.saving")
               : observation
-              ? "Atualizar"
-              : "Criar"}
+              ? t("observations.update")
+              : t("observations.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

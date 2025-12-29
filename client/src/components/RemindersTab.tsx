@@ -10,7 +10,8 @@ import { AlertCircle, Plus, Trash2, Check, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format, differenceInDays, isPast } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR, enUS } from "date-fns/locale";
+import { useI18n } from "@/lib/i18n";
 
 interface Reminder {
   id: string;
@@ -22,10 +23,13 @@ interface Reminder {
 }
 
 export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
+  const { t, language } = useI18n();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newReminder, setNewReminder] = useState({ titulo: "", descricao: "", dataLimite: "" });
+
+  const dateLocale = language === "pt-BR" ? ptBR : enUS;
 
   // Se tem vehicleId, usa rota de veículo. Senão, usa rota global
   const endpoint = vehicleId ? `/api/vehicles/${vehicleId}/reminders` : `/api/reminders`;
@@ -48,7 +52,7 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
       queryClient.invalidateQueries({ queryKey: [endpoint] });
       setNewReminder({ titulo: "", descricao: "", dataLimite: "" });
       setIsDialogOpen(false);
-      toast({ title: "Lembrete criado com sucesso!" });
+      toast({ title: t("reminders.success") });
     },
   });
 
@@ -71,7 +75,7 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [endpoint] });
-      toast({ title: "Lembrete deletado!" });
+      toast({ title: t("reminders.deleted") });
     },
   });
 
@@ -82,32 +86,32 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
     const daysUntil = differenceInDays(date, new Date());
 
     if (daysUntil < 0) {
-      return { type: "passed", text: `${Math.abs(daysUntil)} dias vencido` };
+      return { type: "passed", text: `${Math.abs(daysUntil)} ${t("reminders.vencido")}` };
     } else if (daysUntil === 0) {
-      return { type: "today", text: "Vence hoje" };
+      return { type: "today", text: t("reminders.venceHoje") };
     } else if (daysUntil === 1) {
-      return { type: "tomorrow", text: "Vence amanhã" };
+      return { type: "tomorrow", text: t("reminders.venceAmanha") };
     }
-    return { type: "pending", text: `${daysUntil} dias restantes` };
+    return { type: "pending", text: `${daysUntil} ${t("reminders.diasRestantes")}` };
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-card-foreground">Lembretes</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">{t("reminders.title")}</h3>
         <Button
           size="sm"
           onClick={() => setIsDialogOpen(true)}
           data-testid="button-add-reminder"
         >
           <Plus className="mr-2 h-4 w-4" />
-          Novo Lembrete
+          {t("reminders.new")}
         </Button>
       </div>
 
       {reminders.length === 0 ? (
         <Card className="p-6 text-center">
-          <p className="text-muted-foreground">Nenhum lembrete definido. Crie um novo!</p>
+          <p className="text-muted-foreground">{t("reminders.empty")}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -133,7 +137,7 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
                     )}
                     <div className="mt-3 flex items-center gap-2">
                       <span className={`text-xs ${alert.type === "passed" ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
-                        {format(new Date(reminder.dataLimite), "dd 'de' MMMM", { locale: ptBR })}
+                        {format(new Date(reminder.dataLimite), "dd 'de' MMMM", { locale: dateLocale })}
                       </span>
                       <Badge variant="outline" className={`${color.bg} ${color.text} border-0`}>
                         {color.icon}
@@ -176,29 +180,29 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo Lembrete</DialogTitle>
+            <DialogTitle>{t("reminders.new")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-card-foreground">Título</label>
+              <label className="text-sm font-medium text-card-foreground">{t("reminders.titleLabel")}</label>
               <Input
-                placeholder="Ex: Revisar mecânica..."
+                placeholder={t("reminders.titlePlaceholder")}
                 value={newReminder.titulo}
                 onChange={(e) => setNewReminder({ ...newReminder, titulo: e.target.value })}
                 data-testid="input-reminder-title"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-card-foreground">Descrição</label>
+              <label className="text-sm font-medium text-card-foreground">{t("reminders.description")}</label>
               <Textarea
-                placeholder="Ex: Verificar se os freios..."
+                placeholder={t("reminders.descriptionPlaceholder")}
                 value={newReminder.descricao}
                 onChange={(e) => setNewReminder({ ...newReminder, descricao: e.target.value })}
                 data-testid="input-reminder-description"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-card-foreground">Alertar Prazo</label>
+              <label className="text-sm font-medium text-card-foreground">{t("reminders.deadline")}</label>
               <Input
                 type="date"
                 value={newReminder.dataLimite}
@@ -209,14 +213,14 @@ export function RemindersTab({ vehicleId = "" }: { vehicleId?: string }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() => createMutation.mutate()}
               disabled={!newReminder.titulo || !newReminder.dataLimite || createMutation.isPending}
               data-testid="button-save-reminder"
             >
-              {createMutation.isPending ? "Salvando..." : "Salvar"}
+              {createMutation.isPending ? t("reminders.saving") : t("reminders.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
