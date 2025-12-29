@@ -170,13 +170,14 @@ function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) 
             )}
 
             <div className="text-center text-sm pt-2">
-              <span className="text-muted-foreground">O acesso ao Painel de Administrador Master é restrito. </span>
+              <span className="text-muted-foreground">{t("admin.restrictedAccessDescription")} </span>
               <button
                 type="button"
                 className="font-semibold text-purple-600 hover:text-purple-700 underline"
                 onClick={() => (window.location.href = "/signup")}
+                data-testid="link-create-dealer-account"
               >
-                Clique aqui para criar uma conta de concessionária
+                {t("admin.createAccountLink")}
               </button>
             </div>
 
@@ -441,13 +442,14 @@ function AdminLogin({ onLogin }: {
               )}
 
               <div className="text-center text-sm pt-2">
-                <span className="text-muted-foreground">Acesso exclusivo para administradores master. </span>
+                <span className="text-muted-foreground">{t("admin.exclusiveAccessDescription")} </span>
                 <button
                   type="button"
                   className="font-semibold text-purple-600 hover:text-purple-700 underline"
                   onClick={() => (window.location.href = "/signup")}
+                  data-testid="link-create-dealer-account-2"
                 >
-                  Clique aqui para criar sua conta de concessionária
+                  {t("admin.createAccountLink2")}
                 </button>
               </div>
 
