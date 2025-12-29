@@ -2071,13 +2071,13 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                   </div>
                 )}
               </div>
-              {admin.token && (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm text-muted-foreground">Token de Acesso:</span>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                      {admin.token}
-                    </code>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Token de Acesso:</span>
+                <div className="flex items-center gap-2">
+                  <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                    {admin.token || "Não gerado"}
+                  </code>
+                  {admin.token && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -2090,9 +2090,9 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                     >
                       <Check className="h-3 w-3" />
                     </Button>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
