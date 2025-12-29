@@ -1141,7 +1141,7 @@ export async function registerAdminRoutes(app: Express) {
         empresaId: companyId,
         tipo: "a_pagar",
         descricao: descricaoFinal,
-        categoria: "Assinatura VeloStock",
+        categoria: descricao && descricao.trim() ? descricao : "Cobrança VeloStock",
         valor: String(valor),
         dataVencimento: new Date(dataVencimento),
         status: "pendente",
