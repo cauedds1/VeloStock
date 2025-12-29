@@ -461,6 +461,36 @@ export async function registerAdminRoutes(app: Express) {
     }
   });
 
+  // Regenerar token do PRÓPRIO admin logado
+  app.post("/api/admin/me/regenerar-token", requireAdminAuth, async (req: any, res) => {
+    try {
+      const adminId = req.session.adminId;
+      const crypto = await import("crypto");
+      const newToken = crypto.randomBytes(32).toString("hex");
+
+      const updated = await db
+        .update(adminCredentials)
+        .set({ 
+          token: newToken,
+          updatedAt: new Date(),
+        })
+        .where(eq(adminCredentials.id, adminId))
+        .returning();
+
+      if (updated.length === 0) {
+        return res.status(404).json({ error: "Admin não encontrado" });
+      }
+
+      res.json({
+        id: updated[0].id,
+        token: updated[0].token,
+      });
+    } catch (error) {
+      console.error("Erro ao regenerar token próprio:", error);
+      res.status(500).json({ error: "Erro ao regenerar token" });
+    }
+  });
+
   const setupAttempts = new Map<string, { count: number; lastAttempt: number }>();
   const MAX_SETUP_ATTEMPTS = 3;
   const SETUP_LOCKOUT_TIME = 30 * 60 * 1000; // 30 minutos

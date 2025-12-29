@@ -2077,7 +2077,7 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                   <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
                     {admin.token || "Não gerado"}
                   </code>
-                  {admin.token && (
+                  {admin.token ? (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -2089,6 +2089,28 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                       data-testid="button-copy-my-token"
                     >
                       <Check className="h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={async () => {
+                        try {
+                          const res = await apiRequest("POST", "/api/admin/me/regenerar-token");
+                          const data = await res.json();
+                          if (data.token) {
+                            setAdmin({ ...admin, token: data.token });
+                            setSuccess("Token gerado com sucesso!");
+                            setTimeout(() => setSuccess(""), 2000);
+                          }
+                        } catch (err) {
+                          setError("Erro ao gerar token");
+                        }
+                      }}
+                      data-testid="button-generate-my-token"
+                    >
+                      Gerar Token
                     </Button>
                   )}
                 </div>
