@@ -1106,6 +1106,30 @@ export default function AdminPanel() {
     );
   }
 
+  // If system needs setup, first validate token then create admin account
+  if (needsSetup) {
+    if (!tokenValidated) {
+      return (
+        <TokenGate
+          onValidToken={(token) => {
+            setAccessToken(token);
+            setTokenValidated(true);
+          }}
+        />
+      );
+    }
+    return (
+      <AdminSetup
+        accessToken={accessToken}
+        onSetupComplete={() => {
+          // After setup, redirect to login
+          setNeedsSetup(false);
+          setTokenValidated(false);
+        }}
+      />
+    );
+  }
+
   if (!admin) {
     return <AdminLogin onLogin={handleLogin} />;
   }
