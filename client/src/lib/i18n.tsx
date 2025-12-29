@@ -74,6 +74,7 @@ const translations: Record<Language, Record<string, string>> = {
     "auth.firstAdminNote": "Como este é o primeiro acesso, você não precisa de código de convite.",
     "auth.inviteRequired": "Código de convite é necessário para criar conta.",
 
+    "reminders.title": "Lembretes",
     "reminders.new": "Novo Lembrete",
     "reminders.empty": "Nenhum lembrete definido. Crie um novo!",
     "reminders.description": "Descrição",
@@ -143,6 +144,7 @@ const translations: Record<Language, Record<string, string>> = {
     "observations.errorExpenseValue": "Informe um valor válido para o gasto.",
     "observations.errorExpenseDescription": "Informe a descrição do gasto.",
     "observations.errorPaidBy": "Por favor, especifique quem pagou.",
+    "sidebar.mainMenu": "Menu Principal",
     "sidebar.dashboard": "Dashboard",
     "sidebar.vehicles": "Veículos",
     "sidebar.leads": "Leads",
@@ -1330,6 +1332,7 @@ const translations: Record<Language, Record<string, string>> = {
     "auth.firstAdminNote": "As this is the first access, you do not need an invite code.",
     "auth.inviteRequired": "Invite code is required to create an account.",
 
+    "reminders.title": "Reminders",
     "reminders.new": "New Reminder",
     "reminders.empty": "No reminders set. Create a new one!",
     "reminders.description": "Description",
@@ -1399,6 +1402,7 @@ const translations: Record<Language, Record<string, string>> = {
     "observations.errorExpenseValue": "Enter a valid value for the expense.",
     "observations.errorExpenseDescription": "Enter the expense description.",
     "observations.errorPaidBy": "Please specify who paid.",
+    "sidebar.mainMenu": "Main Menu",
     "sidebar.dashboard": "Dashboard",
     "sidebar.vehicles": "Vehicles",
     "sidebar.leads": "Leads",
