@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -2100,7 +2101,13 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                           const res = await apiRequest("POST", "/api/admin/me/regenerar-token");
                           const data = await res.json();
                           if (data.token) {
-                            setAdmin({ ...admin, token: data.token });
+                            const adminSetter: any = setAdmin;
+                            if (typeof adminSetter === 'function') {
+                              adminSetter((prev: any) => {
+                                if (!prev) return null;
+                                return { ...prev, token: data.token };
+                              });
+                            }
                             setSuccess("Token gerado com sucesso!");
                             setTimeout(() => setSuccess(""), 2000);
                           }
