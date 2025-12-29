@@ -1109,18 +1109,20 @@ export default function AdminPanel() {
     );
   }
 
-  // If system needs setup, first validate token then create admin account
+  // Always validate token first, regardless of setup status
+  if (!tokenValidated) {
+    return (
+      <TokenGate
+        onValidToken={(token) => {
+          setAccessToken(token);
+          setTokenValidated(true);
+        }}
+      />
+    );
+  }
+
+  // If system needs setup, create admin account
   if (needsSetup) {
-    if (!tokenValidated) {
-      return (
-        <TokenGate
-          onValidToken={(token) => {
-            setAccessToken(token);
-            setTokenValidated(true);
-          }}
-        />
-      );
-    }
     return (
       <AdminSetup
         accessToken={accessToken}
