@@ -1132,6 +1132,7 @@ const translations: Record<Language, Record<string, string>> = {
     "admin.bugInAnalysis": "Em Análise",
     "admin.bugResolved": "Resolvido",
     "admin.adminUsers": "Usuários Administradores",
+    "admin.tokenCopied": "Token copiado com sucesso!",
     "admin.manageAdminsDesc": "Gerencie os administradores do sistema",
     "admin.createUser": "Criar Usuário",
     "admin.createNewAdmin": "Criar Novo Administrador",
