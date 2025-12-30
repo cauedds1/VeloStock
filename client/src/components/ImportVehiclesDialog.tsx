@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,7 @@ export function ImportVehiclesDialog() {
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const resetDialog = () => {
     setStep("upload");
@@ -239,8 +241,8 @@ export function ImportVehiclesDialog() {
 
       if (jsonData.length === 0) {
         toast({
-          title: "Planilha vazia",
-          description: "O arquivo não contém dados para importar.",
+          title: t("import.emptySpreadsheet"),
+          description: t("import.emptySpreadsheetDesc"),
           variant: "destructive",
         });
         return;
@@ -248,8 +250,8 @@ export function ImportVehiclesDialog() {
 
       if (jsonData.length > 500) {
         toast({
-          title: "Limite excedido",
-          description: "Máximo de 500 veículos por importação.",
+          title: t("import.limitExceeded"),
+          description: t("import.limitExceededDesc"),
           variant: "destructive",
         });
         return;
@@ -275,8 +277,8 @@ export function ImportVehiclesDialog() {
       setStep("preview");
     } catch (error) {
       toast({
-        title: "Erro ao ler arquivo",
-        description: "Não foi possível processar o arquivo. Verifique o formato.",
+        title: t("import.readError"),
+        description: t("import.readErrorDesc"),
         variant: "destructive",
       });
     }
@@ -330,7 +332,7 @@ export function ImportVehiclesDialog() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro na importação",
+        title: t("import.importError"),
         description: error.message,
         variant: "destructive",
       });
@@ -395,21 +397,21 @@ export function ImportVehiclesDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" data-testid="button-import-vehicles">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Importar Planilha</span>
-          <span className="sm:hidden">Importar</span>
+          <span className="hidden sm:inline">{t("import.downloadTemplate").replace("Baixar ", "").replace("Download ", "")}</span>
+          <span className="sm:hidden">{t("import.downloadTemplate").replace("Baixar Template de Exemplo", "Importar").replace("Download Example Template", "Import")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
-            Importar Veículos em Massa
+            {t("import.title")}
           </DialogTitle>
           <DialogDescription>
-            {step === "upload" && "Faça upload de uma planilha Excel (.xlsx) ou CSV para importar veículos."}
-            {step === "preview" && `${validCount} veículos válidos, ${errorCount} com erros. Selecione os que deseja importar.`}
-            {step === "importing" && "Importando veículos..."}
-            {step === "result" && `Importação concluída: ${successCount} sucesso, ${failedCount} erros.`}
+            {step === "upload" && t("import.uploadDescription")}
+            {step === "preview" && t("import.previewDescription", { valid: validCount.toString(), error: errorCount.toString() })}
+            {step === "importing" && t("import.importing")}
+            {step === "result" && t("import.resultDescription", { success: successCount.toString(), failed: failedCount.toString() })}
           </DialogDescription>
         </DialogHeader>
 
@@ -430,14 +432,14 @@ export function ImportVehiclesDialog() {
                 <input {...getInputProps()} data-testid="input-file-upload" />
                 <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 {isDragActive ? (
-                  <p className="text-lg font-medium">Solte o arquivo aqui...</p>
+                  <p className="text-lg font-medium">{t("import.dropFile")}</p>
                 ) : (
                   <>
                     <p className="text-lg font-medium">
-                      Arraste um arquivo ou clique para selecionar
+                      {t("import.dragOrClick")}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Formatos aceitos: .xlsx, .xls, .csv (máx. 5MB, 500 veículos)
+                      {t("import.acceptedFormats")}
                     </p>
                   </>
                 )}
@@ -450,37 +452,37 @@ export function ImportVehiclesDialog() {
                   data-testid="button-download-template"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Baixar Template de Exemplo
+                  {t("import.downloadTemplate")}
                 </Button>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-4">
                 <h4 className="font-medium mb-2 flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Campos do Template
+                  {t("import.templateFields")}
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                   <div>
-                    <span className="font-medium text-primary">Obrigatórios:</span>
+                    <span className="font-medium text-primary">{t("import.mandatory")}</span>
                     <ul className="text-muted-foreground">
-                      <li>Marca</li>
-                      <li>Modelo</li>
-                      <li>Ano</li>
+                      <li>{t("import.brand")}</li>
+                      <li>{t("import.model")}</li>
+                      <li>{t("import.year")}</li>
                       <li>Cor</li>
-                      <li>Placa</li>
+                      <li>{t("import.plate")}</li>
                     </ul>
                   </div>
                   <div>
-                    <span className="font-medium">Opcionais:</span>
+                    <span className="font-medium">{t("import.optional")}</span>
                     <ul className="text-muted-foreground">
                       <li>Tipo (Carro/Moto)</li>
-                      <li>Status</li>
+                      <li>{t("import.status")}</li>
                       <li>Preço Compra</li>
                       <li>Preço Venda</li>
                     </ul>
                   </div>
                   <div>
-                    <span className="font-medium">Opcionais:</span>
+                    <span className="font-medium">{t("import.optional")}</span>
                     <ul className="text-muted-foreground">
                       <li>KM</li>
                       <li>Combustível</li>
@@ -489,7 +491,7 @@ export function ImportVehiclesDialog() {
                     </ul>
                   </div>
                   <div>
-                    <span className="font-medium">Status válidos:</span>
+                    <span className="font-medium">{t("import.validStatuses")}</span>
                     <ul className="text-muted-foreground">
                       <li>Entrada</li>
                       <li>Em Reparos</li>
@@ -529,15 +531,15 @@ export function ImportVehiclesDialog() {
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span>{validCount} válidos</span>
+                  <span>{validCount} {t("import.valid")}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <XCircle className="h-4 w-4 text-destructive" />
-                  <span>{errorCount} com erros</span>
+                  <span>{errorCount} {t("import.withErrors")}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <AlertCircle className="h-4 w-4 text-primary" />
-                  <span>{selectedCount} selecionados</span>
+                  <span>{selectedCount} {t("import.selected")}</span>
                 </div>
               </div>
 
@@ -554,13 +556,13 @@ export function ImportVehiclesDialog() {
                           data-testid="checkbox-select-all"
                         />
                       </TableHead>
-                      <TableHead className="w-12">Linha</TableHead>
-                      <TableHead>Marca</TableHead>
-                      <TableHead>Modelo</TableHead>
-                      <TableHead>Ano</TableHead>
-                      <TableHead>Placa</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Erros</TableHead>
+                      <TableHead className="w-12">{t("import.line")}</TableHead>
+                      <TableHead>{t("import.brand")}</TableHead>
+                      <TableHead>{t("import.model")}</TableHead>
+                      <TableHead>{t("import.year")}</TableHead>
+                      <TableHead>{t("import.plate")}</TableHead>
+                      <TableHead>{t("import.status")}</TableHead>
+                      <TableHead>{t("import.errorCol")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -614,9 +616,9 @@ export function ImportVehiclesDialog() {
             <div className="flex flex-col items-center justify-center py-12 space-y-6">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <div className="text-center space-y-2">
-                <p className="text-lg font-medium">Importando veículos...</p>
+                <p className="text-lg font-medium">{t("import.importing")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Isso pode levar alguns segundos
+                  {t("import.importingDesc")}
                 </p>
               </div>
               <div className="w-full max-w-xs">
@@ -633,7 +635,7 @@ export function ImportVehiclesDialog() {
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
                   </div>
                   <div className="text-2xl font-bold text-green-500">{successCount}</div>
-                  <div className="text-sm text-muted-foreground">Importados</div>
+                  <div className="text-sm text-muted-foreground">{t("import.imported")}</div>
                 </div>
                 {failedCount > 0 && (
                   <div className="text-center">
@@ -641,7 +643,7 @@ export function ImportVehiclesDialog() {
                       <XCircle className="h-8 w-8 text-destructive" />
                     </div>
                     <div className="text-2xl font-bold text-destructive">{failedCount}</div>
-                    <div className="text-sm text-muted-foreground">Erros</div>
+                    <div className="text-sm text-muted-foreground">{t("import.errors")}</div>
                   </div>
                 )}
               </div>
@@ -649,7 +651,7 @@ export function ImportVehiclesDialog() {
               {failedCount > 0 && (
                 <ScrollArea className="h-[200px] border rounded-lg">
                   <div className="p-4 space-y-2">
-                    <h4 className="font-medium text-destructive">Erros encontrados:</h4>
+                    <h4 className="font-medium text-destructive">{t("import.errors")} encontrados:</h4>
                     {importResults
                       .filter((r) => !r.success)
                       .map((result) => (
@@ -659,7 +661,7 @@ export function ImportVehiclesDialog() {
                         >
                           <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                           <span>
-                            <span className="font-medium">Linha {result.line}:</span>{" "}
+                            <span className="font-medium">{t("import.line")} {result.line}:</span>{" "}
                             {result.error}
                           </span>
                         </div>
@@ -674,7 +676,7 @@ export function ImportVehiclesDialog() {
         <DialogFooter className="gap-2">
           {step === "upload" && (
             <Button variant="outline" onClick={handleClose}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
           )}
 
@@ -688,7 +690,7 @@ export function ImportVehiclesDialog() {
                   setStep("upload");
                 }}
               >
-                Voltar
+                {t("common.back")}
               </Button>
               <Button
                 onClick={handleImport}
@@ -696,14 +698,14 @@ export function ImportVehiclesDialog() {
                 data-testid="button-confirm-import"
               >
                 <Upload className="mr-2 h-4 w-4" />
-                Importar {selectedCount} veículos
+                {t("import.title").split(" em Massa")[0].split(" in Bulk")[0]} {selectedCount} {selectedCount === 1 ? "veículo" : "veículos"}
               </Button>
             </>
           )}
 
           {step === "result" && (
             <Button onClick={handleClose} data-testid="button-close-import">
-              Fechar
+              {t("common.close")}
             </Button>
           )}
         </DialogFooter>
