@@ -2103,13 +2103,7 @@ function AdminConfigTab({ admin, stats, onAdminUpdate }: {
                           const res = await apiRequest("POST", "/api/admin/me/regenerar-token");
                           const data = await res.json();
                           if (data.token) {
-                            const adminSetter: any = setAdmin;
-                            if (typeof adminSetter === 'function') {
-                              adminSetter((prev: any) => {
-                                if (!prev) return null;
-                                return { ...prev, token: data.token };
-                              });
-                            }
+                            onAdminUpdate({ ...admin, token: data.token });
                             setSuccess("Token gerado com sucesso!");
                             setTimeout(() => setSuccess(""), 2000);
                           }
