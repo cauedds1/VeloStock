@@ -377,11 +377,15 @@ export default function Bills() {
             </div>
           </Card>
 
-          <Card className="p-6 relative rounded-xl border-none shadow-sm" style={{ 
-            background: "linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(to bottom, rgb(239 68 68), rgb(34 197 94)) border-box",
-            border: "2px solid transparent",
-            display: "block"
-          }}>
+          <Card className="p-6 relative rounded-xl border-none shadow-sm overflow-hidden" style={{ minHeight: "100px" }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ 
+              padding: "2px",
+              background: "linear-gradient(to bottom, rgb(239 68 68) 50%, rgb(34 197 94) 50%)",
+              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "xor",
+              maskComposite: "exclude",
+              borderRadius: "inherit"
+            }}></div>
             <div className="relative flex items-center gap-4">
               <div className="p-3 rounded-lg bg-green-500/10">
                 <CheckCircle className="h-6 w-6 text-green-500" />
