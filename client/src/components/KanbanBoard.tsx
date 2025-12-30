@@ -3,7 +3,7 @@ import { KanbanColumn } from "./KanbanColumn";
 import { VehicleCard, VehicleCardProps } from "./VehicleCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ChevronDown, LayoutGrid } from "lucide-react";
+import { Search, ChevronDown, LayoutGrid, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const STATUS_COLUMNS = [
   "Entrada",
@@ -44,13 +46,52 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+interface UndoState {
+  vehicleId: string;
+  vehicleModel: string;
+  fromStatus: string;
+  toStatus: string;
+  timeLeft: number;
+}
+
 export function KanbanBoard({ vehicles }: KanbanBoardProps) {
   const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [displayLimit, setDisplayLimit] = useState(INITIAL_LIMIT);
+  const [draggedVehicle, setDraggedVehicle] = useState<any | null>(null);
+  const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const queryClient = useQueryClient();
   
   const debouncedSearchTerm = useDebounce(searchTerm, DEBOUNCE_DELAY);
+
+  const updateVehicleMutation = useMutation({
+    mutationFn: async (data: { vehicleId: string; status: string }) => {
+      return apiRequest({
+        method: "PATCH",
+        url: `/api/vehicles/${data.vehicleId}`,
+        body: { status: data.status },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+    },
+  });
+
+  const undoMutation = useMutation({
+    mutationFn: async (data: { vehicleId: string; fromStatus: string }) => {
+      return apiRequest({
+        method: "PATCH",
+        url: `/api/vehicles/${data.vehicleId}`,
+        body: { status: data.fromStatus },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      setUndoState(null);
+    },
+  });
   
   const prevVehiclesLength = useRef(vehicles.length);
   useEffect(() => {
@@ -101,6 +142,85 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
 
   const handleLoadMore = useCallback(() => {
     setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
+  }, []);
+
+  const handleDragStart = (vehicle: any) => {
+    setDraggedVehicle(vehicle);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDropOnStatus = (targetStatus: string, e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggedVehicle || draggedVehicle.status === targetStatus) {
+      setDraggedVehicle(null);
+      return;
+    }
+
+    const previousStatus = draggedVehicle.status;
+
+    updateVehicleMutation.mutate(
+      { vehicleId: draggedVehicle.id, status: targetStatus },
+      {
+        onSuccess: () => {
+          if (undoTimerRef.current) {
+            clearInterval(undoTimerRef.current);
+          }
+
+          setUndoState({
+            vehicleId: draggedVehicle.id,
+            vehicleModel: `${draggedVehicle.brand} ${draggedVehicle.model}`,
+            fromStatus: previousStatus,
+            toStatus: targetStatus,
+            timeLeft: 8,
+          });
+
+          undoTimerRef.current = setInterval(() => {
+            setUndoState((prev) => {
+              if (!prev) return null;
+              if (prev.timeLeft <= 1) {
+                if (undoTimerRef.current) {
+                  clearInterval(undoTimerRef.current);
+                }
+                return null;
+              }
+              return { ...prev, timeLeft: prev.timeLeft - 1 };
+            });
+          }, 1000);
+        },
+      }
+    );
+
+    setDraggedVehicle(null);
+  };
+
+  const handleUndo = () => {
+    if (!undoState) return;
+    if (undoTimerRef.current) {
+      clearInterval(undoTimerRef.current);
+    }
+    undoMutation.mutate({
+      vehicleId: undoState.vehicleId,
+      fromStatus: undoState.fromStatus,
+    });
+  };
+
+  const handleCloseUndo = () => {
+    if (undoTimerRef.current) {
+      clearInterval(undoTimerRef.current);
+    }
+    setUndoState(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) {
+        clearInterval(undoTimerRef.current);
+      }
+    };
   }, []);
 
   const vehiclesByStatus = useMemo(() => {
@@ -163,29 +283,43 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
             const vehiclesInStatus = vehiclesByStatus[status] || [];
             const totalInStatus = totalCountByStatus[status] || 0;
             return (
-              <KanbanColumn
+              <div
                 key={status}
-                title={getStatusTranslation(status)}
-                count={totalInStatus}
-                statusKey={status}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDropOnStatus(status, e)}
+                className="flex-shrink-0 w-72"
               >
-                {vehiclesInStatus.map((vehicle) => (
-                  <VehicleCard key={vehicle.id} {...vehicle} />
-                ))}
-                {vehiclesInStatus.length < totalInStatus && (
-                  <div className="text-center text-xs text-muted-foreground py-2 bg-muted/30 rounded-lg">
-                    +{totalInStatus - vehiclesInStatus.length} {t("dashboard.moreVehicles")}
-                  </div>
-                )}
-                {vehiclesInStatus.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-2">
-                      <LayoutGrid className="h-5 w-5 text-muted-foreground/50" />
+                <KanbanColumn
+                  title={getStatusTranslation(status)}
+                  count={totalInStatus}
+                  statusKey={status}
+                >
+                  {vehiclesInStatus.map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      draggable
+                      onDragStart={() => handleDragStart(vehicle)}
+                      className="cursor-grab active:cursor-grabbing"
+                      data-testid={`vehicle-drag-item-${vehicle.id}`}
+                    >
+                      <VehicleCard {...vehicle} />
                     </div>
-                    <span className="text-xs text-muted-foreground">{t("dashboard.noVehicle")}</span>
-                  </div>
-                )}
-              </KanbanColumn>
+                  ))}
+                  {vehiclesInStatus.length < totalInStatus && (
+                    <div className="text-center text-xs text-muted-foreground py-2 bg-muted/30 rounded-lg">
+                      +{totalInStatus - vehiclesInStatus.length} {t("dashboard.moreVehicles")}
+                    </div>
+                  )}
+                  {vehiclesInStatus.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-2">
+                        <LayoutGrid className="h-5 w-5 text-muted-foreground/50" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{t("dashboard.noVehicle")}</span>
+                    </div>
+                  )}
+                </KanbanColumn>
+              </div>
             );
           })}
         </div>
@@ -202,6 +336,49 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
             <ChevronDown className="h-4 w-4 mr-2" />
             {t("dashboard.loadMore", { count: remainingCount.toString() })}
           </Button>
+        </div>
+      )}
+
+      {undoState && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-card border border-border rounded-lg p-4 shadow-lg max-w-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {undoState.vehicleModel}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Alterada: <span className="font-medium">{undoState.fromStatus}</span> → <span className="font-medium">{undoState.toStatus}</span>
+                </p>
+                <div className="mt-2 w-full bg-muted rounded-full h-1 overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${(undoState.timeLeft / 8) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleUndo}
+                  className="text-xs"
+                  data-testid="button-undo-vehicle"
+                >
+                  Desfazer
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleCloseUndo}
+                  className="h-8 w-8"
+                  data-testid="button-close-undo-vehicle"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

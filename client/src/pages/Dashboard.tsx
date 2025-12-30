@@ -5,7 +5,6 @@ import { DashboardAlerts } from "@/components/DashboardAlerts";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { RecentActivity } from "@/components/RecentActivity";
 import { KanbanBoard } from "@/components/KanbanBoard";
-import { VehiclePipeline } from "@/components/VehiclePipeline";
 import { AddVehicleDialog } from "@/components/AddVehicleDialog";
 import { SellerDashboard } from "@/components/SellerDashboard";
 import { SetSalesTargetDialog } from "@/components/SetSalesTargetDialog";
@@ -21,7 +20,6 @@ export default function Dashboard() {
   const { changeIconColors, primaryColor } = useCompanyTheme();
   const { isVendedor } = usePermissions();
   const [setTargetOpen, setSetTargetOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const { data: vehicles = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
   });
@@ -105,7 +103,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="bg-card/50 backdrop-blur-sm rounded-xl border p-6">
-                <VehiclePipeline searchTerm={searchTerm} />
+                <KanbanBoard vehicles={vehicles} />
               </div>
             )}
           </div>
