@@ -68,11 +68,8 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
 
   const updateVehicleMutation = useMutation({
     mutationFn: async (data: { vehicleId: string; status: string }) => {
-      return apiRequest({
-        method: "PATCH",
-        url: `/api/vehicles/${data.vehicleId}`,
-        body: { status: data.status },
-      });
+      const res = await apiRequest("PATCH", `/api/vehicles/${data.vehicleId}`, { status: data.status });
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
@@ -81,11 +78,8 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
 
   const undoMutation = useMutation({
     mutationFn: async (data: { vehicleId: string; fromStatus: string }) => {
-      return apiRequest({
-        method: "PATCH",
-        url: `/api/vehicles/${data.vehicleId}`,
-        body: { status: data.fromStatus },
-      });
+      const res = await apiRequest("PATCH", `/api/vehicles/${data.vehicleId}`, { status: data.fromStatus });
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
@@ -166,37 +160,32 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
     const previousStatus = draggedVehicle.status;
     const vehicleToMove = draggedVehicle;
 
-    updateVehicleMutation.mutate(
-      { vehicleId: vehicleToMove.id, status: targetStatus },
-      {
-        onSuccess: () => {
+    updateVehicleMutation.mutate({ vehicleId: vehicleToMove.id, status: targetStatus });
+    
+    if (undoTimerRef.current) {
+      clearInterval(undoTimerRef.current);
+    }
+
+    setUndoState({
+      vehicleId: vehicleToMove.id,
+      vehicleModel: `${vehicleToMove.brand} ${vehicleToMove.model}`,
+      fromStatus: previousStatus,
+      toStatus: targetStatus,
+      timeLeft: 8,
+    });
+
+    undoTimerRef.current = setInterval(() => {
+      setUndoState((prev) => {
+        if (!prev) return null;
+        if (prev.timeLeft <= 1) {
           if (undoTimerRef.current) {
             clearInterval(undoTimerRef.current);
           }
-
-          setUndoState({
-            vehicleId: vehicleToMove.id,
-            vehicleModel: `${vehicleToMove.brand} ${vehicleToMove.model}`,
-            fromStatus: previousStatus,
-            toStatus: targetStatus,
-            timeLeft: 8,
-          });
-
-          undoTimerRef.current = setInterval(() => {
-            setUndoState((prev) => {
-              if (!prev) return null;
-              if (prev.timeLeft <= 1) {
-                if (undoTimerRef.current) {
-                  clearInterval(undoTimerRef.current);
-                }
-                return null;
-              }
-              return { ...prev, timeLeft: prev.timeLeft - 1 };
-            });
-          }, 1000);
-        },
-      }
-    );
+          return null;
+        }
+        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      });
+    }, 1000);
 
     setDraggedVehicle(null);
   };
@@ -305,7 +294,11 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
                     draggable
                     onDragStart={(e) => handleDragStart(vehicle, e)}
                     onDragEnd={handleDragEnd}
-                    className="cursor-grab active:cursor-grabbing"
+                    className={`cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                      draggedVehicle?.id === vehicle.id 
+                        ? 'opacity-50 scale-95' 
+                        : ''
+                    }`}
                     data-testid={`vehicle-drag-item-${vehicle.id}`}
                   >
                     <VehicleCard {...vehicle} />

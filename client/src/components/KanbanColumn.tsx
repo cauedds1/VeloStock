@@ -70,7 +70,7 @@ export const KanbanColumn = memo(function KanbanColumn({
   
   return (
     <div 
-      className={`flex h-full w-72 flex-shrink-0 flex-col rounded-xl border transition-colors ${isDragOver ? 'bg-muted/50 border-primary/50' : 'bg-muted/30 dark:bg-muted/10 border-border/50'}`}
+      className={`flex h-full w-72 flex-shrink-0 flex-col rounded-xl border transition-all duration-200 ${isDragOver ? 'bg-muted/60 border-primary/60 shadow-lg scale-105' : 'bg-muted/30 dark:bg-muted/10 border-border/50'}`}
       onDragOver={handleDragOverInternal}
       onDrop={handleDropInternal}
       onDragLeave={handleDragLeave}
