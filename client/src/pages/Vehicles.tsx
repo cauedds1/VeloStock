@@ -10,6 +10,7 @@ import { ImportVehiclesDialog } from "@/components/ImportVehiclesDialog";
 import { Link } from "wouter";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useI18n } from "@/lib/i18n";
+import { VehiclePipeline } from "@/components/VehiclePipeline";
 import {
   Select,
   SelectContent,
@@ -58,6 +59,9 @@ export default function Vehicles() {
   const [selectedBrand, setSelectedBrand] = useState<string>(() => {
     return localStorage.getItem("vehicles-selected-brand") || "all";
   });
+  const [viewMode, setViewMode] = useState<"pipeline" | "grid">(() => {
+    return (localStorage.getItem("vehicles-view-mode") as "pipeline" | "grid") || "pipeline";
+  });
 
   const { data: vehicles = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
@@ -69,6 +73,10 @@ export default function Vehicles() {
       return response.json();
     },
   });
+
+  useEffect(() => {
+    localStorage.setItem("vehicles-view-mode", viewMode);
+  }, [viewMode]);
 
   const SORT_OPTIONS = useMemo(() => [
     { value: "location", label: t("vehicles.sortByLocation") },
@@ -210,25 +218,47 @@ export default function Vehicles() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            data-testid="input-search-vehicles"
           />
         </div>
         
         <div className="flex gap-2 sm:gap-3 flex-wrap items-center">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-60">
-              <ArrowUpDown className="mr-2 h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "pipeline" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("pipeline")}
+              data-testid="button-view-pipeline"
+            >
+              Pipeline
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              data-testid="button-view-grid"
+            >
+              Grade
+            </Button>
+          </div>
+
+          {viewMode === "grid" && (
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-60">
+                <ArrowUpDown className="mr-2 h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           
-          {sortBy === "location" && (
+          {viewMode === "grid" && sortBy === "location" && (
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger className="w-full sm:w-52">
                 <SelectValue placeholder={t("vehicles.allLocations")} />
@@ -245,7 +275,7 @@ export default function Vehicles() {
             </Select>
           )}
 
-          {sortBy === "status" && (
+          {viewMode === "grid" && sortBy === "status" && (
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-full sm:w-52">
                 <SelectValue />
@@ -262,7 +292,7 @@ export default function Vehicles() {
             </Select>
           )}
 
-          {sortBy === "brand" && (
+          {viewMode === "grid" && sortBy === "brand" && (
             <Select value={selectedBrand} onValueChange={setSelectedBrand}>
               <SelectTrigger className="w-full sm:w-52">
                 <SelectValue placeholder={t("vehicles.allBrands")} />
@@ -280,67 +310,71 @@ export default function Vehicles() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {isLoading ? (
-          <p className="text-muted-foreground">{t("common.loading")}</p>
-        ) : filteredVehicles.length === 0 ? (
-          <p className="text-muted-foreground">{t("vehicles.noVehicles")}</p>
-        ) : (
-          filteredVehicles.map((vehicle: any) => (
-            <Link key={vehicle.id} href={`/veiculo/${vehicle.id}`}>
-              <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-muted/40">
-                <CardHeader className="p-0">
-                  <div className="aspect-video relative overflow-hidden rounded-t-lg bg-gradient-to-br from-muted/50 to-muted">
-                    <img
-                      src={vehicle.image || "/car-placeholder.png"}
-                      alt={`${vehicle.brand} ${vehicle.model}`}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 space-y-2">
-                  <CardTitle className="text-lg font-bold transition-colors duration-300 group-hover:text-primary">
-                    {vehicle.brand} {vehicle.model}
-                  </CardTitle>
-                  <div className="space-y-1.5 text-sm">
-                    <p className="text-muted-foreground">
-                      <span className="font-medium">{t("vehicles.year")}:</span> {vehicle.year}
-                    </p>
-                    <p className="text-muted-foreground font-mono">
-                      <span className="font-medium font-sans">{t("vehicles.plate")}:</span> {vehicle.plate}
-                    </p>
-                    <div className="pt-1">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                        {vehicle.status}
-                      </span>
+      {isLoading ? (
+        <p className="text-muted-foreground">{t("common.loading")}</p>
+      ) : viewMode === "pipeline" ? (
+        <VehiclePipeline searchTerm={searchTerm} />
+      ) : (
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredVehicles.length === 0 ? (
+            <p className="text-muted-foreground">{t("vehicles.noVehicles")}</p>
+          ) : (
+            filteredVehicles.map((vehicle: any) => (
+              <Link key={vehicle.id} href={`/veiculo/${vehicle.id}`}>
+                <Card className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-muted/40" data-testid={`vehicle-grid-card-${vehicle.id}`}>
+                  <CardHeader className="p-0">
+                    <div className="aspect-video relative overflow-hidden rounded-t-lg bg-gradient-to-br from-muted/50 to-muted">
+                      <img
+                        src={vehicle.image || "/car-placeholder.png"}
+                        alt={`${vehicle.brand} ${vehicle.model}`}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    {vehicle.physicalLocation && (
-                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
-                        <span className="text-base">📍</span>
-                        <span className="font-medium">
-                          {vehicle.physicalLocation}
-                          {vehicle.physicalLocationDetail && ` - ${vehicle.physicalLocationDetail}`}
-                        </span>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-2">
+                    <CardTitle className="text-lg font-bold transition-colors duration-300 group-hover:text-primary">
+                      {vehicle.brand} {vehicle.model}
+                    </CardTitle>
+                    <div className="space-y-1.5 text-sm">
+                      <p className="text-muted-foreground">
+                        <span className="font-medium">{t("vehicles.year")}:</span> {vehicle.year}
                       </p>
-                    )}
-                    {vehicle.salePrice && (
-                      <div className="pt-2 mt-2 border-t border-border/40">
-                        <p className="text-lg font-bold text-primary">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(Number(vehicle.salePrice))}
-                        </p>
+                      <p className="text-muted-foreground font-mono">
+                        <span className="font-medium font-sans">{t("vehicles.plate")}:</span> {vehicle.plate}
+                      </p>
+                      <div className="pt-1">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {vehicle.status}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        )}
-      </div>
+                      {vehicle.physicalLocation && (
+                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                          <span className="text-base">📍</span>
+                          <span className="font-medium">
+                            {vehicle.physicalLocation}
+                            {vehicle.physicalLocationDetail && ` - ${vehicle.physicalLocationDetail}`}
+                          </span>
+                        </p>
+                      )}
+                      {vehicle.salePrice && (
+                        <div className="pt-2 mt-2 border-t border-border/40">
+                          <p className="text-lg font-bold text-primary">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(Number(vehicle.salePrice))}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
