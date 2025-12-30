@@ -144,8 +144,9 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
     setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
   }, []);
 
-  const handleDragStart = (vehicle: any) => {
+  const handleDragStart = (vehicle: any, e: React.DragEvent) => {
     setDraggedVehicle(vehicle);
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -155,15 +156,18 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
 
   const handleDropOnStatus = (targetStatus: string, e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     if (!draggedVehicle || draggedVehicle.status === targetStatus) {
       setDraggedVehicle(null);
       return;
     }
 
     const previousStatus = draggedVehicle.status;
+    const vehicleToMove = draggedVehicle;
 
     updateVehicleMutation.mutate(
-      { vehicleId: draggedVehicle.id, status: targetStatus },
+      { vehicleId: vehicleToMove.id, status: targetStatus },
       {
         onSuccess: () => {
           if (undoTimerRef.current) {
@@ -171,8 +175,8 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
           }
 
           setUndoState({
-            vehicleId: draggedVehicle.id,
-            vehicleModel: `${draggedVehicle.brand} ${draggedVehicle.model}`,
+            vehicleId: vehicleToMove.id,
+            vehicleModel: `${vehicleToMove.brand} ${vehicleToMove.model}`,
             fromStatus: previousStatus,
             toStatus: targetStatus,
             timeLeft: 8,
@@ -194,6 +198,10 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
       }
     );
 
+    setDraggedVehicle(null);
+  };
+
+  const handleDragEnd = () => {
     setDraggedVehicle(null);
   };
 
@@ -295,7 +303,8 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
                   <div
                     key={vehicle.id}
                     draggable
-                    onDragStart={() => handleDragStart(vehicle)}
+                    onDragStart={(e) => handleDragStart(vehicle, e)}
+                    onDragEnd={handleDragEnd}
                     className="cursor-grab active:cursor-grabbing"
                     data-testid={`vehicle-drag-item-${vehicle.id}`}
                   >
