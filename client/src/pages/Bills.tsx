@@ -174,9 +174,9 @@ export default function Bills() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pendente: "hsl(var(--badge-color-3))", // Yellow/Orange
-      pago: "hsl(var(--badge-color-1))",     // Green
-      vencido: "hsl(var(--destructive))",    // Red
+      pendente: "#ffffff", // White background for pending
+      pago: "rgb(34 197 94)",     // Green
+      vencido: "rgb(239 68 68)",    // Red
       parcial: "hsl(var(--badge-color-5))",  // Blue/Purple
     };
     return colors[status] || "hsl(var(--muted))";
@@ -447,7 +447,11 @@ export default function Bills() {
                 {filteredBills.map((bill) => (
                   <tr key={bill.id} className="border-b hover:bg-muted/50">
                     <td className="p-3">
-                      <Badge variant={bill.tipo === "a_pagar" ? "destructive" : "default"}>
+                      <Badge 
+                        variant={bill.tipo === "a_pagar" ? "destructive" : "default"}
+                        className={bill.tipo === "a_receber" ? "bg-green-500 hover:bg-green-600" : ""}
+                        style={bill.tipo === "a_pagar" ? { backgroundColor: "rgb(239 68 68)" } : undefined}
+                      >
                         {bill.tipo === "a_pagar" ? t("bills.toPay") : t("bills.toReceive")}
                       </Badge>
                     </td>
@@ -456,7 +460,13 @@ export default function Bills() {
                     <td className="p-3 text-right font-medium">R$ {parseFloat(bill.valor).toLocaleString("pt-BR")}</td>
                     <td className="p-3">{format(new Date(bill.dataVencimento), "dd/MM/yyyy", { locale: ptBR })}</td>
                     <td className="p-3">
-                      <Badge style={{ backgroundColor: getStatusColor(bill.status), color: "white" }}>
+                      <Badge 
+                        style={{ 
+                          backgroundColor: getStatusColor(bill.status), 
+                          color: bill.status === "pendente" ? "#000000" : "white",
+                          border: bill.status === "pendente" ? "1px solid #e2e8f0" : "none"
+                        }}
+                      >
                         {getStatusLabel(bill.status)}
                       </Badge>
                     </td>
