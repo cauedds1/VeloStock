@@ -377,8 +377,12 @@ export default function Bills() {
             </div>
           </Card>
 
-          <Card className="p-6 border-2" style={{ borderColor: "rgb(34 197 94)" }}>
-            <div className="flex items-center gap-4">
+          <Card className="p-6 relative overflow-hidden rounded-xl border-none">
+            <div className="absolute inset-0 pointer-events-none rounded-xl border-2" style={{ 
+              borderImage: "linear-gradient(to bottom, rgb(239 68 68) 50%, rgb(34 197 94) 50%) 1",
+              borderRadius: "inherit"
+            }}></div>
+            <div className="relative flex items-center gap-4">
               <div className="p-3 rounded-lg bg-green-500/10">
                 <CheckCircle className="h-6 w-6 text-green-500" />
               </div>
