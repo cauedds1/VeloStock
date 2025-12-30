@@ -176,7 +176,7 @@ export function ImportVehiclesDialog() {
     const plate = String(row.Placa || row.placa || row.PLACA || "").toUpperCase().trim();
     const vehicleType = String(row.Tipo || row.tipo || row.TIPO || "Carro").trim();
     const status = String(row.Status || row.status || row.STATUS || "Entrada").trim();
-    const purchasePrice = String(row["Preço Compra"] || row["Preco Compra"] || row["preco compra"] || "").trim();
+    const purchasePrice = String(row["Preço Compra"] || row["Preço de Aquisição"] || row["Preco Compra"] || row["Preco de Aquisicao"] || row["preço compra"] || row["preço de aquisição"] || "").trim();
     const salePrice = String(row["Preço Venda"] || row["Preco Venda"] || row["preco venda"] || "").trim();
     const kmOdometer = String(row.KM || row.km || row.Quilometragem || row.quilometragem || "").trim();
     const fuelType = String(row.Combustível || row.Combustivel || row.combustivel || "").trim();
