@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 interface KanbanColumnProps {
@@ -46,14 +46,34 @@ export const KanbanColumn = memo(function KanbanColumn({
   onDragOver,
   onDrop
 }: KanbanColumnProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const colorKey = statusKey || title;
   const colors = STATUS_COLORS[colorKey] || STATUS_COLORS["Entrada"];
   
+  const handleDragOverInternal = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setIsDragOver(true);
+    onDragOver?.(e);
+  };
+
+  const handleDropInternal = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    onDrop?.(e);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    setIsDragOver(false);
+  };
+  
   return (
     <div 
-      className="flex h-full w-72 flex-shrink-0 flex-col rounded-xl bg-muted/30 dark:bg-muted/10 border border-border/50"
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      className={`flex h-full w-72 flex-shrink-0 flex-col rounded-xl border transition-colors ${isDragOver ? 'bg-muted/50 border-primary/50' : 'bg-muted/30 dark:bg-muted/10 border-border/50'}`}
+      onDragOver={handleDragOverInternal}
+      onDrop={handleDropInternal}
+      onDragLeave={handleDragLeave}
     >
       <div className={`flex items-center justify-between px-4 py-3 rounded-t-xl ${colors.bg} border-b ${colors.border}`}>
         <div className="flex items-center gap-2">
@@ -68,10 +88,8 @@ export const KanbanColumn = memo(function KanbanColumn({
           {count}
         </Badge>
       </div>
-      <div className="flex-1 overflow-y-auto p-2">
-        <div className="space-y-2">
-          {children}
-        </div>
+      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+        {children}
       </div>
     </div>
   );
