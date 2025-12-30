@@ -753,15 +753,15 @@ export function ProfileDropdown() {
       <Dialog open={isSupportDialogOpen} onOpenChange={setIsSupportDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Reportar Problema</DialogTitle>
+            <DialogTitle>Report Problem</DialogTitle>
             <DialogDescription>
-              Ajude-nos a melhorar! Descreva o problema que encontrou.
+              Help us improve! Describe the problem you found.
             </DialogDescription>
           </DialogHeader>
 
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
             <p className="text-xs text-amber-900 dark:text-amber-100">
-              <strong>Sistema em Beta:</strong> Bugs e falhas podem acontecer. Seus relatórios são essenciais para melhorar o VeloStock!
+              <strong>Beta System:</strong> Bugs and failures can happen. Your reports are essential to improve VeloStock!
             </p>
           </div>
 
@@ -772,10 +772,10 @@ export function ProfileDropdown() {
                 name="message"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descreva o problema</FormLabel>
+                    <FormLabel>Describe the problem</FormLabel>
                     <FormControl>
                       <textarea 
-                        placeholder="Ex: O dashboard não carrega quando..."
+                        placeholder="Ex: The dashboard doesn't load when..."
                         className="w-full min-h-32 px-3 py-2 border border-input rounded-md text-sm"
                         {...field}
                         data-testid="textarea-bug-message"
@@ -787,18 +787,18 @@ export function ProfileDropdown() {
               />
 
               <div className="space-y-2">
-                <Label>Anexar arquivos (até 5)</Label>
+                <Label>Attach files (up to 5)</Label>
                 <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-muted/50 transition"
                   onClick={() => supportFilesRef.current?.click()}
                   data-testid="dropzone-bug-attachments"
                 >
                   {supportFiles.length === 0 ? (
                     <>
-                      <p className="text-sm text-muted-foreground">Clique ou arraste arquivos aqui</p>
-                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG, PDF - máx 5MB cada</p>
+                      <p className="text-sm text-muted-foreground">Click or drag files here</p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG, PDF - max 5MB each</p>
                     </>
                   ) : (
-                    <p className="text-sm text-green-600">{supportFiles.length} arquivo(s) selecionado(s)</p>
+                    <p className="text-sm text-green-600">{supportFiles.length} file(s) selected</p>
                   )}
                 </div>
                 <input
@@ -838,7 +838,7 @@ export function ProfileDropdown() {
                   variant="outline"
                   onClick={() => setIsSupportDialogOpen(false)}
                 >
-                  Cancelar
+                  Cancel
                 </Button>
                 <Button 
                   type="submit"
@@ -848,7 +848,7 @@ export function ProfileDropdown() {
                   {submitBugReportMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : null}
-                  Enviar Relatório
+                  Send Report
                 </Button>
               </DialogFooter>
             </form>
