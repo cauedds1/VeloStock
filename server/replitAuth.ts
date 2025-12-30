@@ -12,6 +12,9 @@ import { setupLocalAuth } from "./localAuth";
 import { getDatabaseUrl } from "./config/database";
 import { generateVerificationCode, getVerificationCodeExpiry } from "./utils/verificationCode";
 import { sendEmail } from "./utils/replitmail";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
+import { users } from "@shared/schema";
 
 // OAuth COMPLETELY DISABLED - No OIDC config to prevent DNS lookups
 // const getOidcConfig = ... (removed to prevent helium DNS lookup)
