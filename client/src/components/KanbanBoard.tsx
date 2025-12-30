@@ -346,7 +346,7 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
                   {undoState.vehicleModel}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Alterada: <span className="font-medium">{undoState.fromStatus}</span> → <span className="font-medium">{undoState.toStatus}</span>
+                  {t("dashboard.statusChanged")}: <span className="font-medium">{undoState.fromStatus}</span> → <span className="font-medium">{undoState.toStatus}</span>
                 </p>
                 <div className="mt-2 w-full bg-muted rounded-full h-1 overflow-hidden">
                   <div
@@ -363,7 +363,7 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
                   className="text-xs"
                   data-testid="button-undo-vehicle"
                 >
-                  Desfazer
+                  {t("dashboard.undo")}
                 </Button>
                 <Button
                   size="icon"
