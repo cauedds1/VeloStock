@@ -283,43 +283,39 @@ export function KanbanBoard({ vehicles }: KanbanBoardProps) {
             const vehiclesInStatus = vehiclesByStatus[status] || [];
             const totalInStatus = totalCountByStatus[status] || 0;
             return (
-              <div
+              <KanbanColumn
                 key={status}
+                title={getStatusTranslation(status)}
+                count={totalInStatus}
+                statusKey={status}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDropOnStatus(status, e)}
-                className="flex-shrink-0 w-72"
               >
-                <KanbanColumn
-                  title={getStatusTranslation(status)}
-                  count={totalInStatus}
-                  statusKey={status}
-                >
-                  {vehiclesInStatus.map((vehicle) => (
-                    <div
-                      key={vehicle.id}
-                      draggable
-                      onDragStart={() => handleDragStart(vehicle)}
-                      className="cursor-grab active:cursor-grabbing"
-                      data-testid={`vehicle-drag-item-${vehicle.id}`}
-                    >
-                      <VehicleCard {...vehicle} />
+                {vehiclesInStatus.map((vehicle) => (
+                  <div
+                    key={vehicle.id}
+                    draggable
+                    onDragStart={() => handleDragStart(vehicle)}
+                    className="cursor-grab active:cursor-grabbing"
+                    data-testid={`vehicle-drag-item-${vehicle.id}`}
+                  >
+                    <VehicleCard {...vehicle} />
+                  </div>
+                ))}
+                {vehiclesInStatus.length < totalInStatus && (
+                  <div className="text-center text-xs text-muted-foreground py-2 bg-muted/30 rounded-lg">
+                    +{totalInStatus - vehiclesInStatus.length} {t("dashboard.moreVehicles")}
+                  </div>
+                )}
+                {vehiclesInStatus.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-2">
+                      <LayoutGrid className="h-5 w-5 text-muted-foreground/50" />
                     </div>
-                  ))}
-                  {vehiclesInStatus.length < totalInStatus && (
-                    <div className="text-center text-xs text-muted-foreground py-2 bg-muted/30 rounded-lg">
-                      +{totalInStatus - vehiclesInStatus.length} {t("dashboard.moreVehicles")}
-                    </div>
-                  )}
-                  {vehiclesInStatus.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-2">
-                        <LayoutGrid className="h-5 w-5 text-muted-foreground/50" />
-                      </div>
-                      <span className="text-xs text-muted-foreground">{t("dashboard.noVehicle")}</span>
-                    </div>
-                  )}
-                </KanbanColumn>
-              </div>
+                    <span className="text-xs text-muted-foreground">{t("dashboard.noVehicle")}</span>
+                  </div>
+                )}
+              </KanbanColumn>
             );
           })}
         </div>

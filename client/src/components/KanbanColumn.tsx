@@ -8,6 +8,8 @@ interface KanbanColumnProps {
   children: React.ReactNode;
   color?: string;
   statusKey?: string;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
@@ -37,12 +39,23 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; 
   },
 };
 
-export const KanbanColumn = memo(function KanbanColumn({ title, count, children, statusKey }: KanbanColumnProps) {
+export const KanbanColumn = memo(function KanbanColumn({ 
+  title, 
+  count, 
+  children, 
+  statusKey,
+  onDragOver,
+  onDrop
+}: KanbanColumnProps) {
   const colorKey = statusKey || title;
   const colors = STATUS_COLORS[colorKey] || STATUS_COLORS["Entrada"];
   
   return (
-    <div className="flex h-full w-72 flex-shrink-0 flex-col rounded-xl bg-muted/30 dark:bg-muted/10 border border-border/50">
+    <div 
+      className="flex h-full w-72 flex-shrink-0 flex-col rounded-xl bg-muted/30 dark:bg-muted/10 border border-border/50"
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       <div className={`flex items-center justify-between px-4 py-3 rounded-t-xl ${colors.bg} border-b ${colors.border}`}>
         <div className="flex items-center gap-2">
           <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
