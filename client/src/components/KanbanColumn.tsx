@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface KanbanColumnProps {
   title: string;
@@ -69,11 +68,11 @@ export const KanbanColumn = memo(function KanbanColumn({
           {count}
         </Badge>
       </div>
-      <ScrollArea className="flex-1 p-2">
-        <div className="space-y-2 pr-2">
+      <div className="flex-1 overflow-y-auto p-2">
+        <div className="space-y-2">
           {children}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 });
