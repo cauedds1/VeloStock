@@ -379,7 +379,8 @@ export default function Bills() {
 
           <Card className="p-6 relative rounded-xl border-none shadow-sm" style={{ 
             background: "linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(to bottom, rgb(239 68 68), rgb(34 197 94)) border-box",
-            border: "2px solid transparent"
+            border: "2px solid transparent",
+            display: "block"
           }}>
             <div className="relative flex items-center gap-4">
               <div className="p-3 rounded-lg bg-green-500/10">
