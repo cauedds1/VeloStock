@@ -337,14 +337,14 @@ export default function Bills() {
             </div>
           </Card>
 
-          <Card className="p-6 border-2" style={{ borderColor: parseFloat(dashboard.saldoPrevisto) >= 0 ? "rgb(34 197 94 / 0.5)" : "rgb(239 68 68 / 0.5)" }}>
+          <Card className="p-6 border-2" style={{ borderColor: parseFloat(dashboard.saldoPrevisto) > 0 ? "rgb(34 197 94 / 0.5)" : parseFloat(dashboard.saldoPrevisto) < 0 ? "rgb(239 68 68 / 0.5)" : "hsl(var(--muted-foreground) / 0.2)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: parseFloat(dashboard.saldoPrevisto) >= 0 ? "rgb(34 197 94 / 0.1)" : "rgb(239 68 68 / 0.1)" }}>
-                <DollarSign className="h-6 w-6" style={{ color: parseFloat(dashboard.saldoPrevisto) >= 0 ? "rgb(34 197 94)" : "rgb(239 68 68)" }} />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: parseFloat(dashboard.saldoPrevisto) > 0 ? "rgb(34 197 94 / 0.1)" : parseFloat(dashboard.saldoPrevisto) < 0 ? "rgb(239 68 68 / 0.1)" : "hsl(var(--muted-foreground) / 0.1)" }}>
+                <DollarSign className="h-6 w-6" style={{ color: parseFloat(dashboard.saldoPrevisto) > 0 ? "rgb(34 197 94)" : parseFloat(dashboard.saldoPrevisto) < 0 ? "rgb(239 68 68)" : "hsl(var(--muted-foreground))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.expectedBalance")}</p>
-                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.saldoPrevisto) >= 0 ? "rgb(34 197 94)" : "rgb(239 68 68)" }}>
+                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.saldoPrevisto) > 0 ? "rgb(34 197 94)" : parseFloat(dashboard.saldoPrevisto) < 0 ? "rgb(239 68 68)" : "hsl(var(--muted-foreground))" }}>
                   R$ {parseFloat(dashboard.saldoPrevisto).toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -364,14 +364,14 @@ export default function Bills() {
             </div>
           </Card>
 
-          <Card className="p-6 border-2" style={{ borderColor: parseFloat(dashboard.proximosVencimentos.total) >= 0 ? "rgb(34 197 94 / 0.5)" : "rgb(239 68 68 / 0.5)" }}>
+          <Card className="p-6 border-2" style={{ borderColor: parseFloat(dashboard.proximosVencimentos.total) > 0 ? "rgb(34 197 94 / 0.5)" : parseFloat(dashboard.proximosVencimentos.total) < 0 ? "rgb(239 68 68 / 0.5)" : "hsl(var(--muted-foreground) / 0.2)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: parseFloat(dashboard.proximosVencimentos.total) >= 0 ? "rgb(34 197 94 / 0.1)" : "rgb(239 68 68 / 0.1)" }}>
-                <Calendar className="h-6 w-6" style={{ color: parseFloat(dashboard.proximosVencimentos.total) >= 0 ? "rgb(34 197 94)" : "rgb(239 68 68)" }} />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: parseFloat(dashboard.proximosVencimentos.total) > 0 ? "rgb(34 197 94 / 0.1)" : parseFloat(dashboard.proximosVencimentos.total) < 0 ? "rgb(239 68 68 / 0.1)" : "hsl(var(--muted-foreground) / 0.1)" }}>
+                <Calendar className="h-6 w-6" style={{ color: parseFloat(dashboard.proximosVencimentos.total) > 0 ? "rgb(34 197 94)" : parseFloat(dashboard.proximosVencimentos.total) < 0 ? "rgb(239 68 68)" : "hsl(var(--muted-foreground))" }} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.next7Days")}</p>
-                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.proximosVencimentos.total) >= 0 ? "rgb(34 197 94)" : "rgb(239 68 68)" }}>{dashboard.proximosVencimentos.quantidade}</p>
+                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.proximosVencimentos.total) > 0 ? "rgb(34 197 94)" : parseFloat(dashboard.proximosVencimentos.total) < 0 ? "rgb(239 68 68)" : "hsl(var(--muted-foreground))" }}>{dashboard.proximosVencimentos.quantidade}</p>
                 <p className="text-xs text-muted-foreground">R$ {parseFloat(dashboard.proximosVencimentos.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
