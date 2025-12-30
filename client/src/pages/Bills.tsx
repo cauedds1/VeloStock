@@ -311,23 +311,23 @@ export default function Bills() {
 
       {dashboard && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="p-6">
+          <Card className="p-6 border-2" style={{ borderColor: "rgb(239 68 68 / 0.5)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--destructive) / 0.1)" }}>
-                <TrendingDown className="h-6 w-6" style={{ color: "hsl(var(--destructive))" }} />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "rgb(239 68 68 / 0.1)" }}>
+                <TrendingDown className="h-6 w-6 text-red-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.totalToPay")}</p>
-                <p className="text-2xl font-bold text-destructive">R$ {parseFloat(dashboard.totalAPagar.valor).toLocaleString("pt-BR")}</p>
+                <p className="text-2xl font-bold text-red-500">R$ {parseFloat(dashboard.totalAPagar.valor).toLocaleString("pt-BR")}</p>
                 <p className="text-xs text-muted-foreground">{dashboard.totalAPagar.quantidade} {t("bills.bills")}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-2" style={{ borderColor: "rgb(34 197 94 / 0.5)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-1) / 0.1)" }}>
-                <TrendingUp className="h-6 w-6" style={{ color: "hsl(var(--badge-color-1))" }} />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "rgb(34 197 94 / 0.1)" }}>
+                <TrendingUp className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.totalToReceive")}</p>
@@ -337,54 +337,54 @@ export default function Bills() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-2" style={{ borderColor: "hsl(var(--primary) / 0.5)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-2) / 0.1)" }}>
-                <DollarSign className="h-6 w-6" style={{ color: changeIconColors ? "hsl(var(--badge-color-2))" : "currentColor" }} />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--primary) / 0.1)" }}>
+                <DollarSign className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.expectedBalance")}</p>
-                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.saldoPrevisto) >= 0 ? "hsl(var(--badge-color-1))" : "hsl(var(--destructive))" }}>
+                <p className="text-2xl font-bold" style={{ color: parseFloat(dashboard.saldoPrevisto) >= 0 ? "rgb(34 197 94)" : "rgb(239 68 68)" }}>
                   R$ {parseFloat(dashboard.saldoPrevisto).toLocaleString("pt-BR")}
                 </p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-destructive/50">
+          <Card className="p-6 border-2" style={{ borderColor: "rgb(239 68 68)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-destructive/10">
-                <AlertCircle className="h-6 w-6 text-destructive" />
+              <div className="p-3 rounded-lg bg-red-500/10">
+                <AlertCircle className="h-6 w-6 text-red-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.overdueBills")}</p>
-                <p className="text-2xl font-bold text-destructive">{dashboard.vencidas.quantidade}</p>
-                <p className="text-xs text-muted-foreground text-destructive">R$ {parseFloat(dashboard.vencidas.total).toLocaleString("pt-BR")}</p>
+                <p className="text-2xl font-bold text-red-500">{dashboard.vencidas.quantidade}</p>
+                <p className="text-xs text-muted-foreground text-red-500">R$ {parseFloat(dashboard.vencidas.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-2" style={{ borderColor: "hsl(var(--muted-foreground) / 0.5)" }}>
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--badge-color-4) / 0.1)" }}>
-                <Calendar className="h-6 w-6" style={{ color: "hsl(var(--badge-color-4))" }} />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "hsl(var(--muted-foreground) / 0.1)" }}>
+                <Calendar className="h-6 w-6 text-muted-foreground" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.next7Days")}</p>
-                <p className="text-2xl font-bold" style={{ color: "hsl(var(--badge-color-4))" }}>{dashboard.proximosVencimentos.quantidade}</p>
+                <p className="text-2xl font-bold text-muted-foreground">{dashboard.proximosVencimentos.quantidade}</p>
                 <p className="text-xs text-muted-foreground">R$ {parseFloat(dashboard.proximosVencimentos.total).toLocaleString("pt-BR")}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-green-500/50">
+          <Card className="p-6 border-2" style={{ borderColor: "rgb(34 197 94)" }}>
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-green-500/10">
                 <CheckCircle className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("bills.paidThisMonth")}</p>
-                <p className="text-xl font-bold text-destructive">- R$ {parseFloat(dashboard.pagosMes.totalPago).toLocaleString("pt-BR")}</p>
+                <p className="text-xl font-bold text-red-500">- R$ {parseFloat(dashboard.pagosMes.totalPago).toLocaleString("pt-BR")}</p>
                 <p className="text-xl font-bold text-green-500">+ R$ {parseFloat(dashboard.pagosMes.totalRecebido).toLocaleString("pt-BR")}</p>
               </div>
             </div>
