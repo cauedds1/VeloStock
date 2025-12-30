@@ -540,6 +540,8 @@ export async function registerAdminRoutes(app: Express) {
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
+      const crypto = await import("crypto");
+      const setupToken = crypto.randomBytes(32).toString("hex");
 
       const newAdmin = await db
         .insert(adminCredentials)
@@ -547,6 +549,7 @@ export async function registerAdminRoutes(app: Express) {
           email,
           passwordHash,
           nome,
+          token: setupToken,
           ativo: "true",
         })
         .returning();
