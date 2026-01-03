@@ -73,6 +73,7 @@ const translations: Record<Language, Record<string, string>> = {
     "auth.inviteCodePlaceholder": "Obrigatório para novos cadastros",
     "auth.firstAdminNote": "Como este é o primeiro acesso, você não precisa de código de convite.",
     "auth.inviteRequired": "Código de convite é necessário para criar conta.",
+    "auth.invalidInviteCode": "Código de convite inválido ou expirado.",
 
     "reminders.title": "Lembretes",
     "reminders.new": "Novo Lembrete",

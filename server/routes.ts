@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import multer from "multer";
 import { z } from "zod";
-import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema, insertCommissionPaymentSchema, insertReminderSchema, commissionsConfig, commissionPayments, users, companies, storeObservations, operationalExpenses, fipeCache } from "@shared/schema";
+import { insertVehicleSchema, insertVehicleCostSchema, insertStoreObservationSchema, updateVehicleHistorySchema, insertCommissionPaymentSchema, insertReminderSchema, insertInviteSchema, commissionsConfig, commissionPayments, users, companies, storeObservations, operationalExpenses, fipeCache } from "@shared/schema";
 import { isNotNull, sql } from "drizzle-orm";
 import OpenAI from "openai";
 import path from "path";
@@ -3055,7 +3055,7 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         return res.status(403).json({ error: "Usuário não vinculado a uma empresa" });
       }
 
-      const { email, firstName, lastName, role, password } = req.body;
+      const { email, firstName, lastName, role, password, inviteCode } = req.body;
 
       // Validar campos obrigatórios
       if (!email || !firstName || !role || !password) {
@@ -3077,6 +3077,26 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
       }
 
       // Hash da senha
+      // Iniciar a verificação do convite se não for o primeiro usuário
+      const isFirstUserCount = (await db.select({ count: sql<number>`count(*)` }).from(users))[0].count;
+      
+      if (Number(isFirstUserCount) > 0) {
+        if (!inviteCode) {
+          return res.status(400).json({ message: "Código de convite é obrigatório" });
+        }
+        
+        const invite = await storage.getInviteByCode(inviteCode);
+        if (!invite || invite.isActive === "false" || (invite.maxUses && invite.usedCount && invite.usedCount >= invite.maxUses)) {
+          return res.status(400).json({ message: "Código de convite inválido ou esgotado" });
+        }
+        
+        // Incrementar uso do convite
+        await storage.updateInvite(invite.id, {
+          usedCount: (invite.usedCount || 0) + 1,
+          isActive: (invite.usedCount || 0) + 1 >= (invite.maxUses || 1) ? "false" : "true"
+        });
+      }
+
       const passwordHash = await bcrypt.hash(password, 10);
 
       // Criar usuário
@@ -4188,6 +4208,53 @@ Retorne APENAS um JSON válido no formato:
     } catch (error) {
       console.error("Erro ao deletar item de checklist:", error);
       res.status(500).json({ error: "Erro ao deletar item" });
+    }
+  });
+
+  // Invite routes
+  app.get("/api/invites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) return res.status(401).json({ error: "Unauthorized" });
+      const invites = await storage.getInvitesByCompany(userInfo.empresaId);
+      res.json(invites);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch invites" });
+    }
+  });
+
+  app.post("/api/invites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userInfo = await getUserWithCompany(req);
+      if (!userInfo) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { role, maxUses } = req.body;
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      const invite = await storage.createInvite({
+        empresaId: userInfo.empresaId,
+        code,
+        role: role || "vendedor",
+        maxUses: maxUses || 1,
+        createdBy: userInfo.userId,
+        isActive: "true",
+      });
+      
+      res.json(invite);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create invite" });
+    }
+  });
+
+  app.get("/api/invites/validate/:code", async (req, res) => {
+    try {
+      const invite = await storage.getInviteByCode(req.params.code);
+      if (!invite || invite.isActive === "false" || (invite.expiresAt && invite.expiresAt < new Date()) || (invite.maxUses && invite.usedCount && invite.usedCount >= invite.maxUses)) {
+        return res.status(400).json({ valid: false, message: "Invite code invalid or expired" });
+      }
+      res.json({ valid: true, invite });
+    } catch (error) {
+      res.status(500).json({ error: "Validation failed" });
     }
   });
 

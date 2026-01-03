@@ -457,9 +457,30 @@ export const insertCompanySettingsSchema = createInsertSchema(companySettings).o
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
 export type CompanySettings = typeof companySettings.$inferSelect;
 
-// ============================================
-// MÓDULO FINANCEIRO
-// ============================================
+// Tabela de convites para novos usuários
+export const invites = pgTable("invites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  empresaId: varchar("empresa_id").notNull(),
+  code: varchar("code").unique().notNull(),
+  role: userRoleEnum("role").default("vendedor"),
+  maxUses: integer("max_uses").default(1),
+  usedCount: integer("used_count").default(0),
+  isActive: varchar("is_active").default("true"),
+  createdBy: varchar("created_by"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertInviteSchema = createInsertSchema(invites).omit({
+  id: true,
+  createdAt: true,
+  usedCount: true,
+});
+
+export type InsertInvite = z.infer<typeof insertInviteSchema>;
+export type Invite = typeof invites.$inferSelect;
+
+// Rest of the file...
 
 // Enums para módulo financeiro
 export const expenseCategoryEnum = pgEnum("expense_category", [

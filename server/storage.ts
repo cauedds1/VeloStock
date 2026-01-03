@@ -27,6 +27,8 @@ import {
   type InsertChecklistCategory,
   type ChecklistCustomItem,
   type InsertChecklistCustomItem,
+  type Invite,
+  type InsertInvite,
   users,
   vehicles,
   vehicleImages,
@@ -45,6 +47,7 @@ import {
   bugReports,
   checklistCategories,
   checklistCustomItems,
+  invites,
 } from "@shared/schema";
 import { or, sql } from "drizzle-orm";
 import { normalizeChecklistData } from "@shared/checklistUtils";
@@ -117,6 +120,12 @@ export interface IStorage {
   getChecklistCustomItems(empresaId: string): Promise<ChecklistCustomItem[]>;
   createChecklistCustomItem(item: InsertChecklistCustomItem): Promise<ChecklistCustomItem>;
   deleteChecklistCustomItem(id: string, empresaId: string): Promise<boolean>;
+  
+  // Invites
+  getInviteByCode(code: string): Promise<Invite | undefined>;
+  createInvite(invite: InsertInvite): Promise<Invite>;
+  updateInvite(id: string, updates: Partial<InsertInvite>): Promise<Invite | undefined>;
+  getInvitesByCompany(empresaId: string): Promise<Invite[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -768,6 +777,26 @@ export class DatabaseStorage implements IStorage {
       .set({ isActive: "false" })
       .where(and(eq(checklistCustomItems.id, id), eq(checklistCustomItems.empresaId, empresaId)));
     return true;
+  }
+
+  // Invites
+  async getInviteByCode(code: string): Promise<Invite | undefined> {
+    const [invite] = await db.select().from(invites).where(eq(invites.code, code));
+    return invite;
+  }
+
+  async createInvite(insertInvite: InsertInvite): Promise<Invite> {
+    const [invite] = await db.insert(invites).values(insertInvite as any).returning();
+    return invite;
+  }
+
+  async updateInvite(id: string, updates: Partial<InsertInvite>): Promise<Invite | undefined> {
+    const [invite] = await db.update(invites).set(updates).where(eq(invites.id, id)).returning();
+    return invite;
+  }
+
+  async getInvitesByCompany(empresaId: string): Promise<Invite[]> {
+    return await db.select().from(invites).where(eq(invites.empresaId, empresaId)).orderBy(desc(invites.createdAt));
   }
 }
 

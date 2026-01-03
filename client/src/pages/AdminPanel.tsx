@@ -799,6 +799,52 @@ function NovoPagamentoDialog({ clientes, onSuccess }: { clientes: Cliente[]; onS
   );
 }
 
+function InvitesManager() {
+  const { t } = useI18n();
+  const { data: invites, refetch } = useQuery<any[]>({ queryKey: ["/api/invites"] });
+  const [loading, setLoading] = useState(false);
+
+  const generateInvite = async () => {
+    setLoading(true);
+    try {
+      await apiRequest("POST", "/api/invites", { role: "vendedor", maxUses: 1 });
+      refetch();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Códigos de Convite</CardTitle>
+          <CardDescription>Gere códigos para novos usuários se cadastrarem</CardDescription>
+        </div>
+        <Button onClick={generateInvite} disabled={loading}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Gerar Código
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {invites?.map((invite) => (
+            <div key={invite.id} className="flex items-center justify-between p-3 border rounded-md">
+              <div className="font-mono text-lg font-bold">{invite.code}</div>
+              <div className="text-sm text-muted-foreground">
+                Uso: {invite.usedCount} / {invite.maxUses}
+              </div>
+              <Badge variant={invite.isActive === "true" ? "default" : "secondary"}>
+                {invite.isActive === "true" ? "Ativo" : "Inativo"}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminPanel() {
   const { t } = useI18n();
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -1167,7 +1213,7 @@ export default function AdminPanel() {
 
       <main className="max-w-7xl mx-auto p-4 sm:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full lg:w-auto lg:inline-grid ${admin.isMaster ? 'grid-cols-6' : 'grid-cols-5'}`}>
+          <TabsList className={`grid w-full lg:w-auto lg:inline-grid ${admin.isMaster ? "grid-cols-7" : "grid-cols-6"}`}>
             <TabsTrigger value="dashboard" className="gap-2" data-testid="tab-dashboard">
               <BarChart3 className="h-4 w-4 hidden sm:inline" />
               {t("admin.dashboard")}
@@ -1188,6 +1234,10 @@ export default function AdminPanel() {
               <Bug className="h-4 w-4 hidden sm:inline" />
               {t("admin.bugReports")}
             </TabsTrigger>
+            <TabsTrigger value="invites" className="gap-2" data-testid="tab-invites">
+              <UserPlus className="h-4 w-4 hidden sm:inline" />
+              Convites
+            </TabsTrigger>
             {admin.isMaster && (
               <TabsTrigger value="usuarios" className="gap-2" data-testid="tab-usuarios">
                 <UserPlus className="h-4 w-4 hidden sm:inline" />
@@ -1195,6 +1245,10 @@ export default function AdminPanel() {
               </TabsTrigger>
             )}
           </TabsList>
+
+          <TabsContent value="invites" className="space-y-4">
+            <InvitesManager />
+          </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">
             {statsLoading ? (

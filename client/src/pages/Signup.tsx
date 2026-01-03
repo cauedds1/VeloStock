@@ -61,6 +61,21 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
+      // Validar código de convite antes de prosseguir
+      if (!isFirstUser) {
+        const inviteRes = await fetch(`/api/invites/validate/${inviteCode}`);
+        const inviteData = await inviteRes.json();
+        if (!inviteData.valid) {
+          toast({
+            title: t("common.error"),
+            description: t("auth.invalidInviteCode"),
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/auth/signup-step1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
