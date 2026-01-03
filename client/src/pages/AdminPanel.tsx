@@ -125,6 +125,7 @@ function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) 
         return;
       }
 
+      localStorage.setItem("admin_access_token", token);
       onValidToken(token);
     } catch (err) {
       setError(t("admin.connectionError"));
@@ -906,6 +907,26 @@ export default function AdminPanel() {
           return;
         }
 
+        // Tenta recuperar o token do localStorage
+        const savedToken = localStorage.getItem("admin_access_token");
+        if (savedToken && !tokenValidated) {
+          try {
+            const res = await fetch("/api/admin/validate-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token: savedToken }),
+            });
+            if (res.ok) {
+              setAccessToken(savedToken);
+              setTokenValidated(true);
+            } else {
+              localStorage.removeItem("admin_access_token");
+            }
+          } catch (err) {
+            console.error("Erro ao validar token salvo:", err);
+          }
+        }
+
         const res = await fetch("/api/admin/me", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
@@ -919,7 +940,7 @@ export default function AdminPanel() {
     };
 
     checkAuth();
-  }, []);
+  }, [tokenValidated]);
 
   const handleLogin = (adminData: Admin) => {
     justLoggedInRef.current = true;
@@ -931,6 +952,7 @@ export default function AdminPanel() {
 
   const handleLogout = async () => {
     await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+    localStorage.removeItem("admin_access_token");
     setAdmin(null);
     setTokenValidated(false);
     queryClient.clear();
