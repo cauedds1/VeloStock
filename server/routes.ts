@@ -3090,9 +3090,9 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
           return res.status(400).json({ message: "Código de convite inválido ou esgotado" });
         }
         
-        // Incrementar uso do convite
+        // Incrementar uso do convite e desativar imediatamente
         await storage.updateInvite(invite.id, {
-          isActive: (invite.usedCount || 0) + 1 >= (invite.maxUses || 1) ? "false" : "true"
+          isActive: "false"
         });
       }
 

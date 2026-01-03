@@ -808,13 +808,13 @@ function InvitesManager() {
 
   const generateInvite = async () => {
     setLoading(true);
-    console.log("Iniciando geração de convite...");
+    console.log("Iniciando geração de convite único...");
     try {
       const res = await apiRequest("POST", "/api/invites", { role: "vendedor", maxUses: 1 });
       console.log("Resposta da geração de convite:", res);
       toast({
         title: "Sucesso",
-        description: "Código de convite gerado com sucesso!",
+        description: "Código de convite único gerado com sucesso!",
       });
       refetch();
     } catch (error: any) {
