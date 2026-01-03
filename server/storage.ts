@@ -433,8 +433,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStoreObservation(insertObservation: InsertStoreObservation): Promise<StoreObservation> {
-    const result = await db.insert(storeObservations).values(insertObservation).returning();
-    return result[0];
+    const [result] = await db.insert(storeObservations).values(insertObservation).returning();
+    return result;
   }
 
   async updateStoreObservation(id: string, updates: Partial<InsertStoreObservation>): Promise<StoreObservation | undefined> {
@@ -624,10 +624,10 @@ export class DatabaseStorage implements IStorage {
     let query = db.select().from(activityLog).where(eq(activityLog.empresaId, empresaId));
     
     if (filters?.userId) {
-      query = query.where(and(
+      query = db.select().from(activityLog).where(and(
         eq(activityLog.empresaId, empresaId),
         eq(activityLog.userId, filters.userId)
-      )) as any;
+      ));
     }
     
     return await query.orderBy(desc(activityLog.createdAt)).limit(filters?.limit || 50);
