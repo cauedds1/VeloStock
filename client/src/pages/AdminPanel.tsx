@@ -822,7 +822,14 @@ function NovoPagamentoDialog({ clientes, onSuccess }: { clientes: Cliente[]; onS
 
 function InvitesManager() {
   const { t } = useI18n();
-  const { data: invites = [], refetch } = useQuery<any[]>({ queryKey: ["/api/invites"] });
+  const { data: invites = [], refetch } = useQuery<any[]>({ 
+    queryKey: ["/api/admin/invites"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/invites", { credentials: "include" });
+      if (!res.ok) throw new Error("Erro ao buscar convites");
+      return res.json();
+    }
+  });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -830,8 +837,18 @@ function InvitesManager() {
     setLoading(true);
     console.log("Iniciando geração de convite único...");
     try {
-      const res = await apiRequest("POST", "/api/invites", { role: "vendedor", maxUses: 1 });
-      console.log("Resposta da geração de convite:", res);
+      const res = await fetch("/api/admin/invites/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "vendedor", maxUses: 1 }),
+        credentials: "include"
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao gerar convite");
+      }
+
       toast({
         title: "Sucesso",
         description: "Código de convite único gerado com sucesso!",

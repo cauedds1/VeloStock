@@ -4,18 +4,18 @@ import { companies, users, subscriptions, payments, vehicles, adminCredentials, 
 
 // Helper para validar autenticação e obter empresaId do usuário logado
 async function getUserWithCompany(req: any): Promise<{ userId: string; empresaId: string } | null> {
-  const userId = req.user?.claims?.id || req.user?.claims?.sub;
+  const userId = req.session.adminId;
   if (!userId) return null;
   
   const user = await db
     .select()
-    .from(users)
-    .where(eq(users.id, userId))
+    .from(adminCredentials)
+    .where(eq(adminCredentials.id, userId))
     .limit(1);
 
-  if (!user[0]?.empresaId) return null;
+  if (!user[0]) return null;
   
-  return { userId, empresaId: user[0].empresaId };
+  return { userId, empresaId: "admin-system" }; 
 }
 import { eq, and, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
