@@ -4235,7 +4235,7 @@ Retorne APENAS um JSON válido no formato:
         empresaId: userInfo.empresaId,
         code,
         role: role || "vendedor",
-        maxUses: maxUses || 1,
+        maxUses: maxUses !== undefined ? parseInt(maxUses.toString()) : 1,
         createdBy: userInfo.userId,
         isActive: "true",
       });

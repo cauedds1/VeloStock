@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Users, Building2, CreditCard, DollarSign, TrendingUp, LogOut, Lock, Mail, User, Shield, KeyRound,
   Plus, Eye, Edit, Check, X, Calendar, Wallet, BarChart3, Settings, Clock, AlertTriangle, CheckCircle, Bug, Download, UserPlus, ArrowLeft, Paperclip, FileIcon
@@ -801,14 +802,26 @@ function NovoPagamentoDialog({ clientes, onSuccess }: { clientes: Cliente[]; onS
 
 function InvitesManager() {
   const { t } = useI18n();
-  const { data: invites, refetch } = useQuery<any[]>({ queryKey: ["/api/invites"] });
+  const { data: invites = [], refetch } = useQuery<any[]>({ queryKey: ["/api/invites"] });
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const generateInvite = async () => {
     setLoading(true);
     try {
-      await apiRequest("POST", "/api/invites", { role: "vendedor", maxUses: 1 });
+      const res = await apiRequest("POST", "/api/invites", { role: "vendedor", maxUses: 1 });
+      toast({
+        title: "Sucesso",
+        description: "Código de convite gerado com sucesso!",
+      });
       refetch();
+    } catch (error: any) {
+      console.error("Erro ao gerar convite:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível gerar o código de convite.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
