@@ -1,6 +1,22 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "../db";
-import { companies, users, subscriptions, payments, vehicles, adminCredentials, bugReports, billsPayable } from "@shared/schema";
+import { companies, users, subscriptions, payments, vehicles, adminCredentials, bugReports, billsPayable, invites } from "@shared/schema";
+
+// Helper para validar autenticação e obter empresaId do usuário logado
+async function getUserWithCompany(req: any): Promise<{ userId: string; empresaId: string } | null> {
+  const userId = req.user?.claims?.id || req.user?.claims?.sub;
+  if (!userId) return null;
+  
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user[0]?.empresaId) return null;
+  
+  return { userId, empresaId: user[0].empresaId };
+}
 import { eq, and, desc, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
