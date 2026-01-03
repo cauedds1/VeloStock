@@ -3092,7 +3092,6 @@ Gere APENAS o texto do anúncio, sem títulos ou formatação extra.`;
         
         // Incrementar uso do convite
         await storage.updateInvite(invite.id, {
-          usedCount: (invite.usedCount || 0) + 1,
           isActive: (invite.usedCount || 0) + 1 >= (invite.maxUses || 1) ? "false" : "true"
         });
       }
@@ -4225,11 +4224,16 @@ Retorne APENAS um JSON válido no formato:
 
   app.post("/api/invites", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Recebida requisição para gerar convite:", req.body);
       const userInfo = await getUserWithCompany(req);
-      if (!userInfo) return res.status(401).json({ error: "Unauthorized" });
+      if (!userInfo) {
+        console.log("Usuário não autorizado para gerar convite");
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       
       const { role, maxUses } = req.body;
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      console.log("Gerando código:", code);
       
       const invite = await storage.createInvite({
         empresaId: userInfo.empresaId,
@@ -4240,8 +4244,10 @@ Retorne APENAS um JSON válido no formato:
         isActive: "true",
       });
       
+      console.log("Convite criado com sucesso:", invite);
       res.json(invite);
     } catch (error) {
+      console.error("Erro ao criar convite no servidor:", error);
       res.status(500).json({ error: "Failed to create invite" });
     }
   });
