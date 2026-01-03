@@ -173,18 +173,33 @@ export default function Signup() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">{t("auth.password")}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="password">{t("auth.password")}</Label>
+                              <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                disabled={isLoading}
+                              />
+                            </div>
+
+                            {!isFirstUser && isFirstUser !== null && (
+                              <div className="space-y-2">
+                                <Label htmlFor="inviteCode">{t("auth.inviteCode")}</Label>
+                                <Input
+                                  id="inviteCode"
+                                  type="text"
+                                  placeholder={t("auth.inviteCodePlaceholder")}
+                                  value={inviteCode}
+                                  onChange={(e) => setInviteCode(e.target.value)}
+                                  required
+                                  disabled={isLoading}
+                                />
+                              </div>
+                            )}
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
@@ -204,7 +219,7 @@ export default function Signup() {
                     <Label htmlFor="inviteCode">{t("auth.inviteCode")}</Label>
                     <Input
                       id="inviteCode"
-                      type="password"
+                      type="text"
                       placeholder={t("auth.inviteCodePlaceholder")}
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
