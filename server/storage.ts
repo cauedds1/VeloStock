@@ -433,7 +433,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStoreObservation(insertObservation: InsertStoreObservation): Promise<StoreObservation> {
-    const [result] = await db.insert(storeObservations).values(insertObservation).returning();
+    const [result] = await db.insert(storeObservations).values({
+      description: insertObservation.description,
+      empresaId: insertObservation.empresaId,
+      category: insertObservation.category || null,
+      status: insertObservation.status || "Pendente",
+      expenseCost: insertObservation.expenseCost ? insertObservation.expenseCost.toString() : null,
+      expenseDescription: insertObservation.expenseDescription || null,
+      expensePaymentMethod: insertObservation.expensePaymentMethod || null,
+      expensePaidBy: insertObservation.expensePaidBy || null,
+    }).returning();
     return result;
   }
 

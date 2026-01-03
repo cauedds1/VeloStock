@@ -1372,6 +1372,57 @@ export async function registerAdminRoutes(app: Express) {
     }
   });
 
+  // ============================================
+  // INVITES - ENDPOINTS PARA ADMIN
+  // ============================================
+
+  // Listar convites da empresa
+  app.get("/api/admin/invites", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { empresaId } = await getUserWithCompany(req) || {};
+      if (!empresaId) return res.status(403).json({ error: "Empresa não identificada" });
+
+      const result = await db
+        .select()
+        .from(invites)
+        .where(eq(invites.empresaId, empresaId))
+        .orderBy(desc(invites.createdAt));
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Erro ao buscar convites:", error);
+      res.status(500).json({ error: "Erro ao buscar convites" });
+    }
+  });
+
+  // Gerar novo convite
+  app.post("/api/admin/invites/generate", requireAdminAuth, async (req: any, res) => {
+    try {
+      const { empresaId, userId } = await getUserWithCompany(req) || {};
+      if (!empresaId) return res.status(403).json({ error: "Empresa não identificada" });
+
+      const { role, maxUses, expiresAt } = req.body;
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      const [newInvite] = await db
+        .insert(invites)
+        .values({
+          empresaId,
+          code,
+          role: role || "vendedor",
+          maxUses: maxUses || 1,
+          createdBy: userId,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+        })
+        .returning();
+
+      res.json(newInvite);
+    } catch (error) {
+      console.error("Erro ao gerar convite:", error);
+      res.status(500).json({ error: "Erro ao gerar convite" });
+    }
+  });
+
   // Atualizar status do bug report
   app.patch("/api/admin/bug-reports/:id/status", requireAdminAuth, async (req: any, res) => {
     try {
