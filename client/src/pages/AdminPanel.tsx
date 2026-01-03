@@ -105,6 +105,7 @@ function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) 
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +126,9 @@ function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) 
         return;
       }
 
-      localStorage.setItem("admin_access_token", token);
+      if (rememberMe) {
+        localStorage.setItem("admin_access_token", token);
+      }
       onValidToken(token);
     } catch (err) {
       setError(t("admin.connectionError"));
@@ -164,6 +167,22 @@ function TokenGate({ onValidToken }: { onValidToken: (token: string) => void }) 
                   data-testid="input-admin-access-token"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-600"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Salvar este dispositivo?
+              </label>
             </div>
 
             {error && (
