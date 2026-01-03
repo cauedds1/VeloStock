@@ -1392,10 +1392,11 @@ export async function registerAdminRoutes(app: Express) {
   // INVITES - ENDPOINTS PARA ADMIN
   // ============================================
 
-  // Listar convites da empresa
   app.get("/api/admin/invites", requireAdminAuth, async (req: any, res) => {
     try {
-      const { empresaId } = await getUserWithCompany(req) || {};
+      const userResult = await getUserWithCompany(req);
+      const empresaId = userResult?.empresaId;
+      
       if (!empresaId) return res.status(403).json({ error: "Empresa não identificada" });
 
       const result = await db
@@ -1414,7 +1415,10 @@ export async function registerAdminRoutes(app: Express) {
   // Gerar novo convite
   app.post("/api/admin/invites/generate", requireAdminAuth, async (req: any, res) => {
     try {
-      const { empresaId, userId } = await getUserWithCompany(req) || {};
+      const userResult = await getUserWithCompany(req);
+      const empresaId = userResult?.empresaId;
+      const userId = userResult?.userId;
+      
       if (!empresaId) return res.status(403).json({ error: "Empresa não identificada" });
 
       const { role, maxUses, expiresAt } = req.body;
